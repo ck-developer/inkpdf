@@ -1,0 +1,19 @@
+# Environnement de test local : `docker compose up --build`, puis http://localhost:3000/docs
+#
+# Les templates sont lus depuis le dossier de l'hôte désigné par INKPDF_TEMPLATES
+# (par défaut ./examples/templates) ; ajouter, modifier ou supprimer un template dans ce
+# dossier est pris en compte à chaud, sans redémarrer le conteneur.
+services:
+  inkpdf:
+    build: .
+    image: inkpdf:dev
+    ports:
+      - "${INKPDF_PORT:-3000}:3000"
+    volumes:
+      - "${INKPDF_TEMPLATES:-./examples/templates}:/templates:ro"
+    environment:
+      INKPDF_LOG_FORMAT: "${INKPDF_LOG_FORMAT:-pretty}"
+      RUST_LOG: "${RUST_LOG:-info}"
+      INKPDF_RENDER_TIMEOUT_SECS: "${INKPDF_RENDER_TIMEOUT_SECS:-30}"
+      INKPDF_MAX_BODY_BYTES: "${INKPDF_MAX_BODY_BYTES:-5242880}"
+    restart: unless-stopped
