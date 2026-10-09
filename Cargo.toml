@@ -1,0 +1,62 @@
+[package]
+name = "inkpdf"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+description = "PDF generation service from Typst templates, without a browser."
+repository = "https://github.com/ck-developer/inkpdf"
+# TODO(LICENSE): licence provisoire, à trancher avant la première publication (constitution).
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "inkpdf"
+path = "src/main.rs"
+
+[[bench]]
+name = "render"
+harness = false
+
+[dependencies]
+typst = "=0.15.1"
+typst-pdf = "=0.15.1"
+# `PagedDocument` vit dans typst-layout, non réexporté par `typst`.
+typst-layout = "=0.15.1"
+typst-kit = { version = "=0.15.1", default-features = false, features = ["embedded-fonts"] }
+comemo = "0.5"
+axum = "0.8.9"
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "signal", "sync", "time", "fs", "net", "io-util"] }
+tower-http = { version = "0.7", features = ["trace"] }
+utoipa = { version = "=6.0.0", features = ["axum_extras"] }
+utoipa-axum = "=0.3.0"
+utoipa-scalar = { version = "=0.4.0", features = ["axum"] }
+jsonschema = { version = "=0.58.6", default-features = false }
+notify = "8.2"
+arc-swap = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+time = { version = "0.3", features = ["formatting"] }
+regex = "1"
+num_cpus = "1"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+tempfile = "3"
+pdf-extract = "0.9"
+criterion = "0.7"
+
+# Profil de l'image Docker (`cargo build --profile dist`) : binaire sans symboles, LTO, pour
+# tenir l'image sous 100 Mo (SC-009). Séparé de `release` pour que les tests en release
+# (garde-fou de performance) restent rapides à compiler.
+[profile.dist]
+inherits = "release"
+strip = true
+lto = "thin"
+codegen-units = 1

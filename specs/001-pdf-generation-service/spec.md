@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-09
 
-**Status**: Draft
+**Status**: Implemented — 2026-10-09, PR #1 (57/57 tâches)
 
 **Input**: User description: commande lancée sans argument ; description reprise du périmètre V1
 fourni lors de la ratification de la constitution : « Microservice de génération de PDF basé sur
