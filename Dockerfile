@@ -11,17 +11,17 @@ RUN mkdir -p src benches \
     && echo 'fn main() {}' > src/main.rs \
     && touch src/lib.rs \
     && echo 'fn main() {}' > benches/render.rs \
-    && cargo build --release --locked \
+    && cargo build --profile dist --locked \
     && rm -rf src benches
 
 COPY src ./src
 COPY benches ./benches
-RUN touch src/main.rs src/lib.rs && cargo build --release --locked
+RUN touch src/main.rs src/lib.rs && cargo build --profile dist --locked
 
 # --- Runtime -------------------------------------------------------------------------------
 FROM gcr.io/distroless/cc-debian12:nonroot
 
-COPY --from=build /src/target/release/inkpdf /usr/local/bin/inkpdf
+COPY --from=build /src/target/dist/inkpdf /usr/local/bin/inkpdf
 
 ENV INKPDF_TEMPLATES_DIR=/templates
 VOLUME /templates
