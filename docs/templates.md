@@ -1,0 +1,171 @@
+# Écrire un template inkpdf
+
+Ce guide s'adresse aux auteurs de templates. Le format décrit ici est un contrat versionné avec
+l'API : toute rupture est une rupture majeure du service.
+
+## Arborescence
+
+```text
+<volume>/                       # INKPDF_TEMPLATES_DIR, monté en lecture seule
+└── sample/                     # identifiant du template : ^[a-z0-9][a-z0-9_-]{0,63}$
+    ├── main.typ                # REQUIS — point d'entrée Typst
+    ├── schema.json             # REQUIS — JSON Schema (draft 2020-12) de l'entrée
+    ├── template.json           # optionnel — métadonnées
+    ├── fonts/                  # optionnel — .ttf / .otf / .ttc, chargées automatiquement
+    └── assets/                 # optionnel — images et fichiers lus par main.typ
+```
+
+- L'identifiant du template est le nom de son dossier. Un dossier dont le nom ne respecte pas
+  le format est ignoré (et journalisé au démarrage).
+- Les fichiers et dossiers cachés (préfixe `.`) sont ignorés.
+- Les liens symboliques sont suivis tant que leur cible reste dans le dossier du template ;
+  un lien qui en sort est exclu (cas des ConfigMaps Kubernetes : les liens vers `..data`
+  restent dans le dossier et sont donc suivis).
+- La taille totale d'un template est limitée par `INKPDF_MAX_TEMPLATE_BYTES` (50 Mo par
+  défaut) ; au-delà, le template est signalé `invalid`.
+- `main.typ` peut inclure ou importer d'autres fichiers du même dossier
+  (`#include "parts/footer.typ"`, `#image("assets/logo.png")`).
+
+Un template est entièrement chargé en mémoire au moment où il est (re)découvert ; un rendu ne
+lit jamais le disque et voit donc toujours une version complète et cohérente du template.
+
+## `template.json`
+
+```json
+{
+  "name": "Exemple",
+  "description": "Titre et tableau de libellés/valeurs ; démonstration du format.",
+  "version": "1.0.0"
+}
+```
+
+| Champ | Type | Requis | Défaut |
+|-------|------|--------|--------|
+| `name` | chaîne (1–120) | non | identifiant du dossier |
+| `description` | chaîne (≤ 2000) | non | absent |
+| `version` | chaîne (≤ 64) | non | absent (SemVer recommandé) |
+
+Toute autre clé rend le template invalide (détection des fautes de frappe).
+
+## `schema.json`
+
+Le corps d'une génération a deux sections :
+
+- `data` (requise) : le contenu du document, entièrement défini par vous ;
+- `design` (optionnelle) : les réglages d'apparence (couleur, alignement, blocs affichés…).
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["data"],
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "type": "object",
+      "required": ["title", "items"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["label", "value"],
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primaryColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "default": "#1f4e79" },
+        "align":        { "enum": ["left", "center", "right"], "default": "left" },
+        "showFooter":   { "type": "boolean", "default": true }
+      }
+    }
+  }
+}
+```
+
+Règles :
+
+1. La racine DOIT être `type: object` et déclarer `properties.data`.
+2. Seules `data` et `design` sont admises à la racine. Si `additionalProperties` est absent à
+   la racine, le service le considère comme `false` (sans modifier le schéma exposé par
+   `GET /templates/{id}/schema`, qui renvoie votre fichier octet pour octet).
+3. Les propriétés de `design` DEVRAIENT avoir un `default`. Avant la validation, le service
+   initialise `design` à `{}` s'il est absent et insère les défauts manquants, récursivement
+   dans les sous-objets de `design`. Les défauts ne sont **pas** appliqués à `data`.
+4. Seules les références `$ref` internes (`#/...`, `$defs`) sont résolues ; une référence
+   externe rend le template invalide.
+5. Pour des valeurs décimales exactes, préférez des entiers (centimes) ou des chaînes : les
+   nombres décimaux sont transmis à Typst comme flottants.
+
+Un corps non conforme est rejeté (`422 validation-failed`) avec la liste de toutes les
+violations, sans que Typst ne soit invoqué.
+
+## Lire les données dans `main.typ`
+
+L'entrée validée (défauts appliqués) est disponible dans `sys.inputs` :
+
+```typst
+#let data = sys.inputs.data
+#let design = sys.inputs.design
+
+#set text(fill: rgb(design.primaryColor))
+#let aligns = (left: left, center: center, right: right)
+#align(aligns.at(design.align))[= #data.title]
+#table(columns: 2, ..data.items.map(i => (i.label, str(i.value))).flatten())
+#if design.showFooter [ #include "parts/footer.typ" ]
+```
+
+Si le schéma ne déclare pas `design`, `sys.inputs.design` est un dictionnaire vide.
+
+| JSON | Typst |
+|------|-------|
+| objet | dictionnaire |
+| tableau | tableau |
+| chaîne | `str` |
+| entier | `int` (au-delà de la plage 64 bits : `float`) |
+| nombre décimal | `float` |
+| booléen | `bool` |
+| `null` | `none` |
+
+Les chaînes ne sont **jamais** interprétées comme du code Typst : un titre
+`#import "/etc/passwd"` est affiché tel quel.
+
+## Restrictions du bac à sable
+
+| Interdit | Comportement |
+|----------|--------------|
+| `#import "@preview/..."` ou tout paquet | échec de génération (`500 render-failed`) |
+| lecture hors du dossier (`../`, chemin absolu, lien sortant) | échec (`500 render-failed`) |
+| accès réseau, variables d'environnement, polices système | indisponibles |
+
+Les erreurs de compilation sont renvoyées dans `diagnostics[]` avec le fichier (relatif au
+dossier du template), la ligne, la colonne et les indications de Typst.
+
+## Polices
+
+Polices toujours disponibles (embarquées dans le binaire) : Libertinus Serif,
+New Computer Modern, DejaVu Sans Mono. Ajoutez les vôtres dans `fonts/` (TTF, OTF, TTC) ; un
+fichier de police illisible rend le template invalide.
+
+## Déterminisme
+
+Deux générations avec le même template (inchangé) et le même corps produisent des PDF
+identiques à l'octet près. Exception : `datetime.today()` est autorisé mais rend le document
+dépendant du jour de génération ; passez plutôt la date dans `data`.
+
+## Publication et mise à jour
+
+Copiez le dossier dans le volume : il est pris en compte en quelques secondes, sans
+redémarrage. Une modification n'est appliquée que lorsque le dossier est resté stable une
+seconde ; pendant une copie, la version précédente continue d'être servie. Un template
+invalide est listé avec `status: invalid` et sa `reason`, sans affecter les autres.
