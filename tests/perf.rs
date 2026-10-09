@@ -1,5 +1,5 @@
 //! SC-001 : garde-fou de régression de latence. Exécuté en release par la CI :
-//! `cargo test --release -- --ignored`. Document d'une page : un titre et un tableau de 20 lignes.
+//! `cargo test --release --test perf -- --ignored`. Document d'une page : un titre et un tableau de 20 lignes.
 
 mod common;
 
@@ -12,7 +12,7 @@ const RENDERS: usize = 50;
 const P95_BUDGET: Duration = Duration::from_millis(200);
 
 #[tokio::test(flavor = "multi_thread")]
-#[ignore = "performance test, run with `cargo test --release -- --ignored`"]
+#[ignore = "performance test, run with `cargo test --release --test perf -- --ignored`"]
 async fn sample_p95_is_below_200ms() {
     let volume = TestVolume::new();
     volume.copy_template(&sample_template(), "sample");

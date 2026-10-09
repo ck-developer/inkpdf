@@ -5,11 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+# Un nouveau push annule le run en cours de la même branche.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,11 +23,36 @@ jobs:
           toolchain: "1.98"
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: lint
       - name: Format
         run: cargo fmt --check
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.98"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: test
       - name: Tests
         run: cargo test
+
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.98"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: perf
+      # Seul le binaire du test de performance est compilé en release.
       - name: Performance tests
-        run: cargo test --release -- --ignored
+        run: cargo test --release --test perf -- --ignored

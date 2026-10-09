@@ -94,7 +94,7 @@ Voir [docs/templates.md](docs/templates.md) et l'exemple neutre
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test
-cargo test --release -- --ignored        # garde-fou de latence (p95 < 200 ms)
+cargo test --release --test perf -- --ignored   # garde-fou de latence (p95 < 200 ms)
 cargo bench --bench render
 INKPDF_UPDATE_OPENAPI=1 cargo test --test contract_openapi   # régénère openapi/openapi.json
 ```
