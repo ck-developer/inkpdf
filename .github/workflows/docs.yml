@@ -39,7 +39,7 @@ jobs:
         # 404.html uses root-relative links (site-url), which lychee cannot resolve offline.
         run: lychee --offline --no-progress --include-fragments --exclude-path docs/book/404.html docs/book
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/book
 
