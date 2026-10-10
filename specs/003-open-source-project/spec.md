@@ -1,0 +1,254 @@
+# Feature Specification: Open-source project foundation
+
+**Feature Branch**: `003-open-source-project`
+
+**Created**: 2026-10-10
+
+**Status**: Draft
+
+**Input**: User description: "Make inkpdf a real open-source project. (1) Monorepo layout as a
+Cargo workspace … (2) A real documentation site in English … (3) Open-source hygiene … (4) CI/CD:
+every push to main publishes the Docker image tag `dev`; release tags publish versioned images
+with a GitHub release and changelog, driven by conventional commits … (5) Replace
+scripts/add-package.sh with a Rust command … Out of scope: helper packages themselves, the
+client generator itself, remote images."
+
+## User Scenarios & Testing *(mandatory)*
+
+### Actors
+
+- **Template author**: writes templates for their own documents; needs to understand the
+  concepts and best practices, not a fixed catalogue of document types.
+- **Integrator / operator**: deploys inkpdf and calls its API; needs install, configuration,
+  API and operations documentation, and published images.
+- **Contributor**: changes inkpdf itself; needs contribution rules, architecture notes and a
+  reliable release process.
+- **Maintainer**: curates the bundled Typst packages and publishes releases.
+
+### User Story 1 - Learn and use inkpdf from its documentation site (Priority: P1)
+
+A newcomer opens the documentation site, follows "Getting started", gets a first PDF in a few
+minutes, then reads the concepts: inkpdf is a foundation; a template is a folder whose author
+defines, in its own schema, what goes into the `data`, `layout` and `metadata` dimensions. The
+guides explain how to write a template and the best practices; the reference answers precise
+questions (API, configuration, errors, template format, bundled packages).
+
+**Why this priority**: without documentation, an open-source tool is not usable by anyone but
+its authors.
+
+**Independent Test**: a person who has never seen inkpdf produces a PDF from their own small
+template using only the site.
+
+**Acceptance Scenarios**:
+
+1. **Given** the published site, **When** a newcomer follows "Getting started", **Then** they
+   obtain a PDF from the example template in under 10 minutes.
+2. **Given** the concepts section, **When** an author reads it, **Then** it explains that the
+   content of `data` and `layout` is defined by each template's schema (examples are
+   illustrations, not a required structure), and how `metadata` is handled by the service.
+3. **Given** the reference section, **When** an integrator looks up an endpoint, a
+   configuration variable or an error code, **Then** each one is documented, and the API
+   reference matches the OpenAPI document served by the running version.
+4. **Given** a change merged to the main branch, **Then** the site is republished
+   automatically.
+
+---
+
+### User Story 2 - Get the right image for testing or production (Priority: P1)
+
+An operator pulls `dev` to test the latest state of the main branch, or a version number
+(`0.2.0`, `0.2`, `latest`) for production. A release is created from the accumulated
+conventional commits, with a changelog, without manual tagging.
+
+**Why this priority**: today no image is published at all; nobody can deploy inkpdf without
+building it.
+
+**Independent Test**: merge a change to main and pull `dev`; accept a release proposal and pull
+the versioned tags.
+
+**Acceptance Scenarios**:
+
+1. **Given** a push to the main branch whose checks pass, **Then** the image tagged `dev` is
+   republished for both supported architectures; no per-commit tags are created.
+2. **Given** a failing check on main, **Then** `dev` is not republished.
+3. **Given** conventional commits merged since the last release, **Then** a release proposal
+   (version bump + changelog) is opened automatically; **When** it is accepted, **Then** the
+   version is tagged, a release with notes is published, and images `X.Y.Z`, `X.Y` and
+   `latest` are published.
+
+---
+
+### User Story 3 - Contribute to a well-organised repository (Priority: P2)
+
+A contributor finds a short README, contribution rules, a code of conduct, a security policy,
+a changelog, issue and pull-request templates, editor settings and automatic dependency
+updates. The repository is laid out as a multi-component project in which the service is one
+component, with room for future Typst helper packages and a client code-generation tool, and
+everything is tested end to end in the same change.
+
+**Why this priority**: necessary for outside contributions and future components, but the
+service already works without it.
+
+**Independent Test**: a contributor opens an issue and a pull request using the templates, and
+the full test suite runs from the repository root after the layout change.
+
+**Acceptance Scenarios**:
+
+1. **Given** the repository root, **Then** it contains a README of at most about one screen
+   linking to the site, plus contribution, conduct, security and changelog documents.
+2. **Given** the new layout, **When** the checks run, **Then** every existing test, the
+   performance guard and the image build pass unchanged.
+3. **Given** a vulnerability, **When** a reporter reads the security policy, **Then** they know
+   how to report it privately.
+
+---
+
+### User Story 4 - Manage bundled packages with one reliable command (Priority: P2)
+
+The maintainer adds or updates a bundled Typst package with a single command, which also adds
+the package's own Typst dependencies, records digests and licenses, and updates the package
+documentation. A verification command proves the bundled set is consistent.
+
+**Why this priority**: the current shell script requires adding dependencies by hand and does
+not keep the documentation in sync.
+
+**Independent Test**: add a package with dependencies using the command and observe that the
+lock file, the archives and the documentation are complete and that verification passes.
+
+**Acceptance Scenarios**:
+
+1. **Given** a package name without version, **When** the maintainer adds it, **Then** the
+   latest published version compatible with the engine is selected, its dependencies are added
+   as dependencies, and the documentation lists it.
+2. **Given** an update to a newer version, **Then** the previous selected version is replaced
+   and archives no longer referenced are removed.
+3. **Given** a tampered archive or a lock entry without archive, **When** verification runs,
+   **Then** it fails and names the package.
+4. **Given** the list command, **Then** it shows each bundled package with version, role and
+   license.
+
+---
+
+### Edge Cases
+
+- A push to main while a previous `dev` publication is still running: the latest commit wins.
+- A release proposal that contains only documentation or chore commits: no version bump is
+  proposed (or a patch bump, per conventional-commit rules), and nothing is published.
+- The documentation build fails (broken internal link): the site is not republished and the
+  check reports the broken link.
+- A package added with the command has a dependency that is itself incompatible with the engine:
+  the command fails and adds nothing.
+- The package registry is unreachable when running the package command: clear error, no
+  partial changes to the lock file.
+- The layout change must not alter the built service: the produced image and API behave
+  exactly as before (same tests, same OpenAPI document).
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Repository layout**
+
+- **FR-001**: The repository MUST be organised as a multi-component project in which the
+  existing service is one component, unchanged in behaviour, with documented places for
+  future Typst helper packages and a client code-generation tool.
+- **FR-002**: All checks (format, lint, tests, performance guard, image build) MUST run from
+  the repository root and cover every component.
+
+**Documentation**
+
+- **FR-003**: The project MUST publish an English documentation site, rebuilt and republished
+  automatically on every change to the main branch.
+- **FR-004**: The site MUST contain these sections:
+  - *Getting started*;
+  - *Concepts*: inkpdf as a foundation, the template, the `data` / `layout` / `metadata`
+    dimensions as defined by each template's own schema, packages, hot reload, the sandbox;
+  - *Guides*: writing a template, best practices, using bundled packages, downloads and
+    metadata, testing with Bruno, the progress invoice walkthrough presented as an
+    illustration;
+  - *Reference*: API, configuration, error codes, template format and schema rules, bundled
+    packages;
+  - *Operations*: deployment, limits, security;
+  - *Contributing*: architecture, tests, adding a package, releasing.
+- **FR-005**: The API reference MUST be derived from the OpenAPI document of the same version,
+  and the bundled-packages reference from the lock file. Neither may be maintained by hand.
+- **FR-006**: The documentation build MUST fail on broken internal links.
+- **FR-007**: The README MUST become a short entry point (purpose, quick start, links to the
+  site, license).
+
+**Open-source hygiene**
+
+- **FR-008**: The repository MUST provide contribution guidelines, a code of conduct, a
+  security policy with a private reporting channel, a changelog, issue templates (bug, feature)
+  and a pull-request template.
+- **FR-009**: The repository MUST provide shared editor settings and automatic dependency
+  update proposals for the Rust dependencies, the CI actions and the container base image.
+- **FR-010**: The README MUST show status badges: checks, license, latest release and
+  documentation.
+
+**Images and releases**
+
+- **FR-011**: Every push to the main branch whose checks pass MUST publish the container image
+  under the tag `dev`, for amd64 and arm64. No per-commit tags are published.
+- **FR-012**: Releases MUST be proposed automatically from conventional commits (version bump
+  and changelog). Accepting a proposal MUST tag the version and publish a release with notes,
+  plus images `X.Y.Z`, `X.Y` and `latest`.
+- **FR-013**: The version shown by the service (health endpoint and API document) MUST match the
+  released version.
+
+**Package management**
+
+- **FR-014**: The shell script MUST be replaced by a single command with these sub-commands:
+  - `add`: given a name and an optional version; without a version, the latest version that is
+    compatible with the engine is selected;
+  - `update`: to the latest version, or to a given version;
+  - `verify`: digests, archive and lock-entry correspondence, closure of dependencies, and
+    documentation synchronisation;
+  - `list`.
+- **FR-015**: `add` and `update` MUST add missing Typst dependencies of the package
+  automatically, with the dependency role, and MUST leave everything unchanged when any step
+  fails.
+- **FR-016**: The command MUST keep the bundled-packages documentation in sync with the lock
+  file.
+
+### Key Entities
+
+- **Component**: one part of the multi-component project (today: the service; later: helper
+  packages, client generator).
+- **Documentation site**: generated, versioned with the code, published from the main branch.
+- **Image tag**: `dev` (main branch), `X.Y.Z` / `X.Y` / `latest` (releases).
+- **Release proposal**: automatic version bump and changelog awaiting acceptance.
+- **Package lock entry**: unchanged from feature 002 (name, version, digest, license, role).
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: A newcomer obtains a first PDF in under 10 minutes using only the documentation
+  site.
+- **SC-002**: 100 % of API endpoints, configuration variables, error codes and bundled packages
+  appear in the documentation reference, and it never diverges from the running version.
+- **SC-003**: A change merged to main is available as the `dev` image and on the documentation
+  site in under 30 minutes, without manual action.
+- **SC-004**: Publishing a release requires a single manual action (accepting the release
+  proposal).
+- **SC-005**: Adding a package that has Typst dependencies takes a single command, with zero
+  manual edits to the lock file or the documentation.
+- **SC-006**: After the layout change, 100 % of the existing tests pass, and the OpenAPI
+  document and the image behave exactly as before.
+
+## Assumptions
+
+- The project is licensed `MIT OR Apache-2.0` (PR #3); the documentation and hygiene files
+  reference it.
+- The documentation is hosted on the repository's project pages, and the images are published
+  to the repository's container registry, `ghcr.io/ck-developer/inkpdf`.
+- Commit messages already follow the conventional-commit convention. The first automated
+  release will be 0.2.0, since 0.1.0 is the unreleased V1.
+- The service is not split into several components yet; that will come with the first second
+  consumer (helpers, CLI or generator).
+- Spec Kit artefacts under `specs/` are project history and are not part of the published
+  documentation.
+- Out of scope: the Typst helper packages themselves, the client code-generation tool itself,
+  remote images, documentation versioning per release (the site reflects the main branch, and
+  releases link to their tagged sources).
