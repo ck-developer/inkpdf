@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.0 (2026-10-10)
+
+
+### Features
+
+* **api:** live, template-aware OpenAPI document and /docs page ([1e7fabf](https://github.com/ck-developer/inkpdf/commit/1e7fabf0c512de89e8b7cd848093e47fa4bec20c))
+* **xtask:** cargo xtask packages add|update|remove|verify|list and docs generate|check ([2f2159f](https://github.com/ck-developer/inkpdf/commit/2f2159fb9025ac0df813202c65ad4965e41f9980))
+
+
+### Bug Fixes
+
+* **release:** keep the changelog inside the package and update Cargo.lock ([ae68d57](https://github.com/ck-developer/inkpdf/commit/ae68d5733432b1f5243814ad098d7681179ee162))
+* **release:** keep the changelog inside the package and update Cargo.lock ([e939f07](https://github.com/ck-developer/inkpdf/commit/e939f07a175fae8d64d4c12cafadd6cafd78f079))
+
+
+### Refactoring
+
+* move the service into a Cargo workspace (crates/inkpdf) ([6ca4263](https://github.com/ck-developer/inkpdf/commit/6ca426334cd7ae1ee5ddad711c4cb90f9e8c4173))
+
+## Changelog
+
 All notable changes to inkpdf are documented here. From 0.1.0 on, this file is maintained by
 [release-please](https://github.com/googleapis/release-please) from
 [conventional commits](https://www.conventionalcommits.org/).
