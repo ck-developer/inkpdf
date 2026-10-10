@@ -5,19 +5,49 @@
   "include-component-in-tag": false,
   "bootstrap-sha": "90ee8fb529a0db047884b0bb7704f2f7f9e0e154",
   "changelog-sections": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "perf", "section": "Performance" },
-    { "type": "refactor", "section": "Refactoring" },
-    { "type": "docs", "section": "Documentation" },
-    { "type": "chore", "section": "Miscellaneous", "hidden": true },
-    { "type": "test", "section": "Tests", "hidden": true },
-    { "type": "ci", "section": "CI", "hidden": true }
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance"
+    },
+    {
+      "type": "refactor",
+      "section": "Refactoring"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation"
+    },
+    {
+      "type": "chore",
+      "section": "Miscellaneous",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "Tests",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "CI",
+      "hidden": true
+    }
   ],
   "packages": {
     "crates/inkpdf": {
       "package-name": "inkpdf",
-      "changelog-path": "../../CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     }
-  }
+  },
+  "plugins": [
+    "cargo-workspace"
+  ]
 }

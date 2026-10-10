@@ -47,8 +47,8 @@ Commit messages, like everything else in the repository, are written in English.
 release-please keeps one open pull request, titled after the next version. It:
 
 - computes the next version from the conventional commits since the last release;
-- bumps `version` in `crates/inkpdf/Cargo.toml`;
-- adds the new section to `CHANGELOG.md`, grouped by type.
+- bumps `version` in `crates/inkpdf/Cargo.toml` and in `Cargo.lock` (cargo-workspace plugin);
+- adds the new section to `crates/inkpdf/CHANGELOG.md`, grouped by type.
 
 It is updated on every push to `main`. To release, review it and merge it.
 
@@ -66,6 +66,7 @@ ignores `info.version`, so a release bump does not break it.
 
 ## `CHANGELOG.md`
 
-`CHANGELOG.md`, at the repository root, is maintained by release-please: do not edit released
-sections by hand. History from before automated releases (0.1.0) is summarised by hand in its
+The changelog lives in `crates/inkpdf/CHANGELOG.md` (release-please only writes inside the
+package folder); the root `CHANGELOG.md` points to it. It is maintained by release-please: do
+not edit released sections by hand. History from before automated releases (0.1.0) is summarised by hand in its
 own section.
