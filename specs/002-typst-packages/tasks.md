@@ -220,7 +220,7 @@ US2 (P2), US4 (P2), US3 (P3).
 - [X] T034 [P] Mettre à jour le skill `.claude/skills/typst-dev/SKILL.md` et `reference/packages.md` : dans inkpdf, import par le nom seul, aucune version, liste dans `packages/lock.toml`, ajout via `scripts/add-package.sh`.
 - [X] T035 Dans `tests/perf.rs` (R14, SC-005, SC-006), ajouter un test ignoré qui mesure le p95 de `packages-demo` (moins de 1 s) et vérifier que le p95 de `sample` reste dans la limite existante. Lancer `cargo test --release --test perf -- --ignored` et noter les chiffres.
 - [X] T036 Lancer `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` et `cargo test`, puis corriger.
-- [ ] T037 Dérouler quickstart.md de bout en bout avec `docker compose up --build`, scénarios P1 à P5. Vérifier la taille de l'image et que l'image démarre et génère `packages-demo`.
+- [X] T037 Dérouler quickstart.md de bout en bout avec `docker compose up --build`, scénarios P1 à P5. Vérifier la taille de l'image et que l'image démarre et génère `packages-demo`.
 
 ---
 
