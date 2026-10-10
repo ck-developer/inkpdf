@@ -21,7 +21,9 @@ La **V1 d'inkpdf est livrée** (PR #1, fusionnée). Le service :
 | Liste | La liste des paquets intégrés est **fixée** (nom + version exacte + empreinte de sécurité) dans le dépôt, après validation par toi. |
 | Taille | La taille de l'image n'est **pas un critère** : le service doit surtout générer vite. |
 | Versions | Mettre à jour un paquet = **ajouter** la nouvelle version à côté de l'ancienne ; un template existant ne casse jamais. |
-| Helpers maison | Plus tard (voir étape 5). Ce sera un paquet comme un autre. |
+| Helpers maison | **Non retenu** pour le moment. |
+| Dossier `packages/` partagé | **Non retenu** pour le moment. |
+| P3 et Markdown (`cmarker`) | **Non intégrés.** Liste P1 validée telle quelle, sans `cmarker` : 21 paquets (29 avec dépendances, ~6 Mo). |
 | Aperçu / document final | `render` devient l'aperçu ; une nouvelle route produira le document final. Sujet séparé (étape 4). |
 
 ## 3. Comment ça marchera (image simple)
@@ -57,10 +59,10 @@ Fichier : `research/carte-paquets.md`. Les 827 bibliothèques sont classées par
 | Étape | Quoi | Pour toi, concrètement |
 |---|---|---|
 | **1** | **Feature 002 — paquets intégrés (P1)** : l'application sait trouver un paquet intégré ; la liste P1 est fixée et chaque paquet est testé automatiquement ; erreurs claires si un template demande un paquet absent ; une route d'API liste les paquets disponibles ; doc pour les auteurs de templates. | Un template peut faire des QR codes, des graphiques, des montants bien formatés. |
-| **2** | Élargir à **P2** (et éventuellement P3) : on ajoute des lignes à la liste, le test automatique écarte ceux qui ne compilent pas. | Plus de briques, sans nouveau développement. |
-| **3** | **Dossier `packages/` partagé** à côté des templates, pour les paquets non intégrés ou faits maison, sans reconstruire l'application. Demande une petite modification de la constitution. | Ajouter un paquet = déposer un dossier. |
+| **2** | Élargir à **P2** si besoin : on ajoute des lignes à la liste, le test automatique écarte ceux qui ne compilent pas. | Plus de briques, sans nouveau développement. |
+| ~~3~~ | ~~Dossier `packages/` partagé~~ | **Non retenu** (décision du 2026-10-10). |
 | **4** | **Aperçu / document final** : `render` = aperçu ; nouvelle route = document final (à préciser : PDF/A pour l'archivage ? filigrane « APERÇU » ?). | Deux usages distincts. |
-| **5** | **Helpers maison** (`@inkpdf/…`) : fonctions communes à tous les templates (montants, dates, adresses…), puis plus tard des composants dont l'apparence suit les réglages `design`. | Écrire un template devient plus rapide. |
+| ~~5~~ | ~~Helpers maison~~ | **Non retenu** (décision du 2026-10-10). |
 
 **Améliorations repérées, à placer plus tard** : données d'exemple par template (aperçu sans rien envoyer), PDF/A et PDF/UA (archivage, accessibilité), date du jour maîtrisée, limite de durée pour certains paquets lourds (WASM), Factur-X (facture électronique, demande un traitement en plus de Typst).
 
@@ -68,13 +70,13 @@ Fichier : `research/carte-paquets.md`. Les 827 bibliothèques sont classées par
 
 Framework de design ou de composants, génération par lots, stockage des PDF, téléchargement de paquets pendant le fonctionnement, Factur-X.
 
-## 7. Ce que tu dois décider
+## 7. Décisions prises (2026-10-10)
 
-1. **Valider la liste P1** (retirer ou ajouter des paquets) — c'est le point de départ de l'étape 1.
-2. **P3** : les intégrer aussi dès l'étape 2 (ils ne coûtent que de la taille, le test automatique écarte ceux qui ne marchent pas) ou les laisser de côté ?
-3. **`cmarker`** (Markdown) : le garder en imposant le mode sécurisé, ou l'exclure ?
+1. Liste **P1 validée**, sans `cmarker` (Markdown) : 21 paquets.
+2. **P3 non intégrés.**
+3. **Pas de dossier partagé ni de helpers maison** pour le moment.
 
-Ensuite : la spécification 002 (actuellement écrite pour « un dossier de paquets par template ») sera **réécrite** autour de l'intégration, puis on suit le cycle habituel : plan → tâches → implémentation.
+La spécification 002 a été réécrite en conséquence (`spec.md`). Suite : `/speckit-plan`.
 
 ## Petit lexique
 

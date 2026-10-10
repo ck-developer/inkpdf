@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [X] No [NEEDS CLARIFICATION] markers remain
 - [X] Requirements are testable and unambiguous
 - [X] Success criteria are measurable
 - [X] Success criteria are technology-agnostic (no implementation details)
@@ -31,7 +31,9 @@
 
 ## Notes
 
-- 3 marqueurs [NEEDS CLARIFICATION] en attente de réponse : US4 (paquet maison de helpers),
-  FR-005 (exception « images »), FR-009 (moment de détection d'un paquet manquant).
-- La syntaxe d'import Typst et l'arborescence `packages/` sont mentionnées car elles font partie
-  du format de template visible par les auteurs (contrat), pas de l'implémentation.
+- Spec réécrite le 2026-10-10 après décision : paquets intégrés à l'application selon une liste
+  fixée (21 paquets P1 sans `cmarker`, 29 avec dépendances). Plus aucun marqueur de clarification.
+- La syntaxe d'import (`@preview/nom:version`) et la notion de « liste fixée avec empreinte »
+  sont mentionnées car elles font partie du contrat visible par les auteurs et les mainteneurs,
+  pas de l'implémentation.
+- Tous les points sont validés : prêt pour `/speckit-plan` (ou `/speckit-clarify` si besoin).
