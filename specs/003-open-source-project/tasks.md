@@ -32,8 +32,8 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ## Phase 1: Setup
 
-- [ ] T001 Make sure the license from PR #3 is on this branch. Once PR #3 is merged, rebase `003-open-source-project` onto `main`; if it is not merged yet, cherry-pick its commit. Check that `LICENSE-MIT` and `LICENSE-APACHE` are present.
-- [ ] T002 [P] Add `.editorconfig` at the root (UTF-8, LF, final newline, 4 spaces for `*.rs`, 2 spaces for `*.{json,yml,yaml,toml,md,typ}`, `max_line_length = 100` for `*.rs`).
+- [X] T001 Make sure the license from PR #3 is on this branch. Once PR #3 is merged, rebase `003-open-source-project` onto `main`; if it is not merged yet, cherry-pick its commit. Check that `LICENSE-MIT` and `LICENSE-APACHE` are present.
+- [X] T002 [P] Add `.editorconfig` at the root (UTF-8, LF, final newline, 4 spaces for `*.rs`, 2 spaces for `*.{json,yml,yaml,toml,md,typ}`, `max_line_length = 100` for `*.rs`).
 
 ---
 
