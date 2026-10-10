@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Build ---------------------------------------------------------------------------------
-FROM rust:1.98-bookworm AS build
+FROM rust:1.99-bookworm AS build
 WORKDIR /src
 
 # Dependencies are built in a separate layer, cached as long as the manifests, build.rs and
