@@ -1,11 +1,12 @@
-//! inkpdf : service générique de génération de PDF à partir de templates Typst.
+//! inkpdf: a generic service that generates PDFs from Typst templates.
 //!
-//! Le service est agnostique du contenu : il valide le corps `{ data, design }` contre le
-//! schéma du template puis le transmet à Typst, sans rien connaître de sa signification.
+//! The service is content-agnostic: it validates the `{ data, layout }` body against the
+//! template's schema, then hands it to Typst without knowing anything about its meaning.
 
 pub mod api;
 pub mod config;
 pub mod error;
+pub mod packages;
 pub mod registry;
 pub mod render;
 pub mod template;
@@ -18,17 +19,17 @@ pub use api::{ApiDoc, build_app, openapi};
 pub use config::Config;
 pub use registry::Registry;
 
-/// État partagé par les handlers.
+/// State shared by the handlers.
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<Config>,
     pub registry: Arc<Registry>,
-    /// Créneaux de rendu simultanés.
+    /// Concurrent render slots.
     pub render_slots: Arc<Semaphore>,
 }
 
 impl AppState {
-    /// Crée l'état ; le registre est vide tant que `scan_all` n'a pas été appelé.
+    /// Creates the state; the registry stays empty until `scan_all` is called.
     pub fn new(config: Config) -> Self {
         let registry = Registry::new(config.templates_dir.clone(), config.max_template_bytes);
         Self {

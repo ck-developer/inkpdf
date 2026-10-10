@@ -1,4 +1,4 @@
-//! Utilitaires partagés des tests d'intégration.
+//! Shared helpers for the integration tests.
 #![allow(dead_code)]
 
 use std::fs;
@@ -12,28 +12,28 @@ use inkpdf::{AppState, Config, build_app};
 use serde_json::Value;
 use tower::ServiceExt;
 
-/// Racine du dépôt.
+/// Repository root.
 pub fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
-/// Template de démonstration livré dans `examples/`.
+/// Demo template shipped in `examples/`.
 pub fn sample_template() -> PathBuf {
     repo_root().join("examples/templates/sample")
 }
 
-/// Fixture de `tests/fixtures/templates/`.
+/// Fixture from `tests/fixtures/templates/`.
 pub fn fixture(name: &str) -> PathBuf {
     repo_root().join("tests/fixtures/templates").join(name)
 }
 
-/// Corps d'exemple `examples/requests/sample.json`.
+/// Sample body `examples/requests/sample.json`.
 pub fn sample_request() -> Value {
     let raw = fs::read(repo_root().join("examples/requests/sample.json")).unwrap();
     serde_json::from_slice(&raw).unwrap()
 }
 
-/// Volume de templates jetable.
+/// Disposable templates volume.
 pub struct TestVolume {
     dir: tempfile::TempDir,
 }
@@ -49,7 +49,7 @@ impl TestVolume {
         self.dir.path()
     }
 
-    /// Copie récursivement `src` sous l'identifiant `id`.
+    /// Recursively copies `src` under the id `id`.
     pub fn copy_template(&self, src: &Path, id: &str) -> &Self {
         copy_dir(src, &self.path().join(id));
         self
@@ -86,7 +86,7 @@ pub fn copy_dir(src: &Path, dst: &Path) {
     }
 }
 
-/// Configuration de test : jamais lue depuis l'environnement (tests parallèles isolés).
+/// Test configuration: never read from the environment (parallel tests stay isolated).
 pub fn test_config(volume: &TestVolume) -> Config {
     Config {
         templates_dir: volume.path().to_path_buf(),
@@ -94,7 +94,7 @@ pub fn test_config(volume: &TestVolume) -> Config {
     }
 }
 
-/// État scanné et prêt.
+/// Scanned, ready state.
 pub fn test_state(config: Config) -> AppState {
     let state = AppState::new(config);
     state.registry.scan_all();
@@ -102,7 +102,7 @@ pub fn test_state(config: Config) -> AppState {
     state
 }
 
-/// Application en mémoire, registre scanné et prêt.
+/// In-memory application with a scanned, ready registry.
 pub fn test_app(config: Config) -> Router {
     build_app(test_state(config))
 }
@@ -149,12 +149,52 @@ pub async fn post_json(app: &Router, uri: &str, body: &Value) -> Response {
     .await
 }
 
-/// Corps d'une réponse problem+json.
+/// Body of a problem+json response.
 pub fn problem(body: &Bytes) -> Value {
     serde_json::from_slice(body).unwrap()
 }
 
-/// Texte extrait d'un PDF.
+/// Text extracted from a PDF.
 pub fn pdf_text(bytes: &[u8]) -> String {
     pdf_extract::extract_text_from_mem(bytes).unwrap()
 }
+
+/// In-memory template entry that bypasses the loader: compiles arbitrary Typst (e.g.
+/// versioned package imports) directly in the `SandboxWorld`.
+pub fn entry_with_main(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry::TemplateEntry> {
+    use inkpdf::registry::{Fingerprint, TemplateEntry, TemplateStatus};
+    let mut files = std::collections::HashMap::new();
+    files.insert(
+        "main.typ".to_owned(),
+        typst::foundations::Bytes::new(main.as_bytes().to_vec()),
+    );
+    std::sync::Arc::new(TemplateEntry {
+        id: id.parse().unwrap(),
+        name: id.to_owned(),
+        description: None,
+        version: None,
+        status: TemplateStatus::Valid,
+        schema: None,
+        files,
+        fonts: None,
+        fingerprint: Fingerprint::default(),
+        loaded_at: time::OffsetDateTime::now_utc(),
+    })
+}
+
+/// Compiles `entry` to a PDF with an empty body.
+pub fn compile(
+    entry: std::sync::Arc<inkpdf::registry::TemplateEntry>,
+) -> Result<Vec<u8>, inkpdf::error::ApiError> {
+    let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    inkpdf::render::compile_pdf(
+        entry,
+        &serde_json::json!({ "data": {} }),
+        &Default::default(),
+        "inkpdf",
+        cancel,
+    )
+}
+
+/// Minimal schema accepted by the loader.
+pub const MINIMAL_SCHEMA: &str = r#"{"type":"object","properties":{"data":{"type":"object"}}}"#;

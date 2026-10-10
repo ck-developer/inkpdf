@@ -1,7 +1,6 @@
-//! Registre en mémoire des templates du volume.
+//! In-memory registry of the volume's templates.
 //!
-//! Les lecteurs obtiennent un instantané cohérent (`ArcSwap`) ; les mises à jour remplacent la
-//! carte entière d'un seul coup.
+//! Readers get a consistent snapshot (`ArcSwap`); updates replace the whole map at once.
 
 pub mod fingerprint;
 pub mod loader;
@@ -20,7 +19,7 @@ pub use loader::{LoadOutcome, TemplateEntry, TemplateStatus};
 
 use crate::template::TemplateId;
 
-/// Nombre d'essais d'un chargement instable lors d'un scan complet.
+/// Number of attempts for an unstable load during a full scan.
 const SCAN_ATTEMPTS: usize = 3;
 
 pub type TemplateMap = BTreeMap<TemplateId, Arc<TemplateEntry>>;
@@ -30,15 +29,15 @@ pub struct Registry {
     max_template_bytes: u64,
     map: ArcSwap<TemplateMap>,
     ready: AtomicBool,
-    /// Rafraîchissements sérialisés ; empreintes candidates observées une fois, en attente de
-    /// confirmation de stabilité.
+    /// Serialized refreshes; candidate fingerprints seen once, awaiting confirmation that they
+    /// are stable.
     candidates: Mutex<HashMap<TemplateId, Fingerprint>>,
 }
 
-/// Issue d'un rafraîchissement.
+/// Outcome of a refresh.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct RefreshOutcome {
-    /// Des changements attendent une observation de confirmation.
+    /// Some changes are waiting for a confirming observation.
     pub needs_confirmation: bool,
 }
 
@@ -61,7 +60,7 @@ impl Registry {
         self.max_template_bytes
     }
 
-    /// Vrai une fois le scan initial terminé.
+    /// True once the initial scan has finished.
     pub fn is_ready(&self) -> bool {
         self.ready.load(Ordering::Acquire)
     }
@@ -74,27 +73,27 @@ impl Registry {
         self.map.load().get(id).cloned()
     }
 
-    /// Instantané de la carte, trié par identifiant.
+    /// Snapshot of the map, sorted by id.
     pub fn snapshot(&self) -> Arc<TemplateMap> {
         self.map.load_full()
     }
 
-    /// Entrées triées par identifiant.
+    /// Entries sorted by id.
     pub fn list(&self) -> Vec<Arc<TemplateEntry>> {
         self.map.load().values().cloned().collect()
     }
 
-    /// Nombre de templates valides.
+    /// Number of valid templates.
     pub fn valid_count(&self) -> usize {
         self.map.load().values().filter(|e| e.is_valid()).count()
     }
 
-    /// Publie atomiquement une nouvelle carte.
+    /// Atomically publishes a new map.
     pub fn replace(&self, map: TemplateMap) {
         self.map.store(Arc::new(map));
     }
 
-    /// Scan complet du volume (bloquant) puis publication.
+    /// Full scan of the volume (blocking), then publication.
     pub fn scan_all(&self) {
         let mut map = TemplateMap::new();
         for (id, dir) in self.template_dirs(true) {
@@ -106,9 +105,9 @@ impl Registry {
         self.replace(map);
     }
 
-    /// Rafraîchissement incrémental (bloquant) : ne recharge un template que si son empreinte a
-    /// changé **et** est restée identique entre deux observations ; pendant ce temps, la version
-    /// précédente reste servie. Les dossiers disparus sont retirés. Publication atomique.
+    /// Incremental refresh (blocking): reloads a template only if its fingerprint has changed
+    /// **and** stayed the same across two observations; meanwhile, the previous version is still
+    /// served. Directories that disappeared are removed. Atomic publication.
     pub fn refresh(&self) -> RefreshOutcome {
         let mut candidates = self.candidates.lock().expect("registry lock poisoned");
         let current = self.snapshot();
@@ -121,7 +120,7 @@ impl Registry {
 
         for (id, dir) in dirs {
             let Ok(fingerprint) = Fingerprint::of(&dir) else {
-                // Dossier en cours de suppression ou illisible : nouvel essai au tour suivant.
+                // Directory being deleted or unreadable: try again on the next round.
                 outcome.needs_confirmation = true;
                 continue;
             };
@@ -133,7 +132,7 @@ impl Registry {
                 continue;
             }
             if candidates.get(&id) != Some(&fingerprint) {
-                // Première observation de cette version : attendre la confirmation.
+                // First observation of this version: wait for confirmation.
                 candidates.insert(id, fingerprint);
                 outcome.needs_confirmation = true;
                 continue;
@@ -178,8 +177,8 @@ impl Registry {
         None
     }
 
-    /// Dossiers de templates du volume, identifiants valides seulement. `verbose` active les
-    /// avertissements (scan initial seulement, pour ne pas les répéter à chaque rescan).
+    /// Template directories of the volume, valid ids only. `verbose` enables warnings (initial
+    /// scan only, so they are not repeated on every rescan).
     fn template_dirs(&self, verbose: bool) -> Vec<(TemplateId, PathBuf)> {
         let entries = match fs::read_dir(&self.templates_dir) {
             Ok(entries) => entries,

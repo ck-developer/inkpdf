@@ -1,4 +1,4 @@
-//! Durée et concurrence bornées des rendus.
+//! Bounded render duration and concurrency.
 
 mod common;
 
@@ -9,7 +9,7 @@ use common::*;
 use inkpdf::Config;
 use serde_json::json;
 
-/// Itérations de la fixture `slow` : quelques secondes de compilation.
+/// Iterations for the `slow` fixture: a few seconds of compilation.
 const SLOW_ITERATIONS: u64 = 400_000;
 
 fn volume() -> TestVolume {

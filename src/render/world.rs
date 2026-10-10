@@ -1,14 +1,14 @@
-//! `World` Typst en bac à sable : ne sert que l'instantané en mémoire du template.
+//! Sandboxed Typst `World`: serves only the template's in-memory snapshot.
 //!
-//! Aucun accès disque, réseau, ni variable d'environnement pendant le rendu ; les imports de
-//! paquets sont refusés.
+//! No disk, network or environment variable access during rendering. Packages come only from
+//! the set bundled into the binary (`crate::packages`), each confined to its own root.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
-use typst::diag::{FileError, FileResult};
+use typst::diag::{FileError, FileResult, PackageError};
 use typst::foundations::{Bytes, Datetime, Dict, Duration, Value};
 use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
@@ -19,8 +19,13 @@ use super::fonts::FontSet;
 use super::value::json_to_value;
 use crate::registry::TemplateEntry;
 
-/// Point d'entrée d'un template.
+/// Entry point of a template.
 pub const MAIN_FILE: &str = "main.typ";
+
+/// Package file sources, shared between renders: their `FileId`s are stable, and reusing the
+/// same `Source` lets comemo reuse the packages' evaluation (R6).
+static PACKAGE_SOURCES: LazyLock<Mutex<HashMap<FileId, Source>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub struct SandboxWorld {
     entry: Arc<TemplateEntry>,
@@ -28,21 +33,21 @@ pub struct SandboxWorld {
     library: LazyHash<Library>,
     main: FileId,
     cancel: Arc<AtomicBool>,
-    /// Sources parsées pendant cette compilation.
+    /// Sources parsed during this compilation.
     sources: Mutex<HashMap<FileId, Source>>,
 }
 
 impl SandboxWorld {
-    /// `body` est le corps validé `{ data, design }` ; `cancel` interrompt la compilation au
-    /// prochain accès au monde.
+    /// `body` is the validated `{ data, layout }` body; `cancel` interrupts the compilation on
+    /// the next world access.
     pub fn new(
         entry: Arc<TemplateEntry>,
         body: &serde_json::Value,
         cancel: Arc<AtomicBool>,
     ) -> Self {
         let mut inputs = Dict::new();
-        for key in ["data", "design"] {
-            // Un `design` absent (schéma sans `design`) est vu comme un dictionnaire vide.
+        for key in ["data", "layout"] {
+            // A missing `layout` (schema without `layout`) is seen as an empty dictionary.
             let value = body
                 .get(key)
                 .map_or_else(|| Value::Dict(Dict::new()), json_to_value);
@@ -72,28 +77,41 @@ impl SandboxWorld {
         Ok(())
     }
 
-    /// Chemin relatif au dossier du template, pour les diagnostics.
+    /// Path shown in diagnostics: relative to the template folder, or prefixed with the
+    /// package (`@preview/zero:0.7.1/src/num.typ`).
     pub fn relative_path(id: FileId) -> Option<String> {
+        let path = id.vpath().get_without_slash();
         match id.root() {
-            VirtualRoot::Project => Some(id.vpath().get_without_slash().to_owned()),
-            VirtualRoot::Package(_) => None,
+            VirtualRoot::Project => Some(path.to_owned()),
+            VirtualRoot::Package(spec) => Some(format!("{spec}/{path}")),
         }
     }
 
     fn lookup(&self, id: FileId) -> FileResult<&Bytes> {
         self.check_cancelled()?;
-        if let VirtualRoot::Package(_) = id.root() {
-            return Err(FileError::Other(Some(
-                "package imports are not supported".into(),
-            )));
-        }
-        // Le chemin virtuel est déjà normalisé par Typst (aucun `..` ne sort de la racine) ;
-        // seul l'instantané est consulté.
+        // The virtual path is already normalized by Typst (no `..` escapes the root).
         let vpath = id.vpath();
-        self.entry
-            .files
-            .get(vpath.get_without_slash())
-            .ok_or_else(|| FileError::NotFound(PathBuf::from(vpath.get_with_slash())))
+        let not_found = || FileError::NotFound(PathBuf::from(vpath.get_with_slash()));
+        match id.root() {
+            // Only the template snapshot is consulted.
+            VirtualRoot::Project => self
+                .entry
+                .files
+                .get(vpath.get_without_slash())
+                .ok_or_else(not_found),
+            // Exact match among the bundled packages; a package only sees its own
+            // files.
+            VirtualRoot::Package(spec) => crate::packages::get(spec)
+                .ok_or_else(|| FileError::Package(PackageError::NotFound(spec.clone())))?
+                .file(vpath.get_without_slash())
+                .ok_or_else(not_found),
+        }
+    }
+
+    fn parse(&self, id: FileId) -> FileResult<Source> {
+        let bytes = self.lookup(id)?;
+        let text = std::str::from_utf8(bytes).map_err(|_| FileError::InvalidUtf8)?;
+        Ok(Source::new(id, text.to_owned()))
     }
 }
 
@@ -112,14 +130,18 @@ impl World for SandboxWorld {
 
     fn source(&self, id: FileId) -> FileResult<Source> {
         self.check_cancelled()?;
-        let mut sources = self.sources.lock().expect("source cache poisoned");
-        if let Some(source) = sources.get(&id) {
+        let cache = match id.root() {
+            VirtualRoot::Project => &self.sources,
+            VirtualRoot::Package(_) => &*PACKAGE_SOURCES,
+        };
+        if let Some(source) = cache.lock().expect("source cache poisoned").get(&id) {
             return Ok(source.clone());
         }
-        let bytes = self.lookup(id)?;
-        let text = std::str::from_utf8(bytes).map_err(|_| FileError::InvalidUtf8)?;
-        let source = Source::new(id, text.to_owned());
-        sources.insert(id, source.clone());
+        let source = self.parse(id)?;
+        cache
+            .lock()
+            .expect("source cache poisoned")
+            .insert(id, source.clone());
         Ok(source)
     }
 

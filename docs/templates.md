@@ -1,58 +1,58 @@
-# Écrire un template inkpdf
+# Writing an inkpdf template
 
-Ce guide s'adresse aux auteurs de templates. Le format décrit ici est un contrat versionné avec
-l'API : toute rupture est une rupture majeure du service.
+This guide is for template authors. The format described here is a versioned contract with
+the API: any break in it is a major break of the service.
 
-## Arborescence
+## Layout on disk
 
 ```text
-<volume>/                       # INKPDF_TEMPLATES_DIR, monté en lecture seule
-└── sample/                     # identifiant du template : ^[a-z0-9][a-z0-9_-]{0,63}$
-    ├── main.typ                # REQUIS — point d'entrée Typst
-    ├── schema.json             # REQUIS — JSON Schema (draft 2020-12) de l'entrée
-    ├── template.json           # optionnel — métadonnées
-    ├── fonts/                  # optionnel — .ttf / .otf / .ttc, chargées automatiquement
-    └── assets/                 # optionnel — images et fichiers lus par main.typ
+<volume>/                       # INKPDF_TEMPLATES_DIR, mounted read-only
+└── sample/                     # template identifier: ^[a-z0-9][a-z0-9_-]{0,63}$
+    ├── main.typ                # REQUIRED — Typst entry point
+    ├── schema.json             # REQUIRED — JSON Schema (draft 2020-12) of the input
+    ├── template.json           # optional — metadata
+    ├── fonts/                  # optional — .ttf / .otf / .ttc, loaded automatically
+    └── assets/                 # optional — images and files read by main.typ
 ```
 
-- L'identifiant du template est le nom de son dossier. Un dossier dont le nom ne respecte pas
-  le format est ignoré (et journalisé au démarrage).
-- Les fichiers et dossiers cachés (préfixe `.`) sont ignorés.
-- Les liens symboliques sont suivis tant que leur cible reste dans le dossier du template ;
-  un lien qui en sort est exclu (cas des ConfigMaps Kubernetes : les liens vers `..data`
-  restent dans le dossier et sont donc suivis).
-- La taille totale d'un template est limitée par `INKPDF_MAX_TEMPLATE_BYTES` (50 Mo par
-  défaut) ; au-delà, le template est signalé `invalid`.
-- `main.typ` peut inclure ou importer d'autres fichiers du même dossier
+- The template identifier is the name of its folder. A folder whose name does not match the
+  format is ignored (and logged at startup).
+- Hidden files and folders (`.` prefix) are ignored.
+- Symbolic links are followed as long as their target stays inside the template folder; a
+  link pointing outside it is excluded (Kubernetes ConfigMaps: the links to `..data` stay
+  inside the folder and are therefore followed).
+- The total size of a template is limited by `INKPDF_MAX_TEMPLATE_BYTES` (50 MB by default);
+  beyond that, the template is reported as `invalid`.
+- `main.typ` can include or import other files from the same folder
   (`#include "parts/footer.typ"`, `#image("assets/logo.png")`).
 
-Un template est entièrement chargé en mémoire au moment où il est (re)découvert ; un rendu ne
-lit jamais le disque et voit donc toujours une version complète et cohérente du template.
+A template is loaded entirely into memory when it is (re)discovered; a render never reads the
+disk, so it always sees a complete and consistent version of the template.
 
 ## `template.json`
 
 ```json
 {
-  "name": "Exemple",
-  "description": "Titre et tableau de libellés/valeurs ; démonstration du format.",
+  "name": "Sample",
+  "description": "Title and a table of labels/values; demonstrates the format.",
   "version": "1.0.0"
 }
 ```
 
-| Champ | Type | Requis | Défaut |
-|-------|------|--------|--------|
-| `name` | chaîne (1–120) | non | identifiant du dossier |
-| `description` | chaîne (≤ 2000) | non | absent |
-| `version` | chaîne (≤ 64) | non | absent (SemVer recommandé) |
+| Field | Type | Required | Default |
+|-------|------|----------|---------|
+| `name` | string (1–120) | no | folder identifier |
+| `description` | string (≤ 2000) | no | absent |
+| `version` | string (≤ 64) | no | absent (SemVer recommended) |
 
-Toute autre clé rend le template invalide (détection des fautes de frappe).
+Any other key makes the template invalid (to catch typos).
 
 ## `schema.json`
 
-Le corps d'une génération a deux sections :
+A render request body has two sections:
 
-- `data` (requise) : le contenu du document, entièrement défini par vous ;
-- `design` (optionnelle) : les réglages d'apparence (couleur, alignement, blocs affichés…).
+- `data` (required): the document content, entirely defined by you;
+- `layout` (optional): the appearance settings (color, alignment, blocks shown…).
 
 ```json
 {
@@ -80,7 +80,7 @@ Le corps d'une génération a deux sections :
         }
       }
     },
-    "design": {
+    "layout": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -93,79 +93,142 @@ Le corps d'une génération a deux sections :
 }
 ```
 
-Règles :
+Rules:
 
-1. La racine DOIT être `type: object` et déclarer `properties.data`.
-2. Seules `data` et `design` sont admises à la racine. Si `additionalProperties` est absent à
-   la racine, le service le considère comme `false` (sans modifier le schéma exposé par
-   `GET /templates/{id}/schema`, qui renvoie votre fichier octet pour octet).
-3. Les propriétés de `design` DEVRAIENT avoir un `default`. Avant la validation, le service
-   initialise `design` à `{}` s'il est absent et insère les défauts manquants, récursivement
-   dans les sous-objets de `design`. Les défauts ne sont **pas** appliqués à `data`.
-4. Seules les références `$ref` internes (`#/...`, `$defs`) sont résolues ; une référence
-   externe rend le template invalide.
-5. Pour des valeurs décimales exactes, préférez des entiers (centimes) ou des chaînes : les
-   nombres décimaux sont transmis à Typst comme flottants.
+1. The root MUST be `type: object` and declare `properties.data`.
+2. Only `data` and `layout` are allowed at the root. If `additionalProperties` is absent at the
+   root, the service treats it as `false` (without changing the schema served by
+   `GET /templates/{id}/schema`, which returns your file byte for byte).
+3. The properties of `layout` SHOULD have a `default`. Before validation, the service sets
+   `layout` to `{}` if it is absent and inserts the missing defaults, recursively into the
+   sub-objects of `layout`. Defaults are **not** applied to `data`.
+4. Only internal `$ref` references (`#/...`, `$defs`) are resolved; an external reference
+   makes the template invalid.
+5. For exact decimal values, prefer integers (cents) or strings: decimal numbers are passed to
+   Typst as floats.
 
-Un corps non conforme est rejeté (`422 validation-failed`) avec la liste de toutes les
-violations, sans que Typst ne soit invoqué.
+A non-conforming body is rejected (`422 validation-failed`) with the list of all violations,
+without invoking Typst.
 
-## Lire les données dans `main.typ`
+## Reading the data in `main.typ`
 
-L'entrée validée (défauts appliqués) est disponible dans `sys.inputs` :
+The validated input (with defaults applied) is available in `sys.inputs`:
 
 ```typst
 #let data = sys.inputs.data
-#let design = sys.inputs.design
+#let opts = sys.inputs.layout  // not `layout`: that name would shadow Typst's `layout()` function
 
-#set text(fill: rgb(design.primaryColor))
+#set text(fill: rgb(opts.primaryColor))
 #let aligns = (left: left, center: center, right: right)
-#align(aligns.at(design.align))[= #data.title]
+#align(aligns.at(opts.align))[= #data.title]
 #table(columns: 2, ..data.items.map(i => (i.label, str(i.value))).flatten())
-#if design.showFooter [ #include "parts/footer.typ" ]
+#if opts.showFooter [ #include "parts/footer.typ" ]
 ```
 
-Si le schéma ne déclare pas `design`, `sys.inputs.design` est un dictionnaire vide.
+If the schema does not declare `layout`, `sys.inputs.layout` is an empty dictionary.
 
 | JSON | Typst |
 |------|-------|
-| objet | dictionnaire |
-| tableau | tableau |
-| chaîne | `str` |
-| entier | `int` (au-delà de la plage 64 bits : `float`) |
-| nombre décimal | `float` |
-| booléen | `bool` |
+| object | dictionary |
+| array | array |
+| string | `str` |
+| integer | `int` (beyond the 64-bit range: `float`) |
+| decimal number | `float` |
+| boolean | `bool` |
 | `null` | `none` |
 
-Les chaînes ne sont **jamais** interprétées comme du code Typst : un titre
-`#import "/etc/passwd"` est affiché tel quel.
+Strings are **never** interpreted as Typst code: a title `#import "/etc/passwd"` is displayed
+as is.
 
-## Restrictions du bac à sable
+## Using a package
 
-| Interdit | Comportement |
-|----------|--------------|
-| `#import "@preview/..."` ou tout paquet | échec de génération (`500 render-failed`) |
-| lecture hors du dossier (`../`, chemin absolu, lien sortant) | échec (`500 render-failed`) |
-| accès réseau, variables d'environnement, polices système | indisponibles |
+inkpdf bundles a selection of Typst Universe packages (QR codes, barcodes, charts, number and
+date formatting…): see the list in [packages.md](./packages.md) or through `GET /packages`.
 
-Les erreurs de compilation sont renvoyées dans `diagnostics[]` avec le fichier (relatif au
-dossier du template), la ligne, la colonne et les indications de Typst.
+```typst
+#import "@preview/zero": num
+#import "@preview/tiaoma"
 
-## Polices
+Amount: #num(sys.inputs.data.amount, digits: 2, decimal-separator: ",")
+#tiaoma.qrcode(sys.inputs.data.reference)
+```
 
-Polices toujours disponibles (embarquées dans le binaire) : Libertinus Serif,
-New Computer Modern, DejaVu Sans Mono. Ajoutez les vôtres dans `fonts/` (TTF, OTF, TTC) ; un
-fichier de police illisible rend le template invalide.
+Rules:
 
-## Déterminisme
+1. **A package is imported by name only**: `#import "@preview/<name>"` (with `: a, b` or
+   `as x` if needed); `#include "@preview/<name>"` follows the same rule.
+2. **No version**: the service uses the one it has installed (shown in `GET /packages`).
+   `@preview/zero:0.7.1` is rejected.
+3. **Only the offered packages** can be imported; `@preview` is the only namespace.
+4. **Written literally**: `"@preview/" + name` (a computed import) is not supported.
+5. **Files**: a package only reads its own files. To give it an image or data from the
+   template, pass them in: `image("assets/logo.png")`, `read("data.csv")` or
+   `path("assets/logo.png")`.
+6. **Fonts**: a package's fonts are not loaded; use the service's fonts or those in `fonts/`.
+7. A `packages/` folder inside a template is not used.
+8. An inkpdf template does not compile as is with the standard `typst` tool, which requires a
+   version.
 
-Deux générations avec le même template (inchangé) et le même corps produisent des PDF
-identiques à l'octet près. Exception : `datetime.today()` est autorisé mais rend le document
-dépendant du jour de génération ; passez plutôt la date dans `data`.
+Imports are checked **once, when the template is deployed**. An incorrect import makes it
+`invalid`, with one line per error in `reason`:
 
-## Publication et mise à jour
+```
+main.typ:3: remove the version: write @preview/zero (inkpdf uses its installed version)
+main.typ:4: package @preview/foo is not available in inkpdf (see GET /packages)
+```
 
-Copiez le dossier dans le volume : il est pris en compte en quelques secondes, sans
-redémarrage. Une modification n'est appliquée que lorsque le dossier est resté stable une
-seconde ; pendant une copie, la version précédente continue d'être servie. Un template
-invalide est listé avec `status: invalid` et sa `reason`, sans affecter les autres.
+An error inside a package is reported with a file prefixed by the package, for example
+`@preview/zero:0.7.1/src/num.typ`.
+
+Complete example: [`examples/templates/packages-demo`](../examples/templates/packages-demo).
+
+## Request body: `data`, `layout`, `metadata`
+
+```json
+{
+  "data":     { "…": "content, validated against properties.data" },
+  "layout":   { "…": "appearance, validated against properties.layout; defaults applied" },
+  "metadata": { "title": "…", "author": ["…"], "subject": "…", "keywords": ["…"], "date": "2026-10-01" }
+}
+```
+
+`metadata` is optional and is not part of the template schema: the service validates it with a
+fixed schema (unknown keys and wrong types are rejected with `/metadata/...` paths) and writes it
+into the PDF properties after compilation; it never reaches Typst code. Precedence for each
+field: the request, then the template's own `set document(...)`, then the service defaults
+(title = template `name`, author = `INKPDF_DEFAULT_AUTHOR`, `inkpdf` by default). Without a
+`date`, no date is written (deterministic output).
+
+To get a download instead of an inline PDF, add `?download=true` (and optionally
+`&filename=invoice-042`) to `POST /templates/{templateId}/render`: the response then carries
+`Content-Disposition: attachment` with a cleaned file name (`.pdf` appended).
+
+## Sandbox restrictions
+
+| Forbidden | Behavior |
+|-----------|----------|
+| package not offered, version written, other namespace | template `invalid` (`409 template-invalid`) |
+| reading outside the folder (`../`, absolute path, outgoing link) | failure (`500 render-failed`) |
+| network access, environment variables, system fonts | unavailable |
+
+Compilation errors are returned in `diagnostics[]` with the file (relative to the template
+folder), the line, the column and Typst's hints.
+
+## Fonts
+
+Fonts always available (embedded in the binary): Libertinus Serif, New Computer Modern,
+DejaVu Sans Mono. Add your own in `fonts/` (TTF, OTF, TTC); an unreadable font file makes the
+template invalid.
+
+## Determinism
+
+Two renders with the same (unchanged) template and the same body produce byte-identical PDFs.
+Exception: `datetime.today()` is allowed but makes the document depend on the day it is
+rendered; pass the date in `data` instead.
+
+## Publishing and updating
+
+Copy the folder into the volume: it is picked up within a few seconds, without a restart. A
+change is applied only once the folder has stayed stable for one second; during a copy, the
+previous version keeps being served. An invalid template is listed with `status: invalid` and
+its `reason`, without affecting the others.

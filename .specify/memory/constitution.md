@@ -1,6 +1,19 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.1 → 1.0.2
+Bump rationale: PATCH — la dimension « paramètres de design » est renommée « paramètres de mise
+en page » (clé `layout` dans le corps, les schémas et `sys.inputs`) ; même concept, aucune règle
+ajoutée, retirée ou modifiée (spec 002, US7).
+
+Modifications 1.0.2 :
+- II. Le template, unité auto-suffisante : « paramètres de design » → « paramètres de mise en
+  page (`layout`) »
+- III. Entrée JSON à double dimension : même renommage (quatre occurrences)
+
+Templates dépendants : aucun changement requis.
+
+Historique 1.0.1 :
 Version change: 1.0.0 → 1.0.1
 Bump rationale: PATCH — exemples métier (« facture », « clients finaux ») remplacés par des
 formulations neutres ; aucune règle ajoutée, retirée ou modifiée.
@@ -60,7 +73,7 @@ latence, en mémoire et en taille d'image.
 
 - Le template est l'unité du service. Un template est un dossier contenant :
   1. un fichier Typst paramétrable décrivant le document ;
-  2. un schéma (JSON Schema) déclarant les données métier et les paramètres de design acceptés ;
+  2. un schéma (JSON Schema) déclarant les données métier et les paramètres de mise en page (`layout`) acceptés ;
   3. des ressources optionnelles (polices, images).
 - Un template DOIT être auto-suffisant : toutes ses ressources sont résolues localement, à
   l'intérieur de son dossier (ou des ressources embarquées par le binaire, comme les polices par
@@ -77,15 +90,16 @@ borne précisément ce que le moteur peut lire.
 - Le JSON d'entrée d'une génération porte deux dimensions distinctes et explicitement séparées :
   - les **données métier** : le contenu du document, dont la structure est définie par le
     template ;
-  - les **paramètres de design** : les réglages d'apparence acceptés par le template
+  - les **paramètres de mise en page** (`layout`) : les réglages d'apparence acceptés par le
+    template
     (ex. couleur, alignement, affichage ou non d'un bloc).
-- Le schéma du template DOIT décrire les deux dimensions ; les paramètres de design DEVRAIENT
+- Le schéma du template DOIT décrire les deux dimensions ; les paramètres de mise en page DEVRAIENT
   déclarer des valeurs par défaut afin qu'un appel sans réglage produise un document valide.
 - Le JSON DOIT être validé contre le schéma du template avant toute compilation Typst. Une
   entrée invalide est rejetée avec une erreur structurée (client error) indiquant les chemins
   fautifs ; aucune compilation n'est tentée.
 - Un même template DOIT pouvoir produire plusieurs variantes visuelles par simple variation des
-  paramètres de design, sans duplication du template.
+  paramètres de mise en page, sans duplication du template.
 
 **Rationale** : séparer contenu et apparence rend un template réutilisable ; valider en amont
 transforme les erreurs de rendu opaques en erreurs de contrat lisibles par l'appelant.
@@ -207,4 +221,4 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les décisions différées (TODO) DOIVENT être résolues par un amendement PATCH ou MINOR dès
   qu'elles sont tranchées.
 
-**Version**: 1.0.1 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-09
+**Version**: 1.0.2 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-10

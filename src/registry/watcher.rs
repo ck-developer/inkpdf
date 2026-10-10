@@ -1,5 +1,5 @@
-//! Surveillance du volume : événements `notify` (anti-rebond de 500 ms), rescan périodique de
-//! secours (volumes réseau, ConfigMaps) et observation de confirmation 1 s après un changement.
+//! Volume watching: `notify` events (500 ms debounce), a fallback periodic rescan (network
+//! volumes, ConfigMaps) and a confirming observation 1 s after a change.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -11,12 +11,12 @@ use tokio::time::{Instant, MissedTickBehavior};
 
 use super::Registry;
 
-/// Délai de regroupement des événements du système de fichiers.
+/// Delay over which file system events are grouped.
 const DEBOUNCE: Duration = Duration::from_millis(500);
-/// Délai de l'observation qui confirme la stabilité d'un changement.
+/// Delay before the observation that confirms a change is stable.
 const CONFIRMATION_DELAY: Duration = Duration::from_secs(1);
 
-/// Garde la surveillance active ; l'arrête quand elle est abandonnée.
+/// Keeps watching active; stops it when dropped.
 pub struct WatcherHandle {
     _watcher: Option<RecommendedWatcher>,
     task: JoinHandle<()>,
@@ -28,7 +28,7 @@ impl Drop for WatcherHandle {
     }
 }
 
-/// Démarre la surveillance du volume du registre. Doit être appelé dans un runtime tokio.
+/// Starts watching the registry's volume. Must be called inside a tokio runtime.
 pub fn spawn(registry: Arc<Registry>, rescan_interval: Duration) -> WatcherHandle {
     let (events_tx, events_rx) = mpsc::unbounded_channel::<()>();
     let watcher = start_watcher(&registry, events_tx);
@@ -87,7 +87,7 @@ async fn run(
         tokio::select! {
             event = next_event(&mut events) => {
                 if event.is_none() {
-                    // Plus d'émetteur (watcher indisponible) : rescan seul.
+                    // No sender left (watcher unavailable): rescan only.
                     events = None;
                     continue;
                 }

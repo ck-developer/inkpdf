@@ -1,6 +1,7 @@
-//! Routeur HTTP et document OpenAPI.
+//! HTTP router and OpenAPI document.
 
 pub mod health;
+pub mod packages;
 pub mod render;
 pub mod templates;
 
@@ -23,11 +24,11 @@ use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
     info(
         title = "inkpdf",
         version = env!("CARGO_PKG_VERSION"),
-        description = "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `design`), validé contre le JSON Schema du template avant génération.",
-        license(name = "TODO(LICENSE) — MIT OR Apache-2.0 proposé"),
+        description = "Internal service (private VPC, no authentication). Templates are hot-loaded from a mounted volume; the caller sends only JSON (`data` + `layout`), validated against the template's JSON Schema before generation.",
+        license(name = "TODO(LICENSE) — MIT OR Apache-2.0 proposed"),
     ),
     servers((url = "http://localhost:3000")),
-    tags((name = "templates"), (name = "render"), (name = "ops")),
+    tags((name = "templates"), (name = "render"), (name = "packages"), (name = "ops")),
     components(
         schemas(Problem, ErrorCode, Violation, Diagnostic, health::Health),
         responses(ProblemResponse),
@@ -35,7 +36,7 @@ use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
 )]
 pub struct ApiDoc;
 
-/// Réponse d'erreur partagée (`#/components/responses/Problem`).
+/// Shared error response (`#/components/responses/Problem`).
 pub struct ProblemResponse;
 
 impl<'r> utoipa::ToResponse<'r> for ProblemResponse {
@@ -44,7 +45,7 @@ impl<'r> utoipa::ToResponse<'r> for ProblemResponse {
             .schema(Some(Ref::from_schema_name("Problem")))
             .build();
         let response = ResponseBuilder::new()
-            .description("Erreur au format RFC 9457.")
+            .description("Error in RFC 9457 format.")
             .content("application/problem+json", content)
             .build();
         ("Problem", response.into())
@@ -57,36 +58,37 @@ fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(templates::get_template))
         .routes(routes!(templates::get_template_schema))
         .routes(routes!(render::render_template))
+        .routes(routes!(packages::list_packages))
         .routes(routes!(health::health))
         .routes(routes!(health::ready))
         .routes(routes!(openapi_json))
 }
 
-/// Ce document, au format JSON
+/// This document, in JSON format
 #[utoipa::path(
     get,
     path = "/openapi.json",
     tag = "ops",
     operation_id = "openapi",
-    responses((status = 200, description = "Document OpenAPI 3.1.", body = Object)),
+    responses((status = 200, description = "OpenAPI 3.1 document.", body = Object)),
 )]
 async fn openapi_json() -> Json<utoipa::openapi::OpenApi> {
     Json(openapi())
 }
 
-/// Document OpenAPI généré depuis le code.
+/// OpenAPI document generated from the code.
 pub fn openapi() -> utoipa::openapi::OpenApi {
     static DOC: OnceLock<utoipa::openapi::OpenApi> = OnceLock::new();
     DOC.get_or_init(|| router().into_openapi()).clone()
 }
 
-/// Construit l'application HTTP complète.
+/// Builds the complete HTTP application.
 pub fn build_app(state: AppState) -> Router {
     let (router, api) = router().split_for_parts();
     router
         .merge(Scalar::with_url("/docs", api))
-        // Limite appliquée par l'extracteur du corps ; le dépassement est converti en
-        // `413 payload-too-large` au format problem+json par le handler.
+        // Limit enforced by the body extractor; the handler turns an overflow into a
+        // problem+json `413 payload-too-large`.
         .layer(DefaultBodyLimit::max(state.config.max_body_bytes))
         .layer(TraceLayer::new_for_http())
         .with_state(state)

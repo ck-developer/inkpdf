@@ -1,7 +1,7 @@
-//! Chargement d'un dossier de template en une entrée du registre.
+//! Loading a template directory into a registry entry.
 //!
-//! C'est le seul endroit où les fichiers d'un template sont lus : le rendu ne sert ensuite que
-//! l'instantané en mémoire.
+//! This is the only place where a template's files are read: rendering then only uses the
+//! in-memory snapshot.
 
 use std::collections::HashMap;
 use std::fs;
@@ -13,27 +13,27 @@ use typst::foundations::Bytes;
 
 use super::fingerprint::{self, Fingerprint};
 use crate::render::fonts::{self, FontSet};
-use crate::template::{Manifest, TemplateId, TemplateSchema};
+use crate::template::{Manifest, TemplateId, TemplateSchema, imports};
 
-/// Statut d'un template après chargement.
+/// Status of a template after loading.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TemplateStatus {
     Valid,
     Invalid { reason: String },
 }
 
-/// Entrée du registre : un template chargé, valide ou non.
+/// Registry entry: a loaded template, valid or not.
 pub struct TemplateEntry {
     pub id: TemplateId,
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
     pub status: TemplateStatus,
-    /// Présent si le template est valide.
+    /// Present if the template is valid.
     pub schema: Option<TemplateSchema>,
-    /// Instantané de tous les fichiers ; clé = chemin relatif séparé par `/`.
+    /// Snapshot of all files; key = `/`-separated relative path.
     pub files: HashMap<String, Bytes>,
-    /// Polices embarquées + polices du template (présent si valide).
+    /// Embedded fonts + template fonts (present if valid).
     pub fonts: Option<Arc<FontSet>>,
     pub fingerprint: Fingerprint,
     pub loaded_at: OffsetDateTime,
@@ -62,15 +62,15 @@ impl TemplateEntry {
     }
 }
 
-/// Résultat d'un chargement.
+/// Result of a load.
 #[derive(Debug)]
 pub enum LoadOutcome {
     Loaded(Box<TemplateEntry>),
-    /// Le dossier a changé pendant la lecture : nouvel essai plus tard.
+    /// The directory changed during the read: try again later.
     Unstable,
 }
 
-/// Charge le dossier `dir` du template `id`.
+/// Loads the directory `dir` of template `id`.
 pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome {
     let before = match fingerprint::scan(dir) {
         Ok(scan) => scan,
@@ -126,10 +126,10 @@ pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome 
     LoadOutcome::Loaded(Box::new(validate(id, files, before.fingerprint)))
 }
 
-/// Applique les règles de validité du data-model à un instantané.
+/// Applies the data-model validity rules to a snapshot.
 fn validate(
     id: TemplateId,
-    files: HashMap<String, Bytes>,
+    mut files: HashMap<String, Bytes>,
     fingerprint: Fingerprint,
 ) -> TemplateEntry {
     let manifest = match files.get("template.json") {
@@ -139,6 +139,10 @@ fn validate(
             Err(e) => return invalid(id, None, fingerprint, format!("template.json: {e}")),
         },
     };
+
+    if let Err(reason) = resolve_package_imports(&mut files) {
+        return invalid(id, Some(manifest), fingerprint, reason);
+    }
 
     let checked = (|| {
         let main = files.get("main.typ").ok_or("main.typ is missing")?;
@@ -174,6 +178,39 @@ fn validate(
         },
         Err(reason) => invalid(id, Some(manifest), fingerprint, reason),
     }
+}
+
+/// Rewrites the `@preview/<name>` imports of each `.typ` file with the installed version;
+/// on incorrect imports, returns one `file:line: message` line per error.
+fn resolve_package_imports(files: &mut HashMap<String, Bytes>) -> Result<(), String> {
+    let mut paths: Vec<String> = files
+        .keys()
+        .filter(|path| path.ends_with(".typ"))
+        .cloned()
+        .collect();
+    paths.sort();
+    let mut errors = Vec::new();
+    for path in paths {
+        // A non-UTF-8 `.typ` will be reported by Typst if it is used.
+        let Ok(text) = std::str::from_utf8(&files[&path]) else {
+            continue;
+        };
+        match imports::resolve_imports(&path, text) {
+            Ok(Some(rewritten)) => {
+                files.insert(path, Bytes::new(rewritten.into_bytes()));
+            }
+            Ok(None) => {}
+            Err(found) => errors.extend(found),
+        }
+    }
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(errors
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("\n"))
 }
 
 fn invalid(
@@ -243,6 +280,36 @@ mod tests {
     }
 
     #[test]
+    fn package_import_is_rewritten_with_installed_version() {
+        let f = Fixture::new();
+        f.write("main.typ", "#import \"@preview/zero\": num\n#num(1)\n");
+        let entry = f.load();
+        assert!(entry.is_valid(), "{:?}", entry.status);
+        let main = std::str::from_utf8(&entry.files["main.typ"]).unwrap();
+        let version = crate::packages::selected("zero").unwrap().version();
+        assert!(
+            main.contains(&format!("\"@preview/zero:{version}\"")),
+            "{main}"
+        );
+    }
+
+    #[test]
+    fn incorrect_package_imports_make_the_template_invalid() {
+        let f = Fixture::new();
+        f.write("main.typ", "#import \"parts/a.typ\"\n");
+        f.write(
+            "parts/a.typ",
+            "\n#import \"@preview/zero:0.7.1\"\n#import \"@preview/nope\"\n",
+        );
+        let entry = f.load();
+        assert_eq!(
+            reason(&entry),
+            "parts/a.typ:2: remove the version: write @preview/zero (inkpdf uses its installed version)\n\
+             parts/a.typ:3: package @preview/nope is not available in inkpdf (see GET /packages)"
+        );
+    }
+
+    #[test]
     fn valid_template_with_manifest() {
         let f = Fixture::new();
         f.write(
@@ -285,7 +352,7 @@ mod tests {
         let f = Fixture::new();
         f.write(
             "schema.json",
-            r#"{"type":"object","properties":{"design":{}}}"#,
+            r#"{"type":"object","properties":{"layout":{}}}"#,
         );
         assert!(reason(&f.load()).contains("properties.data"));
     }
@@ -350,9 +417,9 @@ mod tests {
 
     #[test]
     fn modification_during_read_is_unstable() {
-        // Un fichier qui change entre les deux parcours rend le chargement instable : on simule
-        // le changement en modifiant le dossier depuis un second thread pendant la lecture d'un
-        // gros fichier.
+        // A file that changes between the two walks makes the load unstable: the change is
+        // simulated by modifying the directory from a second thread while a large file is being
+        // read.
         let f = Fixture::new();
         f.write("assets/big.bin", vec![0u8; 64 * 1024 * 1024]);
         let dir = f.dir.clone();

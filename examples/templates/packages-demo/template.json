@@ -1,0 +1,5 @@
+{
+  "name": "Package demo",
+  "description": "Neutral template using bundled packages: QR code, formatted amount, chart.",
+  "version": "1.0.0"
+}

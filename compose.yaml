@@ -1,8 +1,8 @@
-# Environnement de test local : `docker compose up --build`, puis http://localhost:3000/docs
+# Local test environment: `docker compose up --build`, then http://localhost:3000/docs
 #
-# Les templates sont lus depuis le dossier de l'hôte désigné par INKPDF_TEMPLATES
-# (par défaut ./examples/templates) ; ajouter, modifier ou supprimer un template dans ce
-# dossier est pris en compte à chaud, sans redémarrer le conteneur.
+# Templates are read from the host folder named by INKPDF_TEMPLATES (./examples/templates
+# by default); adding, editing or removing a template in that folder is picked up live,
+# without restarting the container.
 services:
   inkpdf:
     build: .

@@ -1,4 +1,4 @@
-//! Découverte des templates : liste, détail, schéma.
+//! Template discovery: list, detail, schema.
 
 use std::sync::Arc;
 
@@ -15,11 +15,11 @@ use crate::error::{ApiError, TemplateError};
 use crate::registry::{TemplateEntry, TemplateStatus};
 use crate::template::TemplateId;
 
-/// Paramètre de chemin `templateId` ; un identifiant hors format est traité comme inconnu.
+/// `templateId` path parameter; a malformed identifier is treated as unknown.
 #[derive(Deserialize, IntoParams)]
 #[into_params(parameter_in = Path)]
 pub struct TemplatePath {
-    /// Identifiant du template (nom de son dossier).
+    /// Template identifier (its folder name).
     #[serde(rename = "templateId")]
     #[param(
         rename = "templateId",
@@ -48,7 +48,7 @@ pub struct TemplateSummary {
     #[schema(nullable = false)]
     pub version: Option<String>,
     pub status: TemplateStatusDto,
-    /// Présent si `status` vaut `invalid`.
+    /// Present when `status` is `invalid`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub reason: Option<String>,
@@ -69,7 +69,7 @@ pub struct TemplateDetail {
     pub summary: TemplateSummary,
     #[schema(format = DateTime)]
     pub loaded_at: String,
-    /// JSON Schema de l'entrée (absent si le template est invalide).
+    /// Input JSON Schema (absent when the template is invalid).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<Object>, nullable = false)]
     pub schema: Option<serde_json::Value>,
@@ -124,13 +124,13 @@ fn find(state: &AppState, template_id: &str) -> Result<Arc<TemplateEntry>, Templ
         .ok_or_else(|| ApiError::TemplateNotFound.for_template(id.as_str()))
 }
 
-/// Lister les templates du volume
+/// List the templates in the volume
 #[utoipa::path(
     get,
     path = "/templates",
     tag = "templates",
     operation_id = "listTemplates",
-    responses((status = 200, description = "Templates connus, valides ou invalides, triés par identifiant.", body = TemplateList)),
+    responses((status = 200, description = "Known templates, valid or invalid, sorted by identifier.", body = TemplateList)),
 )]
 pub async fn list_templates(State(state): State<AppState>) -> Json<TemplateList> {
     let templates = state
@@ -142,7 +142,7 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<TemplateList>
     Json(TemplateList { templates })
 }
 
-/// Détail d'un template, schéma compris
+/// Template detail, schema included
 #[utoipa::path(
     get,
     path = "/templates/{templateId}",
@@ -150,7 +150,7 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<TemplateList>
     operation_id = "getTemplate",
     params(TemplatePath),
     responses(
-        (status = 200, description = "Détail du template.", body = TemplateDetail),
+        (status = 200, description = "Template detail.", body = TemplateDetail),
         (status = 404, response = crate::api::ProblemResponse),
     ),
 )]
@@ -164,9 +164,9 @@ pub async fn get_template(
     }
 }
 
-/// JSON Schema brut de l'entrée du template
+/// Raw JSON Schema of the template input
 ///
-/// Utilisable directement par un validateur ou un générateur de formulaires.
+/// Usable directly by a validator or a form generator.
 #[utoipa::path(
     get,
     path = "/templates/{templateId}/schema",
@@ -190,7 +190,7 @@ pub async fn get_template_schema(
     };
     match (&entry.status, &entry.schema) {
         (TemplateStatus::Valid, Some(schema)) => {
-            // Octets d'origine du fichier, exposés tels quels (constitution VI).
+            // The file's original bytes, exposed as is (constitution VI).
             let mut response = (StatusCode::OK, schema.raw().as_slice().to_vec()).into_response();
             response.headers_mut().insert(
                 header::CONTENT_TYPE,

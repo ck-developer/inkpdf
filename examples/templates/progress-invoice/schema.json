@@ -1,0 +1,540 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Construction progress invoice",
+  "type": "object",
+  "required": [
+    "data"
+  ],
+  "$defs": {
+    "amount": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(\\.[0-9]{1,4})?$",
+      "description": "Exact decimal amount as a string, e.g. \"1250.00\"."
+    },
+    "percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage, e.g. 45 or 37.5."
+    },
+    "vatRate": {
+      "type": "number",
+      "enum": [
+        0,
+        2.1,
+        5.5,
+        10,
+        20
+      ]
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "address": {
+      "type": "object",
+      "required": [
+        "line1",
+        "postalCode",
+        "city"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "line1": {
+          "type": "string"
+        },
+        "line2": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      }
+    },
+    "line": {
+      "type": "object",
+      "required": [
+        "code",
+        "label",
+        "unit",
+        "quantity",
+        "unitPrice",
+        "progress"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit as printed: u, ens, m², m³, ml, h, forfait…"
+        },
+        "quantity": {
+          "$ref": "#/$defs/amount"
+        },
+        "unitPrice": {
+          "$ref": "#/$defs/amount"
+        },
+        "progress": {
+          "$ref": "#/$defs/percent",
+          "description": "Cumulative progress at the end of the period (%)."
+        },
+        "previousProgress": {
+          "$ref": "#/$defs/percent",
+          "description": "Cumulative progress already invoiced (%). Defaults to 0."
+        },
+        "vatRate": {
+          "$ref": "#/$defs/vatRate",
+          "description": "VAT rate of the line; defaults to the contract rate."
+        }
+      }
+    }
+  },
+  "properties": {
+    "data": {
+      "type": "object",
+      "required": [
+        "company",
+        "client",
+        "worksite",
+        "contract",
+        "invoice",
+        "lots"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "company": {
+          "type": "object",
+          "required": [
+            "name",
+            "legalForm",
+            "address",
+            "siret",
+            "vatNumber"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "legalForm": {
+              "type": "string",
+              "description": "SAS, SARL…"
+            },
+            "capital": {
+              "$ref": "#/$defs/amount"
+            },
+            "address": {
+              "$ref": "#/$defs/address"
+            },
+            "siret": {
+              "type": "string"
+            },
+            "rcs": {
+              "type": "string"
+            },
+            "vatNumber": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "website": {
+              "type": "string"
+            },
+            "iban": {
+              "type": "string"
+            },
+            "bic": {
+              "type": "string"
+            },
+            "insurance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "insurer",
+                "policy"
+              ],
+              "properties": {
+                "insurer": {
+                  "type": "string"
+                },
+                "policy": {
+                  "type": "string"
+                },
+                "coverage": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "client": {
+          "type": "object",
+          "required": [
+            "name",
+            "address"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "contact": {
+              "type": "string"
+            },
+            "address": {
+              "$ref": "#/$defs/address"
+            },
+            "vatNumber": {
+              "type": "string"
+            }
+          }
+        },
+        "worksite": {
+          "type": "object",
+          "required": [
+            "name",
+            "address"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "address": {
+              "$ref": "#/$defs/address"
+            },
+            "reference": {
+              "type": "string"
+            }
+          }
+        },
+        "contract": {
+          "type": "object",
+          "required": [
+            "reference",
+            "date"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "reference": {
+              "type": "string"
+            },
+            "date": {
+              "$ref": "#/$defs/date"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "forfait",
+                "prix unitaires"
+              ]
+            },
+            "vatRate": {
+              "$ref": "#/$defs/vatRate",
+              "description": "Default VAT rate of the lines (20 when absent)."
+            },
+            "subcontracting": {
+              "type": "boolean",
+              "description": "Subcontracting: VAT is reverse-charged to the customer (no VAT invoiced)."
+            }
+          }
+        },
+        "invoice": {
+          "type": "object",
+          "required": [
+            "number",
+            "date",
+            "situation",
+            "periodStart",
+            "periodEnd",
+            "dueDate"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "number": {
+              "type": "string"
+            },
+            "date": {
+              "$ref": "#/$defs/date"
+            },
+            "situation": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "final": {
+              "type": "boolean",
+              "description": "Final claim (closing statement)."
+            },
+            "periodStart": {
+              "$ref": "#/$defs/date"
+            },
+            "periodEnd": {
+              "$ref": "#/$defs/date"
+            },
+            "dueDate": {
+              "$ref": "#/$defs/date"
+            },
+            "paymentTerms": {
+              "type": "string"
+            },
+            "paymentReference": {
+              "type": "string"
+            }
+          }
+        },
+        "lots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "name",
+              "lines"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "lines": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/line"
+                }
+              }
+            }
+          }
+        },
+        "amendments": {
+          "type": "array",
+          "description": "Contract amendments / additional works.",
+          "items": {
+            "type": "object",
+            "required": [
+              "reference",
+              "label",
+              "amount",
+              "progress"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "reference": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "amount": {
+                "$ref": "#/$defs/amount"
+              },
+              "progress": {
+                "$ref": "#/$defs/percent"
+              },
+              "previousProgress": {
+                "$ref": "#/$defs/percent"
+              },
+              "vatRate": {
+                "$ref": "#/$defs/vatRate"
+              }
+            }
+          }
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "guarantee": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "retention",
+                    "bank-guarantee",
+                    "none"
+                  ],
+                  "description": "`retention`: retention on the total incl. VAT; `bank-guarantee`: replaced by a bank guarantee; `none`: no guarantee."
+                },
+                "rate": {
+                  "$ref": "#/$defs/percent",
+                  "description": "Retention rate (at most 5 % in France)."
+                },
+                "guarantor": {
+                  "type": "string",
+                  "description": "Bank issuing the guarantee."
+                }
+              }
+            },
+            "priceRevision": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "index",
+                "coefficient"
+              ],
+              "properties": {
+                "index": {
+                  "type": "string",
+                  "description": "Price index, e.g. « BT01 août 2026 »."
+                },
+                "coefficient": {
+                  "$ref": "#/$defs/amount",
+                  "description": "Revision coefficient, e.g. \"1.0215\"."
+                }
+              }
+            },
+            "prorataRate": {
+              "$ref": "#/$defs/percent",
+              "description": "Contribution to shared site costs (compte prorata), % of the amount excl. VAT."
+            },
+            "advanceRepaymentRate": {
+              "$ref": "#/$defs/percent",
+              "description": "Advance repayment, % of the period amount excl. VAT."
+            }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primaryColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#1d3557",
+          "description": "Colour of titles, header band and table headers."
+        },
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#e76f51",
+          "description": "Colour of totals and of the amount due."
+        },
+        "font": {
+          "type": "string",
+          "enum": [
+            "Libertinus Serif",
+            "New Computer Modern"
+          ],
+          "default": "Libertinus Serif"
+        },
+        "density": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "compact"
+          ],
+          "default": "normal",
+          "description": "Text size and table spacing."
+        },
+        "headerStyle": {
+          "type": "string",
+          "enum": [
+            "band",
+            "line"
+          ],
+          "default": "band",
+          "description": "Coloured band or simple rule under the page header."
+        },
+        "logo": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "show": {
+              "type": "boolean",
+              "default": true
+            },
+            "position": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right"
+              ],
+              "default": "left"
+            },
+            "width": {
+              "type": "number",
+              "minimum": 10,
+              "maximum": 60,
+              "default": 30,
+              "description": "Width in mm."
+            }
+          }
+        },
+        "columns": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "unitPrice": {
+              "type": "boolean",
+              "default": true,
+              "description": "Unit, quantity and unit price columns."
+            },
+            "progress": {
+              "type": "boolean",
+              "default": true,
+              "description": "Cumulative progress percentage column."
+            },
+            "previous": {
+              "type": "boolean",
+              "default": true,
+              "description": "Cumulative and previously invoiced amount columns."
+            }
+          }
+        },
+        "zebraRows": {
+          "type": "boolean",
+          "default": true
+        },
+        "showLotSubtotals": {
+          "type": "boolean",
+          "default": true
+        },
+        "showAmountInWords": {
+          "type": "boolean",
+          "default": true
+        },
+        "showPaymentQr": {
+          "type": "boolean",
+          "default": true,
+          "description": "SEPA payment QR code (when the IBAN is given and the amount due is positive)."
+        },
+        "showInsurance": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,592 @@
+meta {
+  name: Long claim, all conditions
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/templates/progress-invoice/render
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "data": {
+      "company": {
+        "name": "Bâti Exemple",
+        "legalForm": "SAS",
+        "capital": "50000",
+        "address": {
+          "line1": "8 rue des Artisans",
+          "postalCode": "69003",
+          "city": "Lyon"
+        },
+        "siret": "123 456 789 00012",
+        "rcs": "Lyon B 123 456 789",
+        "vatNumber": "FR12 123456789",
+        "phone": "04 00 00 00 00",
+        "email": "compta@bati-exemple.test",
+        "iban": "FR76 3000 6000 0112 3456 7890 189",
+        "bic": "AGRIFRPP",
+        "insurance": {
+          "insurer": "Assurances Exemple",
+          "policy": "DEC-2026-0042",
+          "coverage": "France métropolitaine"
+        }
+      },
+      "client": {
+        "name": "Office public de l'habitat Exemple",
+        "contact": "Direction de la maîtrise d'ouvrage",
+        "address": {
+          "line1": "45 avenue des Frères",
+          "line2": "CS 10001",
+          "postalCode": "69007",
+          "city": "Lyon"
+        },
+        "vatNumber": "FR98 765432109"
+      },
+      "worksite": {
+        "name": "Résidence Les Platanes — 4 logements",
+        "address": {
+          "line1": "Rue des Platanes",
+          "postalCode": "69200",
+          "city": "Vénissieux"
+        },
+        "reference": "CH-2026-007"
+      },
+      "contract": {
+        "reference": "MP-2026-0088",
+        "date": "2026-01-15",
+        "kind": "prix unitaires",
+        "vatRate": 20
+      },
+      "invoice": {
+        "number": "FA-2026-0177",
+        "date": "2026-10-05",
+        "situation": 4,
+        "periodStart": "2026-09-01",
+        "periodEnd": "2026-09-30",
+        "dueDate": "2026-11-04",
+        "paymentTerms": "virement à 30 jours (délai global de paiement des marchés publics)",
+        "paymentReference": "MP-2026-0088-S4"
+      },
+      "lots": [
+        {
+          "code": "01",
+          "name": "Installation de chantier et terrassements",
+          "lines": [
+            {
+              "code": "01.01",
+              "label": "Installation de chantier",
+              "unit": "forfait",
+              "quantity": "1",
+              "unitPrice": "4800.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "01.02",
+              "label": "Clôture provisoire",
+              "unit": "ml",
+              "quantity": "140",
+              "unitPrice": "22.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "01.03",
+              "label": "Décapage de la terre végétale",
+              "unit": "m²",
+              "quantity": "860",
+              "unitPrice": "3.20",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "01.04",
+              "label": "Terrassement en pleine masse",
+              "unit": "m³",
+              "quantity": "540",
+              "unitPrice": "17.80",
+              "progress": 60,
+              "previousProgress": 40
+            },
+            {
+              "code": "01.05",
+              "label": "Évacuation des déblais en décharge",
+              "unit": "m³",
+              "quantity": "410",
+              "unitPrice": "24.50",
+              "progress": 40,
+              "previousProgress": 20
+            },
+            {
+              "code": "01.06",
+              "label": "Remblai compacté",
+              "unit": "m³",
+              "quantity": "180",
+              "unitPrice": "21.00",
+              "progress": 25,
+              "previousProgress": 0
+            }
+          ]
+        },
+        {
+          "code": "02",
+          "name": "Gros œuvre",
+          "lines": [
+            {
+              "code": "02.01",
+              "label": "Béton de propreté",
+              "unit": "m³",
+              "quantity": "18",
+              "unitPrice": "152.00",
+              "progress": 10,
+              "previousProgress": 0
+            },
+            {
+              "code": "02.02",
+              "label": "Semelles filantes en béton armé",
+              "unit": "m³",
+              "quantity": "64",
+              "unitPrice": "248.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "02.03",
+              "label": "Longrines",
+              "unit": "ml",
+              "quantity": "210",
+              "unitPrice": "96.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "02.04",
+              "label": "Vide sanitaire en blocs béton",
+              "unit": "m²",
+              "quantity": "420",
+              "unitPrice": "58.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "02.05",
+              "label": "Plancher hourdis",
+              "unit": "m²",
+              "quantity": "420",
+              "unitPrice": "74.50",
+              "progress": 60,
+              "previousProgress": 40
+            },
+            {
+              "code": "02.06",
+              "label": "Murs en blocs de 20",
+              "unit": "m²",
+              "quantity": "980",
+              "unitPrice": "61.00",
+              "progress": 40,
+              "previousProgress": 20
+            },
+            {
+              "code": "02.07",
+              "label": "Poteaux en béton armé",
+              "unit": "u",
+              "quantity": "38",
+              "unitPrice": "265.00",
+              "progress": 25,
+              "previousProgress": 0
+            },
+            {
+              "code": "02.08",
+              "label": "Poutres en béton armé",
+              "unit": "ml",
+              "quantity": "190",
+              "unitPrice": "142.00",
+              "progress": 10,
+              "previousProgress": 0
+            },
+            {
+              "code": "02.09",
+              "label": "Linteaux préfabriqués",
+              "unit": "u",
+              "quantity": "52",
+              "unitPrice": "88.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "02.10",
+              "label": "Chaînages verticaux et horizontaux",
+              "unit": "ml",
+              "quantity": "640",
+              "unitPrice": "31.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "02.11",
+              "label": "Dalle haute du R+1",
+              "unit": "m²",
+              "quantity": "410",
+              "unitPrice": "82.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "02.12",
+              "label": "Escalier béton",
+              "unit": "u",
+              "quantity": "2",
+              "unitPrice": "3650.00",
+              "progress": 60,
+              "previousProgress": 40
+            },
+            {
+              "code": "02.13",
+              "label": "Acrotères",
+              "unit": "ml",
+              "quantity": "120",
+              "unitPrice": "74.00",
+              "progress": 40,
+              "previousProgress": 20
+            }
+          ]
+        },
+        {
+          "code": "03",
+          "name": "Charpente et couverture",
+          "lines": [
+            {
+              "code": "03.01",
+              "label": "Charpente fermettes",
+              "unit": "m²",
+              "quantity": "460",
+              "unitPrice": "38.00",
+              "progress": 25,
+              "previousProgress": 0
+            },
+            {
+              "code": "03.02",
+              "label": "Écran sous-toiture",
+              "unit": "m²",
+              "quantity": "520",
+              "unitPrice": "8.40",
+              "progress": 10,
+              "previousProgress": 0
+            },
+            {
+              "code": "03.03",
+              "label": "Couverture tuiles terre cuite",
+              "unit": "m²",
+              "quantity": "520",
+              "unitPrice": "46.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "03.04",
+              "label": "Zinguerie et gouttières",
+              "unit": "ml",
+              "quantity": "160",
+              "unitPrice": "42.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "03.05",
+              "label": "Fenêtres de toit",
+              "unit": "u",
+              "quantity": "8",
+              "unitPrice": "690.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "03.06",
+              "label": "Isolation des combles soufflée",
+              "unit": "m²",
+              "quantity": "410",
+              "unitPrice": "21.00",
+              "progress": 60,
+              "previousProgress": 40
+            }
+          ]
+        },
+        {
+          "code": "04",
+          "name": "Menuiseries extérieures",
+          "lines": [
+            {
+              "code": "04.01",
+              "label": "Fenêtres PVC double vitrage",
+              "unit": "u",
+              "quantity": "34",
+              "unitPrice": "540.00",
+              "progress": 40,
+              "previousProgress": 20
+            },
+            {
+              "code": "04.02",
+              "label": "Portes-fenêtres",
+              "unit": "u",
+              "quantity": "12",
+              "unitPrice": "980.00",
+              "progress": 25,
+              "previousProgress": 0
+            },
+            {
+              "code": "04.03",
+              "label": "Porte d'entrée",
+              "unit": "u",
+              "quantity": "4",
+              "unitPrice": "1850.00",
+              "progress": 10,
+              "previousProgress": 0
+            },
+            {
+              "code": "04.04",
+              "label": "Volets roulants électriques",
+              "unit": "u",
+              "quantity": "46",
+              "unitPrice": "420.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "04.05",
+              "label": "Porte de garage sectionnelle",
+              "unit": "u",
+              "quantity": "2",
+              "unitPrice": "2350.00",
+              "progress": 100,
+              "previousProgress": 80
+            }
+          ]
+        },
+        {
+          "code": "05",
+          "name": "Cloisons, doublages et plâtrerie",
+          "lines": [
+            {
+              "code": "05.01",
+              "label": "Doublage collé isolant",
+              "unit": "m²",
+              "quantity": "860",
+              "unitPrice": "34.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "05.02",
+              "label": "Cloisons placostil 72/48",
+              "unit": "m²",
+              "quantity": "640",
+              "unitPrice": "39.00",
+              "progress": 60,
+              "previousProgress": 40
+            },
+            {
+              "code": "05.03",
+              "label": "Faux plafonds suspendus",
+              "unit": "m²",
+              "quantity": "780",
+              "unitPrice": "36.00",
+              "progress": 40,
+              "previousProgress": 20
+            },
+            {
+              "code": "05.04",
+              "label": "Bandes et finitions",
+              "unit": "m²",
+              "quantity": "2280",
+              "unitPrice": "4.20",
+              "progress": 25,
+              "previousProgress": 0
+            },
+            {
+              "code": "05.05",
+              "label": "Trappes de visite",
+              "unit": "u",
+              "quantity": "14",
+              "unitPrice": "68.00",
+              "progress": 10,
+              "previousProgress": 0
+            }
+          ]
+        },
+        {
+          "code": "06",
+          "name": "Plomberie et chauffage",
+          "lines": [
+            {
+              "code": "06.01",
+              "label": "Pompe à chaleur air/eau",
+              "unit": "u",
+              "quantity": "2",
+              "unitPrice": "9800.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "06.02",
+              "label": "Réseau de chauffage au sol",
+              "unit": "m²",
+              "quantity": "780",
+              "unitPrice": "42.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "06.03",
+              "label": "Distribution eau froide et chaude",
+              "unit": "ens",
+              "quantity": "4",
+              "unitPrice": "2650.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "06.04",
+              "label": "Évacuations PVC",
+              "unit": "ens",
+              "quantity": "4",
+              "unitPrice": "1980.00",
+              "progress": 60,
+              "previousProgress": 40
+            },
+            {
+              "code": "06.05",
+              "label": "Appareils sanitaires",
+              "unit": "u",
+              "quantity": "26",
+              "unitPrice": "410.00",
+              "progress": 40,
+              "previousProgress": 20
+            },
+            {
+              "code": "06.06",
+              "label": "Ballons thermodynamiques",
+              "unit": "u",
+              "quantity": "4",
+              "unitPrice": "2450.00",
+              "progress": 25,
+              "previousProgress": 0
+            }
+          ]
+        },
+        {
+          "code": "07",
+          "name": "Électricité",
+          "lines": [
+            {
+              "code": "07.01",
+              "label": "Tableaux électriques",
+              "unit": "u",
+              "quantity": "4",
+              "unitPrice": "1650.00",
+              "progress": 10,
+              "previousProgress": 0
+            },
+            {
+              "code": "07.02",
+              "label": "Points lumineux",
+              "unit": "u",
+              "quantity": "96",
+              "unitPrice": "62.00",
+              "progress": 100,
+              "previousProgress": 100
+            },
+            {
+              "code": "07.03",
+              "label": "Prises de courant",
+              "unit": "u",
+              "quantity": "180",
+              "unitPrice": "48.00",
+              "progress": 100,
+              "previousProgress": 80
+            },
+            {
+              "code": "07.04",
+              "label": "VMC hygroréglable",
+              "unit": "u",
+              "quantity": "4",
+              "unitPrice": "1150.00",
+              "progress": 75,
+              "previousProgress": 50
+            },
+            {
+              "code": "07.05",
+              "label": "Gaines et câblage",
+              "unit": "ens",
+              "quantity": "4",
+              "unitPrice": "3200.00",
+              "progress": 60,
+              "previousProgress": 40
+            }
+          ]
+        }
+      ],
+      "amendments": [
+        {
+          "reference": "Av. 1",
+          "label": "Renforcement des fondations (sol argileux)",
+          "amount": "6840.00",
+          "progress": 100,
+          "previousProgress": 100
+        },
+        {
+          "reference": "Av. 2",
+          "label": "Ajout de deux fenêtres de toit",
+          "amount": "1980.00",
+          "progress": 50,
+          "previousProgress": 0
+        }
+      ],
+      "conditions": {
+        "guarantee": {
+          "mode": "retention",
+          "rate": 5
+        },
+        "priceRevision": {
+          "index": "BT01 juillet 2026",
+          "coefficient": "1.0215"
+        },
+        "prorataRate": 1.5,
+        "advanceRepaymentRate": 10
+      },
+      "notes": [
+        "Situation établie selon l'état d'avancement contradictoire du 30 septembre 2026.",
+        "Les quantités du lot 06 intègrent l'ordre de service n° 3."
+      ]
+    },
+    "metadata": {
+      "title": "Situation n° 4 — Résidence Les Platanes",
+      "author": [
+        "Bâti Exemple",
+        "Service travaux"
+      ],
+      "subject": "Facture de situation de travaux",
+      "keywords": [
+        "BTP",
+        "situation",
+        "MP-2026-0088"
+      ],
+      "date": "2026-10-05"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Source: examples/requests/progress-invoice/02-long-claim-all-conditions.json
+}

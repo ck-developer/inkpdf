@@ -1,3 +1,6 @@
+> **Note (feature 002)** : la dimension `design` a été renommée `layout` (corps, schémas,
+> `sys.inputs`). Ce document est conservé tel qu'à la V1.
+
 # Contrat : format d'un template inkpdf (V1)
 
 Ce document est le contrat entre les **auteurs de templates** et le service. Il est versionné
@@ -121,7 +124,7 @@ Les chaînes ne sont **jamais** interprétées comme du code Typst.
 
 | Interdit | Comportement |
 |----------|--------------|
-| `#import "@preview/..."` ou tout paquet | échec de génération (`render-failed`) |
+| `#import "@preview/..."` ou tout paquet | échec de génération (`render-failed`) — **remplacé par la feature 002**, voir `specs/002-typst-packages/contracts/template-imports.md` |
 | lecture hors du dossier du template (`../`, chemin absolu, lien sortant) | échec (`render-failed`) |
 | accès réseau, variables d'environnement, polices système | indisponibles |
 | `datetime.today()` | autorisé, mais rend le PDF non déterministe ; préférer une date dans `data` |

@@ -1,11 +1,11 @@
-//! Configuration du service, lue depuis les variables d'environnement `INKPDF_*`.
+//! Service configuration, read from the `INKPDF_*` environment variables.
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 
-/// Format des logs sur stdout.
+/// Log format on stdout.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogFormat {
     Json,
@@ -24,10 +24,10 @@ impl FromStr for LogFormat {
     }
 }
 
-/// Configuration complète du service.
+/// Full service configuration.
 ///
-/// Les tests construisent cette structure directement (`Config { .., ..Config::default() }`) ;
-/// seul `main.rs` passe par [`Config::from_env`].
+/// Tests build this struct directly (`Config { .., ..Config::default() }`);
+/// only `main.rs` goes through [`Config::from_env`].
 #[derive(Debug, Clone)]
 pub struct Config {
     pub templates_dir: PathBuf,
@@ -39,6 +39,8 @@ pub struct Config {
     pub rescan_interval: Duration,
     pub max_template_bytes: u64,
     pub log_format: LogFormat,
+    /// PDF author when neither the request nor the template provides one.
+    pub default_author: String,
 }
 
 impl Default for Config {
@@ -53,11 +55,12 @@ impl Default for Config {
             rescan_interval: Duration::from_secs(2),
             max_template_bytes: 50 * 1024 * 1024,
             log_format: LogFormat::Json,
+            default_author: "inkpdf".to_owned(),
         }
     }
 }
 
-/// Variable d'environnement mal formée.
+/// Malformed environment variable.
 #[derive(Debug, thiserror::Error)]
 #[error("invalid value for {name}: {message}")]
 pub struct ConfigError {
@@ -66,12 +69,12 @@ pub struct ConfigError {
 }
 
 impl Config {
-    /// Part des valeurs par défaut et applique les variables `INKPDF_*` définies.
+    /// Starts from the defaults and applies the `INKPDF_*` variables that are set.
     pub fn from_env() -> Result<Self, ConfigError> {
         Self::from_lookup(|name| std::env::var(name).ok())
     }
 
-    /// Variante testable de [`Config::from_env`] : `lookup` remplace l'environnement.
+    /// Testable variant of [`Config::from_env`]: `lookup` stands in for the environment.
     pub fn from_lookup(lookup: impl Fn(&str) -> Option<String>) -> Result<Self, ConfigError> {
         let mut config = Self::default();
         let var = |name: &'static str| lookup(name).filter(|v| !v.is_empty());
@@ -102,6 +105,9 @@ impl Config {
         }
         if let Some(v) = var("INKPDF_LOG_FORMAT") {
             config.log_format = parse("INKPDF_LOG_FORMAT", &v)?;
+        }
+        if let Some(v) = var("INKPDF_DEFAULT_AUTHOR") {
+            config.default_author = v.trim().to_owned();
         }
         Ok(config)
     }
@@ -162,6 +168,7 @@ mod tests {
         assert_eq!(config.rescan_interval, Duration::from_secs(2));
         assert_eq!(config.max_template_bytes, 52_428_800);
         assert_eq!(config.log_format, LogFormat::Json);
+        assert_eq!(config.default_author, "inkpdf");
     }
 
     #[test]
@@ -171,12 +178,14 @@ mod tests {
             ("INKPDF_LISTEN", "127.0.0.1:8080"),
             ("INKPDF_RENDER_TIMEOUT_SECS", "5"),
             ("INKPDF_LOG_FORMAT", "pretty"),
+            ("INKPDF_DEFAULT_AUTHOR", "ACME"),
         ]))
         .unwrap();
         assert_eq!(config.templates_dir, PathBuf::from("/tmp/t"));
         assert_eq!(config.listen.port(), 8080);
         assert_eq!(config.render_timeout, Duration::from_secs(5));
         assert_eq!(config.log_format, LogFormat::Pretty);
+        assert_eq!(config.default_author, "ACME");
     }
 
     #[test]

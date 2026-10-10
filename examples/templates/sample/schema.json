@@ -23,7 +23,7 @@
         }
       }
     },
-    "design": {
+    "layout": {
       "type": "object",
       "additionalProperties": false,
       "properties": {

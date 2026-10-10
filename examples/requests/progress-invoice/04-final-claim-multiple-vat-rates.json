@@ -1,0 +1,149 @@
+{
+  "data": {
+    "company": {
+      "name": "Bâti Exemple",
+      "legalForm": "SAS",
+      "capital": "50000",
+      "address": {
+        "line1": "8 rue des Artisans",
+        "postalCode": "69003",
+        "city": "Lyon"
+      },
+      "siret": "123 456 789 00012",
+      "rcs": "Lyon B 123 456 789",
+      "vatNumber": "FR12 123456789",
+      "phone": "04 00 00 00 00",
+      "email": "compta@bati-exemple.test",
+      "iban": "FR76 3000 6000 0112 3456 7890 189",
+      "bic": "AGRIFRPP",
+      "insurance": {
+        "insurer": "Assurances Exemple",
+        "policy": "DEC-2026-0042",
+        "coverage": "France métropolitaine"
+      }
+    },
+    "client": {
+      "name": "Mme Durand",
+      "address": {
+        "line1": "27 rue Victor-Hugo",
+        "postalCode": "69002",
+        "city": "Lyon"
+      }
+    },
+    "worksite": {
+      "name": "Rénovation énergétique d'un appartement",
+      "address": {
+        "line1": "27 rue Victor-Hugo",
+        "line2": "3e étage",
+        "postalCode": "69002",
+        "city": "Lyon"
+      }
+    },
+    "contract": {
+      "reference": "DV-2026-0204",
+      "date": "2026-06-12",
+      "kind": "forfait",
+      "vatRate": 10
+    },
+    "invoice": {
+      "number": "FA-2026-0181",
+      "date": "2026-10-09",
+      "situation": 3,
+      "final": true,
+      "periodStart": "2026-09-15",
+      "periodEnd": "2026-10-08",
+      "dueDate": "2026-10-23",
+      "paymentTerms": "à réception"
+    },
+    "lots": [
+      {
+        "code": "A",
+        "name": "Isolation et menuiseries (TVA 5,5 %)",
+        "lines": [
+          {
+            "code": "A.1",
+            "label": "Isolation des murs par l'intérieur",
+            "unit": "m²",
+            "quantity": "64",
+            "unitPrice": "58.00",
+            "progress": 100,
+            "previousProgress": 70,
+            "vatRate": 5.5
+          },
+          {
+            "code": "A.2",
+            "label": "Fenêtres double vitrage",
+            "unit": "u",
+            "quantity": "5",
+            "unitPrice": "760.00",
+            "progress": 100,
+            "previousProgress": 100,
+            "vatRate": 5.5
+          }
+        ]
+      },
+      {
+        "code": "B",
+        "name": "Aménagement (TVA 10 %)",
+        "lines": [
+          {
+            "code": "B.1",
+            "label": "Cloisons et doublages",
+            "unit": "m²",
+            "quantity": "38",
+            "unitPrice": "41.00",
+            "progress": 100,
+            "previousProgress": 60
+          },
+          {
+            "code": "B.2",
+            "label": "Peintures",
+            "unit": "m²",
+            "quantity": "210",
+            "unitPrice": "14.50",
+            "progress": 100,
+            "previousProgress": 0
+          }
+        ]
+      },
+      {
+        "code": "C",
+        "name": "Équipement (TVA 20 %)",
+        "lines": [
+          {
+            "code": "C.1",
+            "label": "Cuisine équipée (fourniture et pose)",
+            "unit": "forfait",
+            "quantity": "1",
+            "unitPrice": "6200.00",
+            "progress": 100,
+            "previousProgress": 50,
+            "vatRate": 20
+          }
+        ]
+      }
+    ],
+    "conditions": {
+      "guarantee": {
+        "mode": "none"
+      }
+    }
+  },
+  "layout": {
+    "font": "New Computer Modern",
+    "primaryColor": "#6d597a",
+    "accentColor": "#b56576",
+    "showAmountInWords": false,
+    "logo": {
+      "show": false
+    }
+  },
+  "metadata": {
+    "title": "Situation de solde — Rénovation Durand",
+    "author": "Bâti Exemple",
+    "keywords": [
+      "rénovation",
+      "TVA réduite"
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-//! US4 : templates ajoutés, modifiés et supprimés à chaud.
+//! US4: templates added, changed and removed while the service runs.
 
 mod common;
 
@@ -12,7 +12,7 @@ use inkpdf::registry::watcher::{self, WatcherHandle};
 use inkpdf::{Config, build_app};
 use serde_json::Value;
 
-/// Délai maximal de prise en compte (SC-003).
+/// Maximum delay before a change is picked up (SC-003).
 const DEADLINE: Duration = Duration::from_secs(5);
 
 struct LiveApp {
@@ -32,7 +32,7 @@ fn live_app(volume: &TestVolume) -> LiveApp {
     }
 }
 
-/// Sonde toutes les 100 ms jusqu'à ce que `check` soit vrai ; échoue au-delà de 5 s.
+/// Polls every 100 ms until `check` is true; fails after 5 s.
 async fn eventually<F, Fut>(what: &str, mut check: F)
 where
     F: FnMut() -> Fut,
@@ -171,7 +171,7 @@ async fn copy_in_progress_never_serves_a_truncated_file() {
 
     let original = std::fs::read_to_string(sample_template().join("main.typ")).unwrap();
     let updated = format!("{original}\nSecond version marker\n");
-    // Première moitié : fichier tronqué, syntaxiquement invalide.
+    // First half: truncated, syntactically invalid file.
     let (head, _) = updated.split_at(updated.find("#table(").unwrap() + "#table(".len());
 
     let writer = {

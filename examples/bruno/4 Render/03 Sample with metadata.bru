@@ -1,0 +1,126 @@
+meta {
+  name: Sample with metadata
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/templates/sample/render
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "data": {
+      "title": "Sample",
+      "items": [
+        {
+          "label": "Alpha",
+          "value": 1.5
+        },
+        {
+          "label": "Beta",
+          "value": 6
+        },
+        {
+          "label": "Gamma",
+          "value": 9
+        },
+        {
+          "label": "Delta",
+          "value": 6.0
+        },
+        {
+          "label": "Epsilon",
+          "value": 15
+        },
+        {
+          "label": "Zeta",
+          "value": 18
+        },
+        {
+          "label": "Eta",
+          "value": 10.5
+        },
+        {
+          "label": "Theta",
+          "value": 24
+        },
+        {
+          "label": "Iota",
+          "value": 27
+        },
+        {
+          "label": "Kappa",
+          "value": 15.0
+        },
+        {
+          "label": "Lambda",
+          "value": 33
+        },
+        {
+          "label": "Mu",
+          "value": 36
+        },
+        {
+          "label": "Nu",
+          "value": 19.5
+        },
+        {
+          "label": "Xi",
+          "value": 42
+        },
+        {
+          "label": "Omicron",
+          "value": 45
+        },
+        {
+          "label": "Pi",
+          "value": 24.0
+        },
+        {
+          "label": "Rho",
+          "value": 51
+        },
+        {
+          "label": "Sigma",
+          "value": 54
+        },
+        {
+          "label": "Tau",
+          "value": 28.5
+        },
+        {
+          "label": "Upsilon",
+          "value": 60
+        }
+      ]
+    },
+    "metadata": {
+      "title": "Quarterly report",
+      "author": [
+        "ACME Corp",
+        "Accounting"
+      ],
+      "subject": "Quarter summary",
+      "keywords": [
+        "report",
+        "Q3"
+      ],
+      "date": "2026-10-01"
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  PDF metadata: request first, then the template's `set document`, then service defaults (`INKPDF_DEFAULT_AUTHOR`).
+}

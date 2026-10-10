@@ -1,4 +1,4 @@
-//! US3 : liste, détail et schéma des templates.
+//! US3: template list, details and schema.
 
 mod common;
 
@@ -30,7 +30,7 @@ async fn list_is_sorted_with_status_and_reason() {
 
     let sample = &templates[1];
     assert_eq!(sample["id"], "sample");
-    assert_eq!(sample["name"], "Exemple");
+    assert_eq!(sample["name"], "Sample");
     assert_eq!(sample["version"], "1.0.0");
     assert!(sample["description"].is_string());
     assert_eq!(sample["status"], "valid");
@@ -47,7 +47,7 @@ async fn detail_exposes_schema_and_links() {
     let properties = &body["schema"]["properties"];
     assert!(properties.get("data").is_some());
     assert_eq!(
-        properties["design"]["properties"]["primaryColor"]["default"],
+        properties["layout"]["properties"]["primaryColor"]["default"],
         "#1f4e79"
     );
     assert_eq!(body["links"]["schema"], "/templates/sample/schema");
@@ -108,4 +108,61 @@ async fn unknown_template_is_not_found_on_both_routes() {
         assert_eq!(headers[header::CONTENT_TYPE], "application/problem+json");
         assert_eq!(problem(&body)["code"], "template-not-found");
     }
+}
+
+/// US2 (002): an incorrect package import makes the template invalid at load time.
+#[tokio::test]
+async fn incorrect_package_imports_make_templates_invalid() {
+    let volume = TestVolume::new();
+    for name in [
+        "version-written",
+        "unknown-package",
+        "other-namespace",
+        "dynamic-import",
+    ] {
+        volume.copy_template(&fixture(name), name);
+    }
+    let app = test_app(test_config(&volume));
+
+    let expected = [
+        (
+            "version-written",
+            "main.typ:2: remove the version: write @preview/zero (inkpdf uses its installed version)",
+        ),
+        (
+            "unknown-package",
+            "main.typ:2: package @preview/does-not-exist is not available in inkpdf (see GET /packages)",
+        ),
+        (
+            "other-namespace",
+            "main.typ:2: only @preview packages are available: @local/zero",
+        ),
+    ];
+    for (id, reason) in expected {
+        let (status, body) = get_json(&app, &format!("/templates/{id}")).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body["status"], "invalid", "{id}");
+        assert_eq!(body["reason"], reason, "{id}");
+
+        let (status, _, body) = post_json(
+            &app,
+            &format!("/templates/{id}/render"),
+            &serde_json::json!({"data": {}}),
+        )
+        .await;
+        assert_eq!(status, StatusCode::CONFLICT, "{id}");
+        assert_eq!(problem(&body)["code"], "template-invalid", "{id}");
+    }
+
+    // Computed import: not visible at load time, refused at render time (contract rule 4).
+    let (_, body) = get_json(&app, "/templates/dynamic-import").await;
+    assert_eq!(body["status"], "valid");
+    let (status, _, body) = post_json(
+        &app,
+        "/templates/dynamic-import/render",
+        &serde_json::json!({"data": {}}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(problem(&body)["code"], "render-failed");
 }

@@ -1,0 +1,51 @@
+meta {
+  name: Package demo
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/templates/packages-demo/render
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "data": {
+      "title": "Package demo",
+      "amount": "1234.56",
+      "reference": "DEMO-2026-0001",
+      "series": [
+        {
+          "label": "T1",
+          "value": 12
+        },
+        {
+          "label": "T2",
+          "value": 19
+        },
+        {
+          "label": "T3",
+          "value": 15
+        },
+        {
+          "label": "T4",
+          "value": 24
+        }
+      ]
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Source: examples/requests/packages-demo.json
+}

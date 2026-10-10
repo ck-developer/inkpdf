@@ -1,0 +1,5 @@
+{
+  "name": "Construction progress invoice",
+  "description": "Multi-page French construction progress invoice (facture de situation): per-item progress, amendments, price revision, shared site costs, advance repayment, retention or bank guarantee, VAT reverse charge, several VAT rates, SEPA payment QR code. Demo only: legal wording and calculation rules are indicative.",
+  "version": "1.0.0"
+}

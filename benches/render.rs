@@ -1,6 +1,6 @@
-//! Benchmark du pipeline de rendu (SC-001) : `examples/templates/sample` avec
-//! `examples/requests/sample.json`. Mesure fine et comparable entre versions ; le seuil
-//! bloquant (p95 < 200 ms) est vérifié par `tests/perf.rs`.
+//! Rendering pipeline benchmark (SC-001): `examples/templates/sample` with
+//! `examples/requests/sample.json`. Fine-grained and comparable across versions; the
+//! blocking threshold (p95 < 200 ms) is checked by `tests/perf.rs`.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -27,7 +27,16 @@ fn render_sample(c: &mut Criterion) {
     let body = entry.schema.as_ref().unwrap().prepare(request).unwrap();
 
     c.bench_function("render sample (20 rows)", |b| {
-        b.iter(|| compile_pdf(entry.clone(), &body, Arc::new(AtomicBool::new(false))).unwrap())
+        b.iter(|| {
+            compile_pdf(
+                entry.clone(),
+                &body,
+                &Default::default(),
+                "inkpdf",
+                Arc::new(AtomicBool::new(false)),
+            )
+            .unwrap()
+        })
     });
 }
 

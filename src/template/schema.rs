@@ -1,4 +1,4 @@
-//! Schéma `schema.json` d'un template : chargement, défauts de `design`, validation.
+//! A template's `schema.json`: loading, `layout` defaults, validation.
 
 use jsonschema::{Draft, Validator};
 use serde_json::{Map, Value};
@@ -6,11 +6,11 @@ use typst::foundations::Bytes;
 
 use crate::error::Violation;
 
-/// Schéma compilé d'un template.
+/// Compiled schema of a template.
 pub struct TemplateSchema {
-    /// Octets d'origine du fichier, exposés tels quels (constitution VI).
+    /// Original bytes of the file, exposed as is (constitution VI).
     raw: Bytes,
-    /// Schéma tel qu'écrit par l'auteur (sans l'`additionalProperties` ajouté).
+    /// Schema as written by the author (without the added `additionalProperties`).
     value: Value,
     validator: Validator,
 }
@@ -24,7 +24,7 @@ impl std::fmt::Debug for TemplateSchema {
 }
 
 impl TemplateSchema {
-    /// Charge et compile un schéma ; l'erreur est destinée à l'auteur du template.
+    /// Loads and compiles a schema; the error is meant for the template author.
     pub fn load(raw: Bytes) -> Result<Self, String> {
         let value: Value = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
         let root = value
@@ -41,9 +41,9 @@ impl TemplateSchema {
         if !properties.contains_key("data") {
             return Err("the root of the schema must declare `properties.data`".into());
         }
-        if let Some(other) = properties.keys().find(|k| *k != "data" && *k != "design") {
+        if let Some(other) = properties.keys().find(|k| *k != "data" && *k != "layout") {
             return Err(format!(
-                "only `data` and `design` may be declared at the root of the schema, found `{other}`"
+                "only `data` and `layout` may be declared at the root of the schema, found `{other}`"
             ));
         }
         if let Some(reference) = find_external_ref(&value) {
@@ -69,32 +69,31 @@ impl TemplateSchema {
         })
     }
 
-    /// Octets d'origine de `schema.json`.
+    /// Original bytes of `schema.json`.
     pub fn raw(&self) -> &Bytes {
         &self.raw
     }
 
-    /// Schéma tel qu'écrit par l'auteur.
+    /// Schema as written by the author.
     pub fn value(&self) -> &Value {
         &self.value
     }
 
-    /// Applique les défauts de `design` puis valide le corps.
+    /// Applies the `layout` defaults, then validates the body.
     ///
-    /// Le corps doit être un objet JSON (vérifié par l'appelant). Toutes les violations sont
-    /// renvoyées.
+    /// The body must be a JSON object (checked by the caller). All violations are returned.
     pub fn prepare(&self, mut body: Value) -> Result<Value, Vec<Violation>> {
-        // `design` n'est initialisé que si le schéma le déclare : sinon la clé ajoutée serait
-        // refusée par `additionalProperties: false`.
-        if let (Some(root), Some(design_schema)) = (
+        // `layout` is initialized only if the schema declares it: otherwise the added key would
+        // be rejected by `additionalProperties: false`.
+        if let (Some(root), Some(layout_schema)) = (
             body.as_object_mut(),
-            self.value.pointer("/properties/design"),
+            self.value.pointer("/properties/layout"),
         ) {
-            let design = root
-                .entry("design")
+            let layout = root
+                .entry("layout")
                 .or_insert_with(|| Value::Object(Map::new()));
-            if let Some(design) = design.as_object_mut() {
-                apply_defaults(design_schema, design);
+            if let Some(layout) = layout.as_object_mut() {
+                apply_defaults(layout_schema, layout);
             }
         }
 
@@ -116,7 +115,7 @@ impl TemplateSchema {
     }
 }
 
-/// Insère les `default` des propriétés absentes, récursivement sur les sous-objets.
+/// Inserts the `default` of missing properties, recursively into sub-objects.
 fn apply_defaults(schema: &Value, target: &mut Map<String, Value>) {
     let Some(properties) = schema.get("properties").and_then(Value::as_object) else {
         return;
@@ -138,7 +137,7 @@ fn apply_defaults(schema: &Value, target: &mut Map<String, Value>) {
     }
 }
 
-/// Vrai si une propriété de ce (sous-)schéma, à n'importe quelle profondeur, a un `default`.
+/// True if a property of this (sub-)schema, at any depth, has a `default`.
 fn has_defaults(schema: &Value) -> bool {
     schema
         .get("properties")
@@ -183,7 +182,7 @@ mod tests {
                         "count": { "type": "integer", "default": 3 }
                     }
                 },
-                "design": {
+                "layout": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -229,19 +228,19 @@ mod tests {
     }
 
     #[test]
-    fn missing_design_gets_defaults() {
+    fn missing_layout_gets_defaults() {
         let body = sample().prepare(json!({"data": {"title": "T"}})).unwrap();
-        assert_eq!(body["design"]["color"], "#000000");
-        assert_eq!(body["design"]["align"], "left");
+        assert_eq!(body["layout"]["color"], "#000000");
+        assert_eq!(body["layout"]["align"], "left");
     }
 
     #[test]
-    fn provided_design_values_are_kept() {
+    fn provided_layout_values_are_kept() {
         let body = sample()
-            .prepare(json!({"data": {"title": "T"}, "design": {"align": "right"}}))
+            .prepare(json!({"data": {"title": "T"}, "layout": {"align": "right"}}))
             .unwrap();
-        assert_eq!(body["design"]["align"], "right");
-        assert_eq!(body["design"]["color"], "#000000");
+        assert_eq!(body["layout"]["align"], "right");
+        assert_eq!(body["layout"]["color"], "#000000");
     }
 
     #[test]
@@ -253,27 +252,27 @@ mod tests {
     #[test]
     fn invalid_body_lists_every_violation() {
         let violations = sample()
-            .prepare(json!({"data": {"title": ""}, "design": {"align": "top"}}))
+            .prepare(json!({"data": {"title": ""}, "layout": {"align": "top"}}))
             .unwrap_err();
         let paths: Vec<&str> = violations.iter().map(|v| v.path.as_str()).collect();
         assert!(paths.contains(&"/data/title"), "{paths:?}");
-        assert!(paths.contains(&"/design/align"), "{paths:?}");
+        assert!(paths.contains(&"/layout/align"), "{paths:?}");
         let align = violations
             .iter()
-            .find(|v| v.path == "/design/align")
+            .find(|v| v.path == "/layout/align")
             .unwrap();
         assert_eq!(
             align.schema_path,
-            "/properties/design/properties/align/enum"
+            "/properties/layout/properties/align/enum"
         );
         assert!(!align.message.is_empty());
     }
 
     #[test]
-    fn design_is_not_added_when_the_schema_does_not_declare_it() {
+    fn layout_is_not_added_when_the_schema_does_not_declare_it() {
         let schema = schema(json!({"type": "object", "properties": {"data": {}}}));
         let body = schema.prepare(json!({"data": {}})).unwrap();
-        assert!(body.get("design").is_none());
+        assert!(body.get("layout").is_none());
     }
 
     #[test]
@@ -286,18 +285,18 @@ mod tests {
     }
 
     #[test]
-    fn defaults_are_applied_recursively_to_design_sub_objects() {
+    fn defaults_are_applied_recursively_to_layout_sub_objects() {
         let body = sample().prepare(json!({"data": {"title": "T"}})).unwrap();
-        assert_eq!(body["design"]["header"]["visible"], true);
-        assert_eq!(body["design"]["header"]["size"], 12);
+        assert_eq!(body["layout"]["header"]["visible"], true);
+        assert_eq!(body["layout"]["header"]["size"], 12);
     }
 
     #[test]
     fn partial_sub_object_is_completed_without_overwriting() {
         let body = sample()
-            .prepare(json!({"data": {"title": "T"}, "design": {"header": {"visible": false}}}))
+            .prepare(json!({"data": {"title": "T"}, "layout": {"header": {"visible": false}}}))
             .unwrap();
-        assert_eq!(body["design"]["header"]["visible"], false);
-        assert_eq!(body["design"]["header"]["size"], 12);
+        assert_eq!(body["layout"]["header"]["visible"], false);
+        assert_eq!(body["layout"]["header"]["size"], 12);
     }
 }

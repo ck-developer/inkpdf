@@ -9,19 +9,19 @@
             }
           }
         },
-        "description": "Erreur au format RFC 9457."
+        "description": "Error in RFC 9457 format."
       }
     },
     "schemas": {
       "Diagnostic": {
-        "description": "Diagnostic de compilation Typst.",
+        "description": "Typst compilation diagnostic.",
         "properties": {
           "column": {
             "minimum": 0,
             "type": "integer"
           },
           "file": {
-            "description": "Chemin relatif au dossier du template.",
+            "description": "Path relative to the template folder.",
             "type": "string"
           },
           "hints": {
@@ -43,11 +43,59 @@
         ],
         "type": "object"
       },
+      "DocumentMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "author": {
+            "oneOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "items": {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              }
+            ]
+          },
+          "date": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "subject": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ErrorCode": {
-        "description": "Code machine d'une erreur (FR-019).",
+        "description": "Machine-readable error code (FR-019).",
         "enum": [
           "template-not-found",
           "invalid-json",
+          "invalid-parameter",
           "unsupported-media-type",
           "validation-failed",
           "payload-too-large",
@@ -64,7 +112,7 @@
             "$ref": "#/components/schemas/HealthStatus"
           },
           "templates": {
-            "description": "Nombre de templates valides.",
+            "description": "Number of valid templates.",
             "minimum": 0,
             "type": "integer"
           },
@@ -86,8 +134,61 @@
         ],
         "type": "string"
       },
+      "PackageInfo": {
+        "description": "Package a template can import.",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "import": {
+            "description": "Import line to write in a template (never with a version).",
+            "example": "@preview/zero",
+            "type": "string"
+          },
+          "license": {
+            "description": "SPDX identifier or expression.",
+            "example": "MIT",
+            "type": "string"
+          },
+          "name": {
+            "description": "Package name on Typst Universe.",
+            "example": "zero",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version installed in the service (informational only).",
+            "example": "0.7.1",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "import",
+          "version",
+          "description",
+          "license"
+        ],
+        "type": "object"
+      },
+      "PackageList": {
+        "properties": {
+          "packages": {
+            "description": "Sorted by name; one entry per package.",
+            "items": {
+              "$ref": "#/components/schemas/PackageInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "packages"
+        ],
+        "type": "object"
+      },
       "Problem": {
-        "description": "Corps d'erreur RFC 9457.",
+        "description": "RFC 9457 error body.",
         "properties": {
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
@@ -133,23 +234,27 @@
       },
       "RenderRequest": {
         "additionalProperties": false,
-        "description": "Forme générique ; la forme exacte de `data` et `design` est donnée par le schéma du template\n(`GET /templates/{templateId}/schema`).",
+        "description": "Generic shape; the exact shape of `data` and `layout` is given by the template's schema\n(`GET /templates/{templateId}/schema`).",
         "properties": {
           "data": {
             "additionalProperties": {},
-            "description": "Données métier.",
+            "description": "Business data.",
             "propertyNames": {
               "type": "string"
             },
             "type": "object"
           },
-          "design": {
+          "layout": {
             "additionalProperties": {},
-            "description": "Paramètres de design ; les propriétés absentes prennent leur `default`.",
+            "description": "Layout parameters; missing properties take their `default`.",
             "propertyNames": {
               "type": "string"
             },
             "type": "object"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/DocumentMetadata",
+            "description": "PDF metadata, all optional. Without `author`, the service's default author\n(`INKPDF_DEFAULT_AUTHOR`, `inkpdf` by default); without `title`, the template's title,\nor failing that its name. `date` in `YYYY-MM-DD` format."
           }
         },
         "required": [
@@ -172,7 +277,7 @@
                 "type": "string"
               },
               "schema": {
-                "description": "JSON Schema de l'entrée (absent si le template est invalide).",
+                "description": "Input JSON Schema (absent when the template is invalid).",
                 "type": "object"
               }
             },
@@ -234,7 +339,7 @@
             "type": "string"
           },
           "reason": {
-            "description": "Présent si `status` vaut `invalid`.",
+            "description": "Present when `status` is `invalid`.",
             "type": "string"
           },
           "status": {
@@ -252,17 +357,17 @@
         "type": "object"
       },
       "Violation": {
-        "description": "Violation du schéma d'un template par le corps d'une requête.",
+        "description": "A request body's violation of a template's schema.",
         "properties": {
           "message": {
             "type": "string"
           },
           "path": {
-            "description": "JSON Pointer dans le corps de la requête.",
+            "description": "JSON Pointer into the request body.",
             "type": "string"
           },
           "schemaPath": {
-            "description": "JSON Pointer dans le schéma.",
+            "description": "JSON Pointer into the schema.",
             "type": "string"
           }
         },
@@ -276,9 +381,9 @@
     }
   },
   "info": {
-    "description": "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `design`), validé contre le JSON Schema du template avant génération.",
+    "description": "Internal service (private VPC, no authentication). Templates are hot-loaded from a mounted volume; the caller sends only JSON (`data` + `layout`), validated against the template's JSON Schema before generation.",
     "license": {
-      "name": "TODO(LICENSE) — MIT OR Apache-2.0 proposé"
+      "name": "TODO(LICENSE) — MIT OR Apache-2.0 proposed"
     },
     "title": "inkpdf",
     "version": "0.1.0"
@@ -297,10 +402,10 @@
                 }
               }
             },
-            "description": "Le processus répond."
+            "description": "The process responds."
           }
         },
-        "summary": "Vivacité du processus",
+        "summary": "Process liveness",
         "tags": [
           "ops"
         ]
@@ -318,12 +423,34 @@
                 }
               }
             },
-            "description": "Document OpenAPI 3.1."
+            "description": "OpenAPI 3.1 document."
           }
         },
-        "summary": "Ce document, au format JSON",
+        "summary": "This document, in JSON format",
         "tags": [
           "ops"
+        ]
+      }
+    },
+    "/packages": {
+      "get": {
+        "description": "Packages present only as dependencies of other packages are not listed: they\ncannot be imported.",
+        "operationId": "listPackages",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageList"
+                }
+              }
+            },
+            "description": "Packages importable with `#import \"@preview/<name>\"`."
+          }
+        },
+        "summary": "Packages available to templates",
+        "tags": [
+          "packages"
         ]
       }
     },
@@ -339,7 +466,7 @@
                 }
               }
             },
-            "description": "Prêt."
+            "description": "Ready."
           },
           "503": {
             "content": {
@@ -349,10 +476,10 @@
                 }
               }
             },
-            "description": "Scan initial en cours."
+            "description": "Initial scan in progress."
           }
         },
-        "summary": "Disponibilité (scan initial du volume terminé)",
+        "summary": "Readiness (initial volume scan finished)",
         "tags": [
           "ops"
         ]
@@ -370,10 +497,10 @@
                 }
               }
             },
-            "description": "Templates connus, valides ou invalides, triés par identifiant."
+            "description": "Known templates, valid or invalid, sorted by identifier."
           }
         },
-        "summary": "Lister les templates du volume",
+        "summary": "List the templates in the volume",
         "tags": [
           "templates"
         ]
@@ -384,7 +511,7 @@
         "operationId": "getTemplate",
         "parameters": [
           {
-            "description": "Identifiant du template (nom de son dossier).",
+            "description": "Template identifier (its folder name).",
             "example": "sample",
             "in": "path",
             "name": "templateId",
@@ -404,13 +531,13 @@
                 }
               }
             },
-            "description": "Détail du template."
+            "description": "Template detail."
           },
           "404": {
             "$ref": "#/components/responses/Problem"
           }
         },
-        "summary": "Détail d'un template, schéma compris",
+        "summary": "Template detail, schema included",
         "tags": [
           "templates"
         ]
@@ -418,17 +545,37 @@
     },
     "/templates/{templateId}/render": {
       "post": {
-        "description": "Valide le corps contre le schéma du template (après application des valeurs `default` de\n`design`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.",
+        "description": "Validates the body against the template's schema (after applying the `default` values of\n`layout`), then returns the PDF. No generation is attempted if validation fails.",
         "operationId": "renderTemplate",
         "parameters": [
           {
-            "description": "Identifiant du template (nom de son dossier).",
+            "description": "Template identifier (its folder name).",
             "example": "sample",
             "in": "path",
             "name": "templateId",
             "required": true,
             "schema": {
               "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`true`: respond as a download (`Content-Disposition: attachment`) instead of\ninline display. Values: `true`, `false`, `1`, `0`.",
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "File name (no path; `.pdf` appended). Default: `<templateId>.pdf`.",
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
               "type": "string"
             }
           }
@@ -453,10 +600,10 @@
                 }
               }
             },
-            "description": "Document généré.",
+            "description": "Generated document.",
             "headers": {
               "Content-Disposition": {
-                "description": "inline; filename=\"<templateId>.pdf\"",
+                "description": "`inline` (display) or `attachment` (download, `download=true`), with `filename` and `filename*` (UTF-8).",
                 "schema": {
                   "type": "string"
                 }
@@ -486,7 +633,7 @@
                 }
               }
             },
-            "description": "Corps non conforme au schéma du template."
+            "description": "Body does not match the template's schema."
           },
           "500": {
             "$ref": "#/components/responses/Problem"
@@ -498,7 +645,7 @@
             "$ref": "#/components/responses/Problem"
           }
         },
-        "summary": "Générer un PDF",
+        "summary": "Generate a PDF",
         "tags": [
           "render"
         ]
@@ -506,11 +653,11 @@
     },
     "/templates/{templateId}/schema": {
       "get": {
-        "description": "Utilisable directement par un validateur ou un générateur de formulaires.",
+        "description": "Usable directly by a validator or a form generator.",
         "operationId": "getTemplateSchema",
         "parameters": [
           {
-            "description": "Identifiant du template (nom de son dossier).",
+            "description": "Template identifier (its folder name).",
             "example": "sample",
             "in": "path",
             "name": "templateId",
@@ -539,7 +686,7 @@
             "$ref": "#/components/responses/Problem"
           }
         },
-        "summary": "JSON Schema brut de l'entrée du template",
+        "summary": "Raw JSON Schema of the template input",
         "tags": [
           "templates"
         ]
@@ -557,6 +704,9 @@
     },
     {
       "name": "render"
+    },
+    {
+      "name": "packages"
     },
     {
       "name": "ops"

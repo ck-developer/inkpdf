@@ -1,4 +1,5 @@
-//! Garanties du bac à sable : paquets, lecture hors du dossier, liens sortants, injection.
+//! Sandbox guarantees: packages (bundled packages only, confined to their root),
+//! reads outside the folder, outgoing links, injection.
 
 mod common;
 
@@ -19,13 +20,76 @@ async fn render(volume: &TestVolume, id: &str) -> (StatusCode, serde_json::Value
 }
 
 #[tokio::test]
-async fn package_import_is_refused() {
+async fn package_not_offered_by_the_service_is_refused() {
+    // `evil-package` imports a missing package (and writes a version): invalid template,
+    // no compilation, no download.
     let volume = TestVolume::new();
     volume.copy_template(&fixture("evil-package"), "evil-package");
     let (status, problem) = render(&volume, "evil-package").await;
-    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
-    assert_eq!(problem["code"], "render-failed");
-    assert!(problem.to_string().contains("package"), "{problem}");
+    assert_eq!(status, StatusCode::CONFLICT);
+    assert_eq!(problem["code"], "template-invalid");
+}
+
+#[tokio::test]
+async fn bundled_package_import_is_accepted() {
+    let volume = TestVolume::new();
+    volume
+        .write_file(
+            "with-package/main.typ",
+            "#import \"@preview/zero\": num\n#num(\"1234.5\")\n",
+        )
+        .write_file("with-package/schema.json", MINIMAL_SCHEMA);
+    let (status, problem) = render(&volume, "with-package").await;
+    assert_eq!(status, StatusCode::OK, "{problem}");
+}
+
+#[test]
+fn package_cannot_read_template_files() {
+    use inkpdf::render::world::SandboxWorld;
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use typst::World;
+    use typst::syntax::{RootedPath, VirtualPath, VirtualRoot};
+
+    let entry = entry_with_main("confined", "secret");
+    let world = SandboxWorld::new(
+        entry,
+        &json!({"data": {}}),
+        Arc::new(AtomicBool::new(false)),
+    );
+    let zero = inkpdf::packages::selected("zero").unwrap().spec().clone();
+    // Inside the package root, `/main.typ` never refers to the template's file.
+    let id = RootedPath::new(
+        VirtualRoot::Package(zero),
+        VirtualPath::new("main.typ").unwrap(),
+    )
+    .intern();
+    assert!(world.file(id).is_err());
+    // And an unknown package exposes nothing.
+    let unknown = "@preview/unknown:1.0.0".parse().unwrap();
+    let id = RootedPath::new(
+        VirtualRoot::Package(unknown),
+        VirtualPath::new("lib.typ").unwrap(),
+    )
+    .intern();
+    assert!(world.file(id).is_err());
+}
+
+#[tokio::test]
+async fn template_can_pass_an_image_to_a_package() {
+    let volume = TestVolume::new();
+    volume
+        .write_file(
+            "pass-image/main.typ",
+            "#import \"@preview/showybox\": showybox\n#showybox(image(\"logo.svg\", width: 1cm))\n",
+        )
+        .write_file(
+            "pass-image/logo.svg",
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>"#,
+        )
+        .write_file("pass-image/schema.json", MINIMAL_SCHEMA);
+    let (status, problem) = render(&volume, "pass-image").await;
+    assert_eq!(status, StatusCode::OK, "{problem}");
 }
 
 #[tokio::test]

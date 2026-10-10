@@ -1,4 +1,4 @@
-//! SC-002 (démarrage avec 50 templates) et SC-007 (20 rendus simultanés).
+//! SC-002 (startup with 50 templates) and SC-007 (20 concurrent renders).
 
 mod common;
 

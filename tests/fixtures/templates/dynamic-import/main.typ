@@ -1,0 +1,3 @@
+= Computed import
+#let name = "zero"
+#import ("@preview/" + name): num

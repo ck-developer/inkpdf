@@ -1,19 +1,20 @@
-//! Erreurs de l'API au format RFC 9457 (`application/problem+json`).
+//! API errors in RFC 9457 format (`application/problem+json`).
 
 use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// Préfixe des URI `type` des erreurs.
+/// Prefix of the error `type` URIs.
 pub const ERROR_TYPE_BASE: &str = "https://github.com/ck-developer/inkpdf/errors/";
 
-/// Code machine d'une erreur (FR-019).
+/// Machine-readable error code (FR-019).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ErrorCode {
     TemplateNotFound,
     InvalidJson,
+    InvalidParameter,
     UnsupportedMediaType,
     ValidationFailed,
     PayloadTooLarge,
@@ -28,6 +29,7 @@ impl ErrorCode {
         match self {
             Self::TemplateNotFound => "template-not-found",
             Self::InvalidJson => "invalid-json",
+            Self::InvalidParameter => "invalid-parameter",
             Self::UnsupportedMediaType => "unsupported-media-type",
             Self::ValidationFailed => "validation-failed",
             Self::PayloadTooLarge => "payload-too-large",
@@ -41,7 +43,7 @@ impl ErrorCode {
     pub fn status(self) -> StatusCode {
         match self {
             Self::TemplateNotFound => StatusCode::NOT_FOUND,
-            Self::InvalidJson => StatusCode::BAD_REQUEST,
+            Self::InvalidJson | Self::InvalidParameter => StatusCode::BAD_REQUEST,
             Self::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
             Self::ValidationFailed => StatusCode::UNPROCESSABLE_ENTITY,
             Self::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
@@ -56,6 +58,7 @@ impl ErrorCode {
         match self {
             Self::TemplateNotFound => "Template not found",
             Self::InvalidJson => "Invalid JSON",
+            Self::InvalidParameter => "Invalid parameter",
             Self::UnsupportedMediaType => "Unsupported media type",
             Self::ValidationFailed => "Validation failed",
             Self::PayloadTooLarge => "Payload too large",
@@ -67,22 +70,22 @@ impl ErrorCode {
     }
 }
 
-/// Violation du schéma d'un template par le corps d'une requête.
+/// A request body's violation of a template's schema.
 #[derive(Debug, Clone, PartialEq, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Violation {
-    /// JSON Pointer dans le corps de la requête.
+    /// JSON Pointer into the request body.
     pub path: String,
-    /// JSON Pointer dans le schéma.
+    /// JSON Pointer into the schema.
     pub schema_path: String,
     pub message: String,
 }
 
-/// Diagnostic de compilation Typst.
+/// Typst compilation diagnostic.
 #[derive(Debug, Clone, PartialEq, Serialize, ToSchema)]
 pub struct Diagnostic {
     pub message: String,
-    /// Chemin relatif au dossier du template.
+    /// Path relative to the template folder.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub file: Option<String>,
@@ -96,7 +99,7 @@ pub struct Diagnostic {
     pub hints: Vec<String>,
 }
 
-/// Corps d'erreur RFC 9457.
+/// RFC 9457 error body.
 #[derive(Debug, Clone, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Problem {
@@ -120,13 +123,15 @@ pub struct Problem {
     pub diagnostics: Option<Vec<Diagnostic>>,
 }
 
-/// Erreur renvoyée par un handler ; une variante par code du data-model.
+/// Error returned by a handler; one variant per data-model code.
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
     #[error("template not found")]
     TemplateNotFound,
     #[error("{message}")]
     InvalidJson { message: String },
+    #[error("invalid query parameter `{name}`: {message}")]
+    InvalidParameter { name: &'static str, message: String },
     #[error("expected Content-Type: application/json")]
     UnsupportedMediaType,
     #[error("{} violation(s)", violations.len())]
@@ -148,6 +153,7 @@ impl ApiError {
         match self {
             Self::TemplateNotFound => ErrorCode::TemplateNotFound,
             Self::InvalidJson { .. } => ErrorCode::InvalidJson,
+            Self::InvalidParameter { .. } => ErrorCode::InvalidParameter,
             Self::UnsupportedMediaType => ErrorCode::UnsupportedMediaType,
             Self::ValidationFailed { .. } => ErrorCode::ValidationFailed,
             Self::PayloadTooLarge { .. } => ErrorCode::PayloadTooLarge,
@@ -158,7 +164,7 @@ impl ApiError {
         }
     }
 
-    /// Associe l'identifiant du template concerné à l'erreur.
+    /// Attaches the affected template's identifier to the error.
     pub fn for_template(self, template_id: impl Into<String>) -> TemplateError {
         TemplateError {
             error: self,
@@ -206,7 +212,7 @@ impl IntoResponse for ApiError {
     }
 }
 
-/// [`ApiError`] accompagnée de l'identifiant du template concerné.
+/// [`ApiError`] together with the affected template's identifier.
 #[derive(Debug)]
 pub struct TemplateError {
     pub error: ApiError,

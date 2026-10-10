@@ -1,4 +1,4 @@
-//! Identifiant de template = nom de son dossier dans le volume.
+//! Template id = name of its directory in the volume.
 
 use std::fmt;
 use std::str::FromStr;
@@ -7,14 +7,14 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::Serialize;
 
-/// Format d'un identifiant de template (exposé tel quel dans l'OpenAPI).
+/// Format of a template id (exposed as is in the OpenAPI).
 pub const TEMPLATE_ID_PATTERN: &str = "^[a-z0-9][a-z0-9_-]{0,63}$";
 
 static TEMPLATE_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(TEMPLATE_ID_PATTERN).expect("valid pattern"));
 
-/// Identifiant validé : ne peut contenir ni `/`, ni `.`, ni majuscule, d'où l'absence de
-/// traversée de chemin possible.
+/// Validated id: it cannot contain `/`, `.` or uppercase letters, so no path traversal is
+/// possible.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 #[serde(transparent)]
 pub struct TemplateId(String);

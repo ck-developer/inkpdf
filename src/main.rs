@@ -1,5 +1,5 @@
-//! Binaire `inkpdf` : `inkpdf [serve]` démarre le service, `inkpdf healthcheck` interroge
-//! `/health` (utilisé par le `HEALTHCHECK` Docker, l'image n'ayant ni shell ni curl).
+//! `inkpdf` binary: `inkpdf [serve]` starts the service, `inkpdf healthcheck` queries
+//! `/health` (used by the Docker `HEALTHCHECK`, since the image has neither a shell nor curl).
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -103,7 +103,7 @@ fn init_tracing(format: LogFormat) {
     }
 }
 
-/// Client HTTP minimal (sans dépendance cliente) : `GET /health` sur le port configuré.
+/// Minimal HTTP client (no client dependency): `GET /health` on the configured port.
 fn healthcheck() -> ExitCode {
     let port = Config::from_env().map(|c| c.listen.port()).unwrap_or(3000);
     let address = SocketAddr::from(([127, 0, 0, 1], port));

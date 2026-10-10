@@ -1,6 +1,7 @@
-//! Modèle d'un template : identifiant, manifeste, schéma.
+//! Template model: id, manifest, schema.
 
 pub mod id;
+pub mod imports;
 pub mod manifest;
 pub mod schema;
 

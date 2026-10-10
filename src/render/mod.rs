@@ -1,6 +1,7 @@
-//! Pipeline de rendu : créneau, délai, compilation Typst, export PDF.
+//! Rendering pipeline: slot, timeout, Typst compilation, PDF export.
 
 pub mod fonts;
+pub mod metadata;
 pub mod value;
 pub mod world;
 
@@ -18,20 +19,22 @@ use typst_pdf::PdfOptions;
 use crate::AppState;
 use crate::error::{ApiError, Diagnostic};
 use crate::registry::TemplateEntry;
+use metadata::DocumentMetadata;
 use world::SandboxWorld;
 
-/// Profondeur conservée par le cache de compilation entre deux rendus.
+/// Age kept by the compilation cache between two renders.
 const CACHE_MAX_AGE: usize = 10;
 
-/// Génère le PDF d'un template à partir d'un corps déjà validé.
+/// Generates a template's PDF from an already validated body.
 ///
-/// - attend un créneau au plus `queue_timeout` (sinon [`ApiError::Overloaded`]) ;
-/// - répond au plus tard après `render_timeout` (sinon [`ApiError::RenderTimeout`]) et demande
-///   alors l'annulation de la compilation, effective au prochain accès au monde ;
-/// - le créneau n'est rendu qu'à la fin réelle du thread de compilation.
+/// - waits at most `queue_timeout` for a slot (otherwise [`ApiError::Overloaded`]);
+/// - responds at the latest after `render_timeout` (otherwise [`ApiError::RenderTimeout`]) and
+///   then requests cancellation of the compilation, effective on the next world access;
+/// - the slot is released only when the compilation thread actually finishes.
 pub async fn render(
     entry: Arc<TemplateEntry>,
     body: serde_json::Value,
+    metadata: DocumentMetadata,
     state: &AppState,
 ) -> Result<Vec<u8>, ApiError> {
     let permit = match tokio::time::timeout(
@@ -45,6 +48,7 @@ pub async fn render(
     };
 
     let cancel = Arc::new(AtomicBool::new(false));
+    let default_author = state.config.default_author.clone();
     let task = {
         let cancel = cancel.clone();
         tokio::task::spawn_blocking(move || {
@@ -54,7 +58,7 @@ pub async fn render(
                 cancel: cancel.clone(),
                 started: Instant::now(),
             };
-            compile_pdf(entry, &body, cancel)
+            compile_pdf(entry, &body, &metadata, &default_author, cancel)
         })
     };
 
@@ -76,12 +80,12 @@ pub async fn render(
     }
 }
 
-/// Tient le créneau de rendu jusqu'à la fin réelle du thread de compilation, y compris quand
-/// celle-ci se termine par une panique.
+/// Holds the render slot until the compilation thread actually finishes, including when it
+/// ends with a panic.
 ///
-/// Après annulation, le monde renvoie des erreurs là où il servait des fichiers : en debug,
-/// l'assertion de pureté de `comemo` transforme cela en panique du thread abandonné ; en
-/// release, la compilation échoue normalement. Dans les deux cas, le créneau est rendu ici.
+/// After cancellation, the world returns errors where it used to serve files: in debug,
+/// `comemo`'s purity assertion turns this into a panic of the abandoned thread; in release,
+/// the compilation fails normally. In both cases, the slot is released here.
 struct RenderGuard {
     _permit: OwnedSemaphorePermit,
     template_id: String,
@@ -102,18 +106,26 @@ impl Drop for RenderGuard {
     }
 }
 
-/// Compilation et export, bloquants.
+/// Compilation and export, blocking.
 pub fn compile_pdf(
     entry: Arc<TemplateEntry>,
     body: &serde_json::Value,
+    metadata: &DocumentMetadata,
+    default_author: &str,
     cancel: Arc<AtomicBool>,
 ) -> Result<Vec<u8>, ApiError> {
     let ident = format!("{}@{}", entry.id, entry.fingerprint);
+    let template_name = entry.name.clone();
     let world = SandboxWorld::new(entry, body, cancel);
 
     let Warned { output, .. } = typst::compile::<PagedDocument>(&world);
     let result = output
-        .and_then(|document| {
+        .and_then(|mut document| {
+            let defaults = metadata::Defaults {
+                title: &template_name,
+                author: default_author,
+            };
+            metadata::apply(document.info_mut(), metadata, &defaults);
             let options = PdfOptions {
                 ident: Smart::Custom(ident),
                 timestamp: None,
