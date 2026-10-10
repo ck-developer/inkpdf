@@ -190,11 +190,11 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 **Independent Test**: files present, issue and PR templates render on GitHub, README ≤ about one screen.
 
-- [ ] T031 [P] [US3] Write `CONTRIBUTING.md`: setup (Rust toolchain, Docker), workspace layout, conventional commits, tests, docs (`cargo xtask docs generate`, `mdbook serve docs`), packages (`cargo xtask packages`), PR checklist, release flow, English-only convention.
-- [ ] T032 [P] [US3] Add `CODE_OF_CONDUCT.md`: Contributor Covenant 2.1, full official text, with the contact `conduct@` replaced by "open a private report through GitHub (Security → Report a vulnerability) or contact the maintainers listed in the repository".
-- [ ] T033 [P] [US3] Write `SECURITY.md`: supported versions (latest release and `dev`), private reporting through GitHub private vulnerability reporting, scope (sandbox escapes, path traversal, resource exhaustion), and a reminder of the deployment model (private network, no auth).
-- [ ] T034 [P] [US3] Create `.github/ISSUE_TEMPLATE/bug.yml`, `feature.yml` and `config.yml` (blank issues disabled, links to docs and security), plus `.github/PULL_REQUEST_TEMPLATE.md` (summary, test plan, docs updated, conventional title).
-- [ ] T035 [P] [US3] Create `.github/dependabot.yml`: weekly updates for `cargo` (directory `/`), `github-actions` (`/`) and `docker` (`/`), with Rust minor and patch updates grouped.
+- [X] T031 [P] [US3] Write `CONTRIBUTING.md`: setup (Rust toolchain, Docker), workspace layout, conventional commits, tests, docs (`cargo xtask docs generate`, `mdbook serve docs`), packages (`cargo xtask packages`), PR checklist, release flow, English-only convention.
+- [X] T032 [P] [US3] Add `CODE_OF_CONDUCT.md`: Contributor Covenant 2.1, full official text, with the contact `conduct@` replaced by "open a private report through GitHub (Security → Report a vulnerability) or contact the maintainers listed in the repository".
+- [X] T033 [P] [US3] Write `SECURITY.md`: supported versions (latest release and `dev`), private reporting through GitHub private vulnerability reporting, scope (sandbox escapes, path traversal, resource exhaustion), and a reminder of the deployment model (private network, no auth).
+- [X] T034 [P] [US3] Create `.github/ISSUE_TEMPLATE/bug.yml`, `feature.yml` and `config.yml` (blank issues disabled, links to docs and security), plus `.github/PULL_REQUEST_TEMPLATE.md` (summary, test plan, docs updated, conventional title).
+- [X] T035 [P] [US3] Create `.github/dependabot.yml`: weekly updates for `cargo` (directory `/`), `github-actions` (`/`) and `docker` (`/`), with Rust minor and patch updates grouped.
 - [ ] T036 [US3] Rewrite `README.md` as an entry point:
   - badges: CI, Docs, License, Release, GHCR ;
   - a one-paragraph pitch ;
