@@ -25,7 +25,7 @@ use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
         title = "inkpdf",
         version = env!("CARGO_PKG_VERSION"),
         description = "Internal service (private VPC, no authentication). Templates are hot-loaded from a mounted volume; the caller sends only JSON (`data` + `layout`), validated against the template's JSON Schema before generation.",
-        license(name = "TODO(LICENSE) — MIT OR Apache-2.0 proposed"),
+        license(name = "MIT OR Apache-2.0", identifier = "MIT OR Apache-2.0"),
     ),
     servers((url = "http://localhost:3000")),
     tags((name = "templates"), (name = "render"), (name = "packages"), (name = "ops")),

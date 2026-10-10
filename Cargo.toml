@@ -5,7 +5,6 @@ edition = "2024"
 rust-version = "1.98"
 description = "PDF generation service from Typst templates, without a browser."
 repository = "https://github.com/ck-developer/inkpdf"
-# TODO(LICENSE): provisional license, to be settled before the first release (constitution).
 license = "MIT OR Apache-2.0"
 publish = false
 
