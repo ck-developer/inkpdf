@@ -189,3 +189,23 @@ fn lock_file_matches_archives_and_binary() {
         .collect();
     assert_eq!(bundled, locked);
 }
+
+/// R11.4 — `docs/packages.md` présente exactement les paquets mis à disposition.
+#[test]
+fn documentation_lists_exactly_the_offered_packages() {
+    let doc = fs::read_to_string(repo_root().join("docs/packages.md")).unwrap();
+    let start = doc.find("## Paquets disponibles").expect("section « Paquets disponibles »");
+    let section = &doc[start..doc[start + 1..].find("\n## ").map_or(doc.len(), |i| start + 1 + i)];
+
+    let documented: BTreeSet<String> = section
+        .split('`')
+        .filter_map(|chunk| chunk.strip_prefix("@preview/"))
+        .map(str::to_owned)
+        .collect();
+    let offered: BTreeSet<String> = packages::all()
+        .iter()
+        .filter(|p| p.is_selected())
+        .map(|p| p.name().to_owned())
+        .collect();
+    assert_eq!(documented, offered);
+}

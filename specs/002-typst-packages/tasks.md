@@ -189,24 +189,24 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T026 [P] [US3] Créer `tests/api_packages.rs` (contracts/api.md). Vérifier :
+- [X] T026 [P] [US3] Créer `tests/api_packages.rs` (contracts/api.md). Vérifier :
   - `GET /packages` renvoie 200 `application/json` avec 21 éléments triés par `name` ;
   - chaque élément a exactement les champs `name`, `import`, `version`, `description` et `license` ;
   - `import == "@preview/" + name` ;
   - aucun paquet `dependency` n'est présent (ex. `komet`, `suiji`) ;
   - `zero` a la version 0.7.1.
-- [ ] T027 [P] [US3] Dans `tests/bundled_packages.rs`, écrire un test de **synchronisation de la doc** (R11.4) : `docs/packages.md` mentionne `@preview/<nom>` pour chacun des 21 paquets `selected`, et aucun autre `@preview/…` dans sa section « Paquets disponibles ».
+- [X] T027 [P] [US3] Dans `tests/bundled_packages.rs`, écrire un test de **synchronisation de la doc** (R11.4) : `docs/packages.md` mentionne `@preview/<nom>` pour chacun des 21 paquets `selected`, et aucun autre `@preview/…` dans sa section « Paquets disponibles ».
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Créer `src/api/packages.rs` :
+- [X] T028 [US3] Créer `src/api/packages.rs` :
   - une DTO `PackageInfo` (`ToSchema`, champs de contracts/api.md, motifs `pattern` sur `name` et `version`) ;
   - une DTO `PackageList` ;
   - un handler `list_packages` annoté `#[utoipa::path(get, path = "/packages", tag = "packages", responses(200))]`, qui projette `packages::all()` filtré sur `selected`.
 
   L'enregistrer dans `src/api/mod.rs` (route `OpenApiRouter` et tag `packages` dans `ApiDoc`).
-- [ ] T029 [US3] Régénérer `openapi/openapi.json` avec `INKPDF_UPDATE_OPENAPI=1 cargo test --test contract_openapi`, relire le diff (seulement `/packages` et les nouveaux schémas), puis relancer le test de contrat sans la variable.
-- [ ] T030 [US3] Rédiger `docs/packages.md`, section « Paquets disponibles » : pour chacun des 21 paquets, ce qu'il fait (reprendre `research/carte-paquets.md`), la ligne d'import, la version installée, la licence et la mention WASM le cas échéant. Ajouter une section « Licences » avec les 29 paquets et leurs licences.
+- [X] T029 [US3] Régénérer `openapi/openapi.json` avec `INKPDF_UPDATE_OPENAPI=1 cargo test --test contract_openapi`, relire le diff (seulement `/packages` et les nouveaux schémas), puis relancer le test de contrat sans la variable.
+- [X] T030 [US3] Rédiger `docs/packages.md`, section « Paquets disponibles » : pour chacun des 21 paquets, ce qu'il fait (reprendre `research/carte-paquets.md`), la ligne d'import, la version installée, la licence et la mention WASM le cas échéant. Ajouter une section « Licences » avec les 29 paquets et leurs licences.
 
 **Checkpoint** : les quatre stories fonctionnent indépendamment.
 

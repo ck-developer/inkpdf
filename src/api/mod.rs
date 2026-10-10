@@ -1,6 +1,7 @@
 //! Routeur HTTP et document OpenAPI.
 
 pub mod health;
+pub mod packages;
 pub mod render;
 pub mod templates;
 
@@ -27,7 +28,7 @@ use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
         license(name = "TODO(LICENSE) — MIT OR Apache-2.0 proposé"),
     ),
     servers((url = "http://localhost:3000")),
-    tags((name = "templates"), (name = "render"), (name = "ops")),
+    tags((name = "templates"), (name = "render"), (name = "packages"), (name = "ops")),
     components(
         schemas(Problem, ErrorCode, Violation, Diagnostic, health::Health),
         responses(ProblemResponse),
@@ -57,6 +58,7 @@ fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(templates::get_template))
         .routes(routes!(templates::get_template_schema))
         .routes(routes!(render::render_template))
+        .routes(routes!(packages::list_packages))
         .routes(routes!(health::health))
         .routes(routes!(health::ready))
         .routes(routes!(openapi_json))

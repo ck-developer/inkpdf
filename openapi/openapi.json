@@ -86,6 +86,59 @@
         ],
         "type": "string"
       },
+      "PackageInfo": {
+        "description": "Paquet importable par un template.",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "import": {
+            "description": "Ligne d'import à écrire dans un template (jamais de version).",
+            "example": "@preview/zero",
+            "type": "string"
+          },
+          "license": {
+            "description": "Identifiant ou expression SPDX.",
+            "example": "MIT",
+            "type": "string"
+          },
+          "name": {
+            "description": "Nom du paquet sur Typst Universe.",
+            "example": "zero",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version installée dans le service (information seulement).",
+            "example": "0.7.1",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "import",
+          "version",
+          "description",
+          "license"
+        ],
+        "type": "object"
+      },
+      "PackageList": {
+        "properties": {
+          "packages": {
+            "description": "Triés par nom ; une seule entrée par paquet.",
+            "items": {
+              "$ref": "#/components/schemas/PackageInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "packages"
+        ],
+        "type": "object"
+      },
       "Problem": {
         "description": "Corps d'erreur RFC 9457.",
         "properties": {
@@ -327,6 +380,28 @@
         ]
       }
     },
+    "/packages": {
+      "get": {
+        "description": "Les paquets présents seulement comme dépendances d'autres paquets ne sont pas listés : ils\nne sont pas importables.",
+        "operationId": "listPackages",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageList"
+                }
+              }
+            },
+            "description": "Paquets importables par `#import \"@preview/<nom>\"`."
+          }
+        },
+        "summary": "Paquets disponibles pour les templates",
+        "tags": [
+          "packages"
+        ]
+      }
+    },
     "/ready": {
       "get": {
         "operationId": "ready",
@@ -557,6 +632,9 @@
     },
     {
       "name": "render"
+    },
+    {
+      "name": "packages"
     },
     {
       "name": "ops"
