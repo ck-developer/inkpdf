@@ -78,11 +78,13 @@ impl SandboxWorld {
         Ok(())
     }
 
-    /// Chemin relatif au dossier du template, pour les diagnostics.
+    /// Chemin affiché dans les diagnostics : relatif au dossier du template, ou préfixé par
+    /// le paquet (`@preview/zero:0.7.1/src/num.typ`).
     pub fn relative_path(id: FileId) -> Option<String> {
+        let path = id.vpath().get_without_slash();
         match id.root() {
-            VirtualRoot::Project => Some(id.vpath().get_without_slash().to_owned()),
-            VirtualRoot::Package(_) => None,
+            VirtualRoot::Project => Some(path.to_owned()),
+            VirtualRoot::Package(spec) => Some(format!("{spec}/{path}")),
         }
     }
 

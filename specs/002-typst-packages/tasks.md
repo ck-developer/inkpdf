@@ -142,16 +142,16 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T019 [P] [US2] Créer les fixtures `tests/fixtures/templates/{version-written,unknown-package,other-namespace,dynamic-import}/`, chacune avec `main.typ` et un `schema.json` minimal. Elles importent respectivement `@preview/zero:0.7.1`, `@preview/does-not-exist`, `@local/zero` et `("@preview/" + "zero")`. Dans `tests/api_templates.rs`, vérifier :
+- [X] T019 [P] [US2] Créer les fixtures `tests/fixtures/templates/{version-written,unknown-package,other-namespace,dynamic-import}/`, chacune avec `main.typ` et un `schema.json` minimal. Elles importent respectivement `@preview/zero:0.7.1`, `@preview/does-not-exist`, `@local/zero` et `("@preview/" + "zero")`. Dans `tests/api_templates.rs`, vérifier :
   - pour les trois premières, `status: invalid` avec la raison exacte de contracts/template-imports.md (fichier et ligne compris) ;
   - qu'une génération répond 409 `template-invalid` ;
   - pour `dynamic-import`, `status: valid`, puis une génération en 500 `render-failed`.
-- [ ] T020 [P] [US2] Dans `tests/api_render.rs` (FR-012), écrire un test : une fixture `tests/fixtures/templates/package-error/` provoque une erreur dans le code d'un paquet (par exemple un argument invalide passé à une fonction de `zero`). La réponse 500 `render-failed` contient un diagnostic dont `file` commence par `@preview/zero:0.7.1/` et dont `line` est renseigné.
+- [X] T020 [P] [US2] Dans `tests/api_render.rs` (FR-012), écrire un test : une fixture `tests/fixtures/templates/package-error/` provoque une erreur dans le code d'un paquet (par exemple un argument invalide passé à une fonction de `zero`). La réponse 500 `render-failed` contient un diagnostic dont `file` commence par `@preview/zero:0.7.1/` et dont `line` est renseigné.
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Dans `src/render/world.rs`, faire renvoyer à `SandboxWorld::relative_path` la chaîne `@preview/<nom>:<version>/<chemin>` pour `VirtualRoot::Package(spec)` (R7). Vérifier que `src/render/mod.rs::to_diagnostic` calcule la ligne pour ces fichiers, la source étant obtenue via le même `World` grâce au cache de T015.
-- [ ] T022 [US2] Vérifier que les messages et le tri de `src/template/imports.rs` et `src/registry/loader.rs` correspondent mot pour mot au contrat. Ajuster si T019 échoue, puis relancer T019 et T020.
+- [X] T021 [US2] Dans `src/render/world.rs`, faire renvoyer à `SandboxWorld::relative_path` la chaîne `@preview/<nom>:<version>/<chemin>` pour `VirtualRoot::Package(spec)` (R7). Vérifier que `src/render/mod.rs::to_diagnostic` calcule la ligne pour ces fichiers, la source étant obtenue via le même `World` grâce au cache de T015.
+- [X] T022 [US2] Vérifier que les messages et le tri de `src/template/imports.rs` et `src/registry/loader.rs` correspondent mot pour mot au contrat. Ajuster si T019 échoue, puis relancer T019 et T020.
 
 **Checkpoint** : US1 et US2 fonctionnent ; quickstart.md P3 et P4 sont vérifiés.
 

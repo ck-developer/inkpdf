@@ -196,3 +196,24 @@ async fn template_using_bundled_packages_renders() {
     assert!(compact.contains("1234,56€"), "{text}");
     assert!(text.contains("DEMO-2026-0001"), "{text}");
 }
+
+/// FR-012 : une erreur dans le code d'un paquet indique le paquet, le fichier et la ligne.
+#[tokio::test]
+async fn error_inside_a_package_points_to_the_package_file() {
+    let volume = TestVolume::new();
+    volume.copy_template(&fixture("package-error"), "package-error");
+    let app = test_app(test_config(&volume));
+    let (status, _, body) = post_json(&app, "/templates/package-error/render", &json!({"data": {}})).await;
+    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    let problem = problem(&body);
+    assert_eq!(problem["code"], "render-failed");
+    let version = inkpdf::packages::selected("zero").unwrap().version();
+    let prefix = format!("@preview/zero:{version}/");
+    let diagnostics = problem["diagnostics"].as_array().unwrap();
+    assert!(
+        diagnostics.iter().any(|d| {
+            d["file"].as_str().is_some_and(|f| f.starts_with(&prefix)) && d["line"].is_u64()
+        }),
+        "{problem}"
+    );
+}
