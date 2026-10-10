@@ -6,6 +6,7 @@
 pub mod api;
 pub mod config;
 pub mod error;
+pub mod packages;
 pub mod registry;
 pub mod render;
 pub mod template;

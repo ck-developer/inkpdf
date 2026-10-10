@@ -4,9 +4,10 @@
 FROM rust:1.98-bookworm AS build
 WORKDIR /src
 
-# Dépendances compilées dans une couche à part (cache tant que Cargo.toml/Cargo.lock ne
-# changent pas).
-COPY Cargo.toml Cargo.lock ./
+# Dépendances compilées dans une couche à part (cache tant que Cargo.toml/Cargo.lock, build.rs
+# et les paquets Typst intégrés ne changent pas).
+COPY Cargo.toml Cargo.lock build.rs ./
+COPY packages ./packages
 RUN mkdir -p src benches \
     && echo 'fn main() {}' > src/main.rs \
     && touch src/lib.rs \

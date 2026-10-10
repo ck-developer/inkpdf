@@ -46,18 +46,18 @@ US2 (P2), US4 (P2), US3 (P3).
 
 **Purpose** : archives, fichier de verrouillage et outillage de construction.
 
-- [ ] T001 Écrire `scripts/add-package.sh <name> <version> [--dependency]` (bash, `set -euo pipefail`, contract lock-file.md, R13). Le script :
+- [X] T001 Écrire `scripts/add-package.sh <name> <version> [--dependency]` (bash, `set -euo pipefail`, contract lock-file.md, R13). Le script :
   - télécharge `https://packages.typst.org/preview/<name>-<version>.tar.gz` dans `packages/vendor/` ;
   - calcule le sha256 (`shasum -a 256` ou `sha256sum`) ;
   - lit `license` dans le `typst.toml` de l'archive (`tar -xzOf … typst.toml`) ;
   - écrit ou remplace l'entrée dans `packages/lock.toml`, triée par `name` puis `version`, avec `role = "selected"` par défaut ou `"dependency"`. En mode `selected`, une entrée `selected` existante du même nom est remplacée et son archive supprimée si aucune autre entrée ne la référence ;
   - rend le fichier exécutable.
-- [ ] T002 Lancer `scripts/add-package.sh` pour les 21 paquets `selected` et les 8 `dependency` du tableau ci-dessus. Vérifier :
+- [X] T002 Lancer `scripts/add-package.sh` pour les 21 paquets `selected` et les 8 `dependency` du tableau ci-dessus. Vérifier :
   - 29 entrées dans `packages/lock.toml`, avec l'en-tête de commentaire du contract lock-file.md ;
   - 29 archives dans `packages/vendor/` (environ 1,7 Mo) ;
   - les licences (`rustycure` en EUPL-1.2, `cetz`/`cetz-plot` en LGPL-3.0-or-later, `payqr-swiss` en LGPL).
-- [ ] T003 [P] Ajouter dans `Cargo.toml` les `[build-dependencies]` `flate2`, `tar`, `sha2`, `toml` et `serde` (feature `derive`), avec des versions compatibles avec celles déjà présentes dans `Cargo.lock`. Ajouter `sha2` et `toml` aux `[dev-dependencies]`. Vérifier qu'aucune dépendance d'exécution n'est ajoutée (`cargo tree -e normal --depth 1`).
-- [ ] T004 [P] Mettre à jour `Dockerfile` : dans les deux étapes de build (couche de dépendances et build final), copier `build.rs` et `packages/` avant `cargo build`. Vérifier que `.dockerignore` n'exclut pas `packages/`.
+- [X] T003 [P] Ajouter dans `Cargo.toml` les `[build-dependencies]` `flate2`, `tar`, `sha2`, `toml` et `serde` (feature `derive`), avec des versions compatibles avec celles déjà présentes dans `Cargo.lock`. Ajouter `sha2` et `toml` aux `[dev-dependencies]`. Vérifier qu'aucune dépendance d'exécution n'est ajoutée (`cargo tree -e normal --depth 1`).
+- [X] T004 [P] Mettre à jour `Dockerfile` : dans les deux étapes de build (couche de dépendances et build final), copier `build.rs` et `packages/` avant `cargo build`. Vérifier que `.dockerignore` n'exclut pas `packages/`.
 
 ---
 
@@ -65,7 +65,7 @@ US2 (P2), US4 (P2), US3 (P3).
 
 **Purpose** : les paquets existent dans le binaire et sont accessibles par une API Rust. Bloque toutes les stories.
 
-- [ ] T005 Écrire `build.rs` (R1, R3, R4, contract lock-file.md « Vérifications à la construction »). Il doit :
+- [X] T005 Écrire `build.rs` (R1, R3, R4, contract lock-file.md « Vérifications à la construction »). Il doit :
   - déclarer `cargo:rerun-if-changed=packages` et `cargo:rerun-if-changed=build.rs` ;
   - lire `packages/lock.toml` (structs serde) ;
   - pour chaque entrée, vérifier le sha256 de l'archive, la décompresser (flate2 + tar) dans `OUT_DIR/packages/<name>-<version>/`, puis vérifier que `typst.toml` existe, que `name` et `version` correspondent, que `entrypoint` existe et qu'aucun chemin n'est absolu ni ne contient `..` ;
@@ -73,13 +73,13 @@ US2 (P2), US4 (P2), US3 (P3).
   - générer `OUT_DIR/bundled_packages.rs`, une table statique triée par (`name`, `version`) de `BundledPackageDef { name, version, description, license, role, entrypoint, files: &[(&str, &[u8])] }`, chaque fichier étant inclus avec `include_bytes!` sur son chemin absolu dans `OUT_DIR`.
 
   Les messages d'échec sont ceux du contrat (`panic!` avec un message clair).
-- [ ] T006 Créer `src/packages/mod.rs` (data-model.md « BundledPackage ») et le déclarer dans `src/lib.rs`. Le module :
+- [X] T006 Créer `src/packages/mod.rs` (data-model.md « BundledPackage ») et le déclarer dans `src/lib.rs`. Le module :
   - fait un `include!(concat!(env!("OUT_DIR"), "/bundled_packages.rs"))` ;
   - définit `BundledPackage` (avec `spec()` qui renvoie un `PackageSpec` `@preview/name:version`) ;
   - expose `all()`, `get(&PackageSpec) -> Option<&'static BundledPackage>` (namespace `preview` uniquement), `selected(name) -> Option<&'static BundledPackage>` et `file(&self, path) -> Option<&'static [u8]>`.
 
   Ajouter des tests unitaires dans le même fichier : 29 paquets, 21 `selected`, `selected("zero")` vaut 0.7.1, `get` de `@preview/zero:0.6.1` existe, `get` de `@local/zero:0.7.1` vaut `None`.
-- [ ] T007 Lancer `cargo build`, puis contrôler à la main SC-007 selon la procédure de quickstart.md §2 (archive altérée → la construction échoue en nommant le paquet ; archive restaurée → la construction passe). Noter le résultat dans le message de commit.
+- [X] T007 Lancer `cargo build`, puis contrôler à la main SC-007 selon la procédure de quickstart.md §2 (archive altérée → la construction échoue en nommant le paquet ; archive restaurée → la construction passe). Noter le résultat dans le message de commit.
 
 **Checkpoint** : `cargo test --lib packages` passe et le binaire contient les 29 paquets.
 

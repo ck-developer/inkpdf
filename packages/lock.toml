@@ -1,0 +1,234 @@
+# Paquets Typst intégrés à inkpdf. Modifier via scripts/add-package.sh.
+# Contrat : specs/002-typst-packages/contracts/lock-file.md
+
+[[package]]
+namespace = "preview"
+name = "cetz"
+version = "0.5.2"
+sha256 = "77cf8490114ae04c6e665a11efa691d284a0cadb9719771b5708c1197292f23f"
+license = "LGPL-3.0-or-later"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "cetz-plot"
+version = "0.1.4"
+sha256 = "13170258be0761701e57141081e1f6f029bc8967988f549a3b089289a1347936"
+license = "LGPL-3.0-or-later"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "codetastic"
+version = "0.2.2"
+sha256 = "ed2c0dac5ace901ea48fbb2330d2477501ce0900051c0a19d7e7cf5a75f20da3"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "datify"
+version = "1.3.0"
+sha256 = "43f313ea6b463469080cfa61e404d51a2d70d7aead6e5365f9b4dc7163519ac6"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "datify-core"
+version = "2.1.0"
+sha256 = "5a3621f82e88098e8924f811f86b2733e8eeed3a6f08ac8e42507888ef0c29e6"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "elembic"
+version = "1.1.1"
+sha256 = "e3a8ec6b2ad5f43d93ae31dd5742de7256c57719675636179cd818f26ca7bb88"
+license = "MIT OR Apache-2.0"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "framefit"
+version = "0.1.0"
+sha256 = "0be5fb005fc9e28ebb1fc5a67f0362298c147e22e708cc85b54c8d655650df57"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "frogst"
+version = "1.0.0"
+sha256 = "9f0272b07a185d2bae408b76e116cabad8ee21a952b61d9c9ffc4acb7e74a359"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "ibanator"
+version = "0.1.0"
+sha256 = "7af25b3ce3aaea52f57a4bda20288f6604f834c3018bd34a8a2553d43d8426b4"
+license = "EUPL-1.2"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "komet"
+version = "0.1.0"
+sha256 = "3fd7d065f670de088a170603069788039ed52614c9fd81d5f7c923bedb355786"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "komet"
+version = "0.2.0"
+sha256 = "0ee6b4760e365d0322c4200944a43d73a6b9a981f5b47eadc44bbee4bbd66e50"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "lilaq"
+version = "0.6.0"
+sha256 = "41e7839e9e4eaf5c0b5ec93f23d387233bce439fe226326b06c2fa01f2fc251f"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "linguify"
+version = "0.5.0"
+sha256 = "ad525da5e5d31dc955211496d7a381c83cf5618504937795ca68946355309378"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "modern-mailmerge"
+version = "0.1.0"
+sha256 = "04f18b5e70e80e89408940e43578bc48370c06076e459191c139fa01a3162918"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "oxifmt"
+version = "1.0.0"
+sha256 = "7d17a1fc8ad01740ec3cb2b03c7360a4225ff9318e5710765fa98ea6fd59594f"
+license = "MIT OR Apache-2.0"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "payqr-swiss"
+version = "0.5.0"
+sha256 = "38a18629feb24f4a310cfa2f5ce2219dc747c72424532cad0708ef9f2b3d85c6"
+license = "LGPL-3.0-only"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "primaviz"
+version = "0.11.0"
+sha256 = "df69073953335817190891c049b9854ba2fde3d2e71e3b230de155e51c94ce7a"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "qrypst"
+version = "0.1.1"
+sha256 = "6b651a5e3329fd8041644cc7dbb2638621614600195ed9e8352080118921b29c"
+license = "Unlicense AND MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "rustycure"
+version = "0.2.0"
+sha256 = "75d8706f94550afa3b678d285a7d02955a386fb421bf5ef8ef5ae42ba0b74540"
+license = "EUPL-1.2"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "sepay"
+version = "0.1.1"
+sha256 = "426b2d3732cd5254979dbb0d8cd5792fa8ea2d9b768e58262fbf6d5c279c205b"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "showybox"
+version = "2.0.4"
+sha256 = "2d415e38ad85143bb0ca7a41f47cdcbbf3186a002a9c637ce3df7ced7125858f"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "suiji"
+version = "0.5.1"
+sha256 = "58a7b19fc6e3419e03a189f32cf86cb7d7e3522abe3e463435c31f3fb21f5aa3"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "tablem"
+version = "0.3.0"
+sha256 = "7735bcf28fcfccd70328ec42035ad597df1146efdf65fb8170dca18684baac73"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "tabut"
+version = "1.0.2"
+sha256 = "ec944c1508c79c2160ff8ca61a462e360b91124d726f009e24c4baf289b0d65e"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "tiaoma"
+version = "0.3.0"
+sha256 = "c646c3f41c3f1a062ff1558f070187ac970b7d350f00b31f45133e059c9981be"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "tiptoe"
+version = "0.4.0"
+sha256 = "1be772c335902a7554b5164a5a4145bfd886867ac1b26478b74d5e4bf9eb6b3f"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "zebra"
+version = "0.1.0"
+sha256 = "d2675ebeecd01f212810e99dd09eb144f690b47354c710e4dc519b8a472b4de8"
+license = "MIT"
+role = "selected"
+
+[[package]]
+namespace = "preview"
+name = "zero"
+version = "0.6.1"
+sha256 = "87ffec0d591551ab5d1465c40582e4441876dd8f70ef88a2d577297f5977768f"
+license = "MIT"
+role = "dependency"
+
+[[package]]
+namespace = "preview"
+name = "zero"
+version = "0.7.1"
+sha256 = "1ba20eb40b859c9d6221a6b05d7eb94eb23203c749f74b48814ed2e64d4771e0"
+license = "MIT"
+role = "selected"
