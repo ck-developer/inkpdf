@@ -48,9 +48,10 @@ struct Package {
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=packages");
+    println!("cargo:rerun-if-changed=../../packages");
 
-    let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    // `packages/` lives at the workspace root, shared by the service and `xtask`.
+    let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("../..");
     let out = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let vendor = root.join("packages/vendor");
 

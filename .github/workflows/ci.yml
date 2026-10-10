@@ -26,9 +26,9 @@ jobs:
         with:
           key: lint
       - name: Format
-        run: cargo fmt --check
+        run: cargo fmt --all --check
       - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
         with:
           key: test
       - name: Tests
-        run: cargo test
+        run: cargo test --workspace
 
   perf:
     runs-on: ubuntu-latest
@@ -55,4 +55,4 @@ jobs:
           key: perf
       # Only the performance test binary is compiled in release mode.
       - name: Performance tests
-        run: cargo test --release --test perf -- --ignored
+        run: cargo test --release -p inkpdf --test perf -- --ignored

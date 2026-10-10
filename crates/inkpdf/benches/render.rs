@@ -12,7 +12,7 @@ use inkpdf::registry::loader::{self, LoadOutcome};
 use inkpdf::render::compile_pdf;
 
 fn render_sample(c: &mut Criterion) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let entry: Arc<TemplateEntry> = match loader::load(
         &root.join("examples/templates/sample"),
         "sample".parse().unwrap(),

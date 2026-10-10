@@ -14,6 +14,11 @@ use tower::ServiceExt;
 
 /// Repository root.
 pub fn repo_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+/// Root of this crate (its `tests/fixtures`).
+pub fn crate_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
@@ -24,7 +29,7 @@ pub fn sample_template() -> PathBuf {
 
 /// Fixture from `tests/fixtures/templates/`.
 pub fn fixture(name: &str) -> PathBuf {
-    repo_root().join("tests/fixtures/templates").join(name)
+    crate_root().join("tests/fixtures/templates").join(name)
 }
 
 /// Sample body `examples/requests/sample.json`.

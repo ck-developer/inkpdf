@@ -43,7 +43,7 @@ fn load_template(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry::Templ
 }
 
 fn smoke_fixture(name: &str) -> String {
-    fs::read_to_string(repo_root().join(format!("tests/fixtures/package-smoke/{name}.typ")))
+    fs::read_to_string(crate_root().join(format!("tests/fixtures/package-smoke/{name}.typ")))
         .unwrap_or_else(|_| panic!("missing tests/fixtures/package-smoke/{name}.typ"))
 }
 

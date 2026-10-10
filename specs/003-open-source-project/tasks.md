@@ -41,27 +41,27 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 **Purpose**: move the service to `crates/inkpdf` without changing its behaviour (R1).
 
-- [ ] T003 With `git mv`, move `src/`, `tests/`, `benches/` and `build.rs` to `crates/inkpdf/`. Create `crates/inkpdf/Cargo.toml` from the current `Cargo.toml` package section, dependencies, dev-dependencies, build-dependencies and bench. The shared fields become `edition.workspace = true`, etc.
-- [ ] T004 Rewrite the root `Cargo.toml` as a workspace:
+- [X] T003 With `git mv`, move `src/`, `tests/`, `benches/` and `build.rs` to `crates/inkpdf/`. Create `crates/inkpdf/Cargo.toml` from the current `Cargo.toml` package section, dependencies, dev-dependencies, build-dependencies and bench. The shared fields become `edition.workspace = true`, etc.
+- [X] T004 Rewrite the root `Cargo.toml` as a workspace:
   - `[workspace]`: `members = ["crates/inkpdf", "xtask"]`, `resolver = "3"`;
   - `[workspace.package]`: edition, rust-version, license `MIT OR Apache-2.0`, repository;
   - `[workspace.lints]`, then move `[profile.dist]` here;
   - add a minimal `xtask/Cargo.toml` and `xtask/src/main.rs` printing usage, so the workspace builds.
 
   Add `.cargo/config.toml` with the alias `xtask = "run --package xtask --"`.
-- [ ] T005 Make every path depend on the workspace root:
+- [X] T005 Make every path depend on the workspace root:
   - `crates/inkpdf/build.rs` reads `CARGO_MANIFEST_DIR/../../packages` ;
   - `crates/inkpdf/tests/common/mod.rs::repo_root()` returns `CARGO_MANIFEST_DIR/../..` ;
   - check the hard-coded paths in tests: `examples/`, `openapi/`, `docs/`, `packages/`, `tests/fixtures` (fixtures move with the tests) ;
   - in `crates/inkpdf/src/api/...`, check for any `include_str!`.
-- [ ] T006 Update the `Dockerfile`:
+- [X] T006 Update the `Dockerfile`:
   - dependency layer: copy `Cargo.toml`, `Cargo.lock`, `crates/inkpdf/Cargo.toml`, `crates/inkpdf/build.rs` and `packages/`, and create stubs for `crates/inkpdf/src` and `benches`, plus an `xtask/` stub (manifest and empty main) ;
   - build `cargo build --profile dist --locked -p inkpdf` ;
   - copy `target/dist/inkpdf`.
 
   Update `.dockerignore` (keep `xtask` out of the context; the stub is created inline). Update `compose.yaml` if needed.
-- [ ] T007 Update `.github/workflows/ci.yml`: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, `cargo test --release -p inkpdf --test perf -- --ignored`, with the rust-cache keys adjusted.
-- [ ] T008 Run the full validation: `cargo test --workspace` (141 tests), clippy, `INKPDF_UPDATE_OPENAPI` not needed (no diff on `openapi/openapi.json`), `docker compose build` and `docker compose up`, then render `sample`. Commit with the message `refactor: move the service into a Cargo workspace (crates/inkpdf)`.
+- [X] T007 Update `.github/workflows/ci.yml`: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, `cargo test --release -p inkpdf --test perf -- --ignored`, with the rust-cache keys adjusted.
+- [X] T008 Run the full validation: `cargo test --workspace` (141 tests), clippy, `INKPDF_UPDATE_OPENAPI` not needed (no diff on `openapi/openapi.json`), `docker compose build` and `docker compose up`, then render `sample`. Commit with the message `refactor: move the service into a Cargo workspace (crates/inkpdf)`.
 
 **Checkpoint**: same behaviour, same contract, same image.
 
