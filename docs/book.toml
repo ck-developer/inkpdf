@@ -1,0 +1,14 @@
+[book]
+title = "inkpdf"
+description = "PDF generation service from Typst templates, without a browser."
+authors = ["The inkpdf contributors"]
+language = "en"
+src = "src"
+
+[output.html]
+git-repository-url = "https://github.com/ck-developer/inkpdf"
+edit-url-template = "https://github.com/ck-developer/inkpdf/edit/main/docs/{path}"
+site-url = "/inkpdf/"
+
+[output.html.search]
+enable = true

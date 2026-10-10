@@ -4,20 +4,26 @@
 FROM rust:1.98-bookworm AS build
 WORKDIR /src
 
-# Dependencies are built in a separate layer (cached as long as Cargo.toml/Cargo.lock,
-# build.rs and the embedded Typst packages do not change).
-COPY Cargo.toml Cargo.lock build.rs ./
+# Dependencies are built in a separate layer, cached as long as the manifests, build.rs and
+# the embedded Typst packages do not change. `xtask` is a workspace member that is not part of
+# the image: only its manifest is copied, with an empty main.
+COPY Cargo.toml Cargo.lock ./
+COPY .cargo ./.cargo
+COPY crates/inkpdf/Cargo.toml crates/inkpdf/build.rs ./crates/inkpdf/
+COPY xtask/Cargo.toml ./xtask/
 COPY packages ./packages
-RUN mkdir -p src benches \
-    && echo 'fn main() {}' > src/main.rs \
-    && touch src/lib.rs \
-    && echo 'fn main() {}' > benches/render.rs \
-    && cargo build --profile dist --locked \
-    && rm -rf src benches
+RUN mkdir -p crates/inkpdf/src crates/inkpdf/benches xtask/src \
+    && echo 'fn main() {}' > crates/inkpdf/src/main.rs \
+    && touch crates/inkpdf/src/lib.rs \
+    && echo 'fn main() {}' > crates/inkpdf/benches/render.rs \
+    && echo 'fn main() {}' > xtask/src/main.rs \
+    && cargo build --profile dist --locked -p inkpdf \
+    && rm -rf crates/inkpdf/src crates/inkpdf/benches
 
-COPY src ./src
-COPY benches ./benches
-RUN touch src/main.rs src/lib.rs && cargo build --profile dist --locked
+COPY crates/inkpdf/src ./crates/inkpdf/src
+COPY crates/inkpdf/benches ./crates/inkpdf/benches
+RUN touch crates/inkpdf/src/main.rs crates/inkpdf/src/lib.rs \
+    && cargo build --profile dist --locked -p inkpdf
 
 # --- Runtime -------------------------------------------------------------------------------
 FROM gcr.io/distroless/cc-debian12:nonroot

@@ -26,9 +26,9 @@ jobs:
         with:
           key: lint
       - name: Format
-        run: cargo fmt --check
+        run: cargo fmt --all --check
       - name: Clippy
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -41,7 +41,9 @@ jobs:
         with:
           key: test
       - name: Tests
-        run: cargo test
+        run: cargo test --workspace
+      - name: Bundled packages
+        run: cargo xtask packages verify
 
   perf:
     runs-on: ubuntu-latest
@@ -55,4 +57,37 @@ jobs:
           key: perf
       # Only the performance test binary is compiled in release mode.
       - name: Performance tests
-        run: cargo test --release --test perf -- --ignored
+        run: cargo test --release -p inkpdf --test perf -- --ignored
+
+  # Every green push to main republishes the `dev` image (no per-commit tags).
+  publish-dev:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [lint, test, perf]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: publish-dev
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/ck-developer/inkpdf:dev
+          labels: |
+            org.opencontainers.image.source=https://github.com/ck-developer/inkpdf
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=MIT OR Apache-2.0
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
