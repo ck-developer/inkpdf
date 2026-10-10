@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to inkpdf are documented here. From 0.2.0 on, this file is maintained by
+All notable changes to inkpdf are documented here. From 0.1.0 on, this file is maintained by
 [release-please](https://github.com/googleapis/release-please) from
 [conventional commits](https://www.conventionalcommits.org/).
 
-## 0.1.0 — history before automated releases
+## History before the first release
 
-Not published as a release; summarised here for reference.
+Work done before 0.1.0, summarised here for reference.
 
 ### Bundled Typst packages, downloads, metadata, `layout` (feature 002)
 

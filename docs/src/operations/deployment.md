@@ -8,8 +8,8 @@ mounted at `/templates` and are picked up live, without a restart.
 
 | Tag | Content |
 |-----|---------|
-| `X.Y.Z` (for example `0.2.0`) | An exact release. Never moves. Recommended for production. |
-| `X.Y` (for example `0.2`) | The latest patch release of that minor version. |
+| `X.Y.Z` (for example `0.1.0`) | An exact release. Never moves. Recommended for production. |
+| `X.Y` (for example `0.1`) | The latest patch release of that minor version. |
 | `latest` | The latest release. |
 | `dev` | The latest commit of `main` whose checks all passed. For testing unreleased changes only. |
 
@@ -23,7 +23,7 @@ The version of a running service is reported by `GET /health` and in `info.versi
 docker run -d --name inkpdf \
   -p 3000:3000 \
   -v /srv/inkpdf/templates:/templates:ro \
-  ghcr.io/ck-developer/inkpdf:0.2.0
+  ghcr.io/ck-developer/inkpdf:0.1.0
 ```
 
 Mount the volume **read-only** (`:ro`): the service never writes to it. Each sub-folder of the
@@ -37,7 +37,7 @@ Every setting is an environment variable; see [Configuration](../reference/confi
 ```yaml
 services:
   inkpdf:
-    image: ghcr.io/ck-developer/inkpdf:0.2.0
+    image: ghcr.io/ck-developer/inkpdf:0.1.0
     ports:
       - "3000:3000"
     volumes:
@@ -85,7 +85,7 @@ spec:
     spec:
       containers:
         - name: inkpdf
-          image: ghcr.io/ck-developer/inkpdf:0.2.0
+          image: ghcr.io/ck-developer/inkpdf:0.1.0
           ports:
             - containerPort: 3000
           env:
