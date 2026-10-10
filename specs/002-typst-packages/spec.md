@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-10
 
-**Status**: Draft
+**Status**: Implemented — 2026-10-10, PR #2 (49/49 tasks)
 
 **Input**: User description: « Permettre aux templates d'utiliser des paquets Typst
 (ex. `#import "@preview/cetz:0.3.4"`) sans aucun accès réseau. » Après étude
