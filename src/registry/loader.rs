@@ -13,7 +13,7 @@ use typst::foundations::Bytes;
 
 use super::fingerprint::{self, Fingerprint};
 use crate::render::fonts::{self, FontSet};
-use crate::template::{Manifest, TemplateId, TemplateSchema};
+use crate::template::{Manifest, TemplateId, TemplateSchema, imports};
 
 /// Statut d'un template après chargement.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -129,7 +129,7 @@ pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome 
 /// Applique les règles de validité du data-model à un instantané.
 fn validate(
     id: TemplateId,
-    files: HashMap<String, Bytes>,
+    mut files: HashMap<String, Bytes>,
     fingerprint: Fingerprint,
 ) -> TemplateEntry {
     let manifest = match files.get("template.json") {
@@ -139,6 +139,10 @@ fn validate(
             Err(e) => return invalid(id, None, fingerprint, format!("template.json: {e}")),
         },
     };
+
+    if let Err(reason) = resolve_package_imports(&mut files) {
+        return invalid(id, Some(manifest), fingerprint, reason);
+    }
 
     let checked = (|| {
         let main = files.get("main.typ").ok_or("main.typ is missing")?;
@@ -174,6 +178,39 @@ fn validate(
         },
         Err(reason) => invalid(id, Some(manifest), fingerprint, reason),
     }
+}
+
+/// Réécrit les imports `@preview/<nom>` de chaque fichier `.typ` avec la version installée ;
+/// en cas d'import incorrect, renvoie une ligne `fichier:ligne: message` par erreur.
+fn resolve_package_imports(files: &mut HashMap<String, Bytes>) -> Result<(), String> {
+    let mut paths: Vec<String> = files
+        .keys()
+        .filter(|path| path.ends_with(".typ"))
+        .cloned()
+        .collect();
+    paths.sort();
+    let mut errors = Vec::new();
+    for path in paths {
+        // Un `.typ` non UTF-8 sera signalé par Typst s'il est utilisé.
+        let Ok(text) = std::str::from_utf8(&files[&path]) else {
+            continue;
+        };
+        match imports::resolve_imports(&path, text) {
+            Ok(Some(rewritten)) => {
+                files.insert(path, Bytes::new(rewritten.into_bytes()));
+            }
+            Ok(None) => {}
+            Err(found) => errors.extend(found),
+        }
+    }
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(errors
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join("\n"))
 }
 
 fn invalid(
@@ -240,6 +277,30 @@ mod tests {
 
     fn reason(entry: &TemplateEntry) -> &str {
         entry.invalid_reason().expect("template should be invalid")
+    }
+
+    #[test]
+    fn package_import_is_rewritten_with_installed_version() {
+        let f = Fixture::new();
+        f.write("main.typ", "#import \"@preview/zero\": num\n#num(1)\n");
+        let entry = f.load();
+        assert!(entry.is_valid(), "{:?}", entry.status);
+        let main = std::str::from_utf8(&entry.files["main.typ"]).unwrap();
+        let version = crate::packages::selected("zero").unwrap().version();
+        assert!(main.contains(&format!("\"@preview/zero:{version}\"")), "{main}");
+    }
+
+    #[test]
+    fn incorrect_package_imports_make_the_template_invalid() {
+        let f = Fixture::new();
+        f.write("main.typ", "#import \"parts/a.typ\"\n");
+        f.write("parts/a.typ", "\n#import \"@preview/zero:0.7.1\"\n#import \"@preview/nope\"\n");
+        let entry = f.load();
+        assert_eq!(
+            reason(&entry),
+            "parts/a.typ:2: remove the version: write @preview/zero (inkpdf uses its installed version)\n\
+             parts/a.typ:3: package @preview/nope is not available in inkpdf (see GET /packages)"
+        );
     }
 
     #[test]

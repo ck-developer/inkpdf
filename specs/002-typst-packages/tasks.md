@@ -31,8 +31,13 @@ US2 (P2), US4 (P2), US3 (P3).
 
 | Rôle | Paquets |
 |---|---|
-| `selected` (21) | tiaoma 0.3.0, zebra 0.1.0, qrypst 0.1.1, codetastic 0.2.2, sepay 0.1.1, zero 0.7.1, oxifmt 1.0.0, frogst 1.0.0, ibanator 0.1.0, datify 1.3.0, linguify 0.5.0, tabut 1.0.2, tablem 0.3.0, cetz 0.5.2, cetz-plot 0.1.4, lilaq 0.6.0, primaviz 0.11.0, showybox 2.0.4, framefit 0.1.0, modern-mailmerge 0.1.0, payqr-swiss 0.5.0 |
+| `selected` (20) | tiaoma 0.3.0, zebra 0.1.0, qrypst 0.1.1, ~~codetastic 0.2.2~~, sepay 0.1.1, zero 0.7.1, oxifmt 1.0.0, frogst 1.0.0, ibanator 0.1.0, datify 1.3.0, linguify 0.5.0, tabut 1.0.2, tablem 0.3.0, cetz 0.5.2, cetz-plot 0.1.4, lilaq 0.6.0, primaviz 0.11.0, showybox 2.0.4, framefit 0.1.0, modern-mailmerge 0.1.0, payqr-swiss 0.5.0 |
 | `dependency` (8) | datify-core 2.1.0, elembic 1.1.1, komet 0.1.0, komet 0.2.0, rustycure 0.2.0, suiji 0.5.1, tiptoe 0.4.0, zero 0.6.1 |
+
+> **2026-10-10, implémentation** : `codetastic` 0.2.2 (2023) échoue avec Typst 0.15.1
+> (`cannot add string and type`, comparaison type/chaîne supprimée en 0.14). Il est retiré
+> selon la politique R11 : **20 paquets mis à disposition, 28 au total**. tiaoma couvre les
+> mêmes codes-barres.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -93,32 +98,32 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T008 [P] [US1] Dans `tests/bundled_packages.rs`, écrire un test **d'import** (FR-010, R11.1). Pour chacun des 29 paquets de `inkpdf::packages::all()`, compiler en PDF, via `inkpdf::render::compile_pdf` sur un `TemplateEntry` en mémoire construit par un helper de `tests/common/mod.rs`, un `main.typ` minimal `#import "@preview/<n>:<v>"` suivi de `#[ok]` (les tests passent par le `World`, la version y est explicite). Afficher la liste des paquets en échec avant d'échouer.
-- [ ] T009 [P] [US1] Créer `tests/fixtures/package-smoke/<nom>.typ` pour chacun des 21 paquets `selected`. Chaque fichier importe le paquet **par son seul nom** et appelle une fonction représentative tirée de son README dans l'archive : un QR code pour tiaoma, zebra et qrypst, un code-barres pour codetastic, un QR EPC pour sepay, `num` pour zero, `strfmt` pour oxifmt, un nombre en toutes lettres pour frogst, le formatage d'un IBAN pour ibanator, une date en français pour datify, une traduction pour linguify, un tableau pour tabut et tablem, un dessin pour cetz, un graphique pour cetz-plot, lilaq et primaviz, un encadré pour showybox, un texte ajusté pour framefit, une page de publipostage pour modern-mailmerge, une QR-facture pour payqr-swiss. Utiliser des données littérales et aucune date du jour.
-- [ ] T010 [US1] Dans `tests/bundled_packages.rs`, écrire un test **d'usage** (R11.2). Chaque fixture de T009 est chargée comme template, en passant par le chargeur, donc avec la réécriture des imports, puis rendue en PDF non vide. Ajouter un test de **déterminisme** : deux rendus de la fixture `cetz` donnent les mêmes octets (FR-015).
-- [ ] T011 [P] [US1] Dans `tests/bundled_packages.rs`, écrire un test de **fermeture** (R11.3). Tous les imports littéraux `@preview/…` des `.typ` de chaque paquet, analysés avec `typst::syntax` et en excluant les sous-dossiers `tests/`, `docs/`, `examples/`, `gallery/` et `template/` du paquet, doivent désigner un paquet de `all()`.
-- [ ] T012 [P] [US1] Dans `tests/sandbox.rs` (FR-013) :
+- [X] T008 [P] [US1] Dans `tests/bundled_packages.rs`, écrire un test **d'import** (FR-010, R11.1). Pour chacun des 29 paquets de `inkpdf::packages::all()`, compiler en PDF, via `inkpdf::render::compile_pdf` sur un `TemplateEntry` en mémoire construit par un helper de `tests/common/mod.rs`, un `main.typ` minimal `#import "@preview/<n>:<v>"` suivi de `#[ok]` (les tests passent par le `World`, la version y est explicite). Afficher la liste des paquets en échec avant d'échouer.
+- [X] T009 [P] [US1] Créer `tests/fixtures/package-smoke/<nom>.typ` pour chacun des 21 paquets `selected`. Chaque fichier importe le paquet **par son seul nom** et appelle une fonction représentative tirée de son README dans l'archive : un QR code pour tiaoma, zebra et qrypst, un code-barres pour codetastic, un QR EPC pour sepay, `num` pour zero, `strfmt` pour oxifmt, un nombre en toutes lettres pour frogst, le formatage d'un IBAN pour ibanator, une date en français pour datify, une traduction pour linguify, un tableau pour tabut et tablem, un dessin pour cetz, un graphique pour cetz-plot, lilaq et primaviz, un encadré pour showybox, un texte ajusté pour framefit, une page de publipostage pour modern-mailmerge, une QR-facture pour payqr-swiss. Utiliser des données littérales et aucune date du jour.
+- [X] T010 [US1] Dans `tests/bundled_packages.rs`, écrire un test **d'usage** (R11.2). Chaque fixture de T009 est chargée comme template, en passant par le chargeur, donc avec la réécriture des imports, puis rendue en PDF non vide. Ajouter un test de **déterminisme** : deux rendus de la fixture `cetz` donnent les mêmes octets (FR-015).
+- [X] T011 [P] [US1] Dans `tests/bundled_packages.rs`, écrire un test de **fermeture** (R11.3). Tous les imports littéraux `@preview/…` des `.typ` de chaque paquet, analysés avec `typst::syntax` et en excluant les sous-dossiers `tests/`, `docs/`, `examples/`, `gallery/` et `template/` du paquet, doivent désigner un paquet de `all()`.
+- [X] T012 [P] [US1] Dans `tests/sandbox.rs` (FR-013) :
   - remplacer le test V1 qui exigeait le refus de `@preview/…` par un test vérifiant que `#import "@preview/zero"` est accepté ;
   - ajouter un test vérifiant qu'un paquet ne peut pas lire un fichier du template. Utiliser une fixture `tests/fixtures/templates/package-reads-template/` dont `main.typ` passe la chaîne `"secret.txt"` (et non un `path`) à une fonction qui fait `read`, ou à défaut tester directement `SandboxWorld::file` avec un `FileId` `Package(spec)` sur `/../secret.txt` ;
   - ajouter un test vérifiant qu'un `path("assets/x.svg")` transmis explicitement à un paquet fonctionne.
-- [ ] T013 [P] [US1] Dans `tests/api_render.rs`, faire un test de bout en bout : `POST /templates/packages-demo/render` avec `examples/requests/packages-demo.json` renvoie 200 `application/pdf`, et `pdf_text` contient le montant formaté et le titre attendus.
+- [X] T013 [P] [US1] Dans `tests/api_render.rs`, faire un test de bout en bout : `POST /templates/packages-demo/render` avec `examples/requests/packages-demo.json` renvoie 200 `application/pdf`, et `pdf_text` contient le montant formaté et le titre attendus.
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Dans `src/render/world.rs` (R5) : `lookup` traite `VirtualRoot::Package(spec)` via `crate::packages::get(spec)` (correspondance exacte) et renvoie `Bytes` du fichier, `FileError::NotFound` si le chemin est absent, ou `FileError::Package(PackageError::NotFound(spec))` si le paquet est inconnu. Retirer le refus V1. Garder `check_cancelled()`.
-- [ ] T015 [US1] Dans `src/packages/mod.rs` et `src/render/world.rs` (R6) :
+- [X] T014 [US1] Dans `src/render/world.rs` (R5) : `lookup` traite `VirtualRoot::Package(spec)` via `crate::packages::get(spec)` (correspondance exacte) et renvoie `Bytes` du fichier, `FileError::NotFound` si le chemin est absent, ou `FileError::Package(PackageError::NotFound(spec))` si le paquet est inconnu. Retirer le refus V1. Garder `check_cancelled()`.
+- [X] T015 [US1] Dans `src/packages/mod.rs` et `src/render/world.rs` (R6) :
   - mettre en place un cache **global** de `Source` pour les fichiers de paquets (`OnceLock<Mutex<HashMap<FileId, Source>>>`) ;
   - créer les `Bytes` à partir des slices statiques sans copie, une fois par fichier (cache `OnceLock`, ou `Bytes::new` sur `&'static [u8]`) ;
   - dans `SandboxWorld::source`, utiliser ce cache pour `VirtualRoot::Package` et garder le cache par rendu pour `Project`.
-- [ ] T016 [US1] Créer `src/template/imports.rs` (R8, R15, data-model.md « TemplateImport ») et le déclarer dans `src/template/mod.rs`. Il expose `resolve_imports(path: &str, text: &str) -> Result<Option<String>, Vec<ImportError>>`, qui :
+- [X] T016 [US1] Créer `src/template/imports.rs` (R8, R15, data-model.md « TemplateImport ») et le déclarer dans `src/template/mod.rs`. Il expose `resolve_imports(path: &str, text: &str) -> Result<Option<String>, Vec<ImportError>>`, qui :
   1. analyse le texte avec `typst::syntax::parse` ;
   2. collecte les `ModuleImport` et `ModuleInclude` dont la source est un `Expr::Str` commençant par `@` ;
   3. classe chaque import en `Resolved`, `VersionWritten`, `OtherNamespace`, `Unavailable` ou `Malformed` ;
   4. si tout est `Resolved`, renvoie le texte réécrit (`@preview/x` → `@preview/x:<version selected>`, remplacement par plage d'octets du nœud chaîne, de la fin vers le début), ou `None` s'il n'y a aucun import de paquet.
 
   Chaque erreur porte le fichier, la ligne (à partir de 1) et le message exact de contracts/template-imports.md. Ajouter des tests unitaires : réécriture correcte, plusieurs imports sur une ligne, `#include`, commentaires ignorés, et chacun des quatre cas d'erreur.
-- [ ] T017 [US1] Dans `src/registry/loader.rs`, après la lecture de l'instantané et avant la construction de l'entrée valide, appeler `resolve_imports` sur chaque fichier `.typ` (UTF-8). En cas de succès, remplacer les octets du fichier dans `entry.files` par le texte réécrit. En cas d'erreurs, appeler `invalid(…)` avec une raison faite d'une ligne `fichier:ligne: message` par erreur (triées par fichier puis ligne). L'empreinte reste calculée sur le disque. Compléter les tests unitaires du chargeur : import valide réécrit, import avec version → invalide.
-- [ ] T018 [US1] Créer `examples/templates/packages-demo/` (FR-019) :
+- [X] T017 [US1] Dans `src/registry/loader.rs`, après la lecture de l'instantané et avant la construction de l'entrée valide, appeler `resolve_imports` sur chaque fichier `.typ` (UTF-8). En cas de succès, remplacer les octets du fichier dans `entry.files` par le texte réécrit. En cas d'erreurs, appeler `invalid(…)` avec une raison faite d'une ligne `fichier:ligne: message` par erreur (triées par fichier puis ligne). L'empreinte reste calculée sur le disque. Compléter les tests unitaires du chargeur : import valide réécrit, import avec version → invalide.
+- [X] T018 [US1] Créer `examples/templates/packages-demo/` (FR-019) :
   - `template.json` ;
   - `schema.json`, avec `data.title`, `data.amount` (chaîne décimale), `data.reference` (texte du QR code) et `data.series` (tableau de nombres) ;
   - `main.typ`, qui importe **par le nom seul** `@preview/tiaoma`, `@preview/zero` et `@preview/cetz-plot` et affiche un QR code, le montant formaté à la française (« 1 234,56 ») et un graphique à barres.

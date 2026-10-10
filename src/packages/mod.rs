@@ -121,8 +121,8 @@ mod tests {
 
     #[test]
     fn validated_list_is_bundled() {
-        assert_eq!(all().len(), 29);
-        assert_eq!(all().iter().filter(|p| p.is_selected()).count(), 21);
+        assert_eq!(all().len(), 28);
+        assert_eq!(all().iter().filter(|p| p.is_selected()).count(), 20);
     }
 
     #[test]

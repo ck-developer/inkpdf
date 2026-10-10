@@ -158,3 +158,37 @@ pub fn problem(body: &Bytes) -> Value {
 pub fn pdf_text(bytes: &[u8]) -> String {
     pdf_extract::extract_text_from_mem(bytes).unwrap()
 }
+
+/// Entrée de template en mémoire, sans passer par le chargeur : sert à compiler du Typst
+/// arbitraire (ex. imports versionnés de paquets) directement dans le `SandboxWorld`.
+pub fn entry_with_main(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry::TemplateEntry> {
+    use inkpdf::registry::{Fingerprint, TemplateEntry, TemplateStatus};
+    let mut files = std::collections::HashMap::new();
+    files.insert(
+        "main.typ".to_owned(),
+        typst::foundations::Bytes::new(main.as_bytes().to_vec()),
+    );
+    std::sync::Arc::new(TemplateEntry {
+        id: id.parse().unwrap(),
+        name: id.to_owned(),
+        description: None,
+        version: None,
+        status: TemplateStatus::Valid,
+        schema: None,
+        files,
+        fonts: None,
+        fingerprint: Fingerprint::default(),
+        loaded_at: time::OffsetDateTime::now_utc(),
+    })
+}
+
+/// Compile `entry` en PDF avec un corps vide.
+pub fn compile(
+    entry: std::sync::Arc<inkpdf::registry::TemplateEntry>,
+) -> Result<Vec<u8>, inkpdf::error::ApiError> {
+    let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    inkpdf::render::compile_pdf(entry, &serde_json::json!({ "data": {} }), cancel)
+}
+
+/// Schéma minimal accepté par le chargeur.
+pub const MINIMAL_SCHEMA: &str = r#"{"type":"object","properties":{"data":{"type":"object"}}}"#;

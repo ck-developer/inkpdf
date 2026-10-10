@@ -1,0 +1,5 @@
+{
+  "name": "Démonstration des paquets",
+  "description": "Template neutre utilisant des paquets intégrés : QR code, montant formaté, graphique.",
+  "version": "1.0.0"
+}

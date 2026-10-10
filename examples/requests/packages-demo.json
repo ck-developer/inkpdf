@@ -1,0 +1,13 @@
+{
+  "data": {
+    "title": "Démonstration des paquets",
+    "amount": "1234.56",
+    "reference": "DEMO-2026-0001",
+    "series": [
+      { "label": "T1", "value": 12 },
+      { "label": "T2", "value": 19 },
+      { "label": "T3", "value": 15 },
+      { "label": "T4", "value": 24 }
+    ]
+  }
+}

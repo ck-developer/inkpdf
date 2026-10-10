@@ -176,3 +176,23 @@ async fn identical_renders_are_byte_identical() {
     assert!(!first.is_empty());
     assert_eq!(first, second);
 }
+
+#[tokio::test]
+async fn template_using_bundled_packages_renders() {
+    let volume = TestVolume::new();
+    volume.copy_template(&repo_root().join("examples/templates/packages-demo"), "packages-demo");
+    let app = test_app(test_config(&volume));
+    let request: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(repo_root().join("examples/requests/packages-demo.json")).unwrap(),
+    )
+    .unwrap();
+    let (status, headers, body) = post_json(&app, "/templates/packages-demo/render", &request).await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+    assert_eq!(headers["content-type"], "application/pdf");
+    let text = pdf_text(&body);
+    assert!(text.contains("Démonstration des paquets"), "{text}");
+    // `zero` compose le nombre en mode mathématique : l'extraction espace chaque chiffre.
+    let compact: String = text.chars().filter(|c| !c.is_whitespace()).collect();
+    assert!(compact.contains("1234,56€"), "{text}");
+    assert!(text.contains("DEMO-2026-0001"), "{text}");
+}

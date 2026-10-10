@@ -1,14 +1,15 @@
 //! `World` Typst en bac à sable : ne sert que l'instantané en mémoire du template.
 //!
-//! Aucun accès disque, réseau, ni variable d'environnement pendant le rendu ; les imports de
-//! paquets sont refusés.
+//! Aucun accès disque, réseau, ni variable d'environnement pendant le rendu. Les paquets ne
+//! viennent que de l'ensemble intégré au binaire (`crate::packages`), chacun confiné à sa
+//! propre racine.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
-use typst::diag::{FileError, FileResult};
+use typst::diag::{FileError, FileResult, PackageError};
 use typst::foundations::{Bytes, Datetime, Dict, Duration, Value};
 use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
@@ -21,6 +22,11 @@ use crate::registry::TemplateEntry;
 
 /// Point d'entrée d'un template.
 pub const MAIN_FILE: &str = "main.typ";
+
+/// Sources des fichiers de paquets, partagées entre rendus : leurs `FileId` sont stables, et
+/// réutiliser la même `Source` permet à comemo de réutiliser l'évaluation des paquets (R6).
+static PACKAGE_SOURCES: LazyLock<Mutex<HashMap<FileId, Source>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub struct SandboxWorld {
     entry: Arc<TemplateEntry>,
@@ -82,18 +88,29 @@ impl SandboxWorld {
 
     fn lookup(&self, id: FileId) -> FileResult<&Bytes> {
         self.check_cancelled()?;
-        if let VirtualRoot::Package(_) = id.root() {
-            return Err(FileError::Other(Some(
-                "package imports are not supported".into(),
-            )));
-        }
-        // Le chemin virtuel est déjà normalisé par Typst (aucun `..` ne sort de la racine) ;
-        // seul l'instantané est consulté.
+        // Le chemin virtuel est déjà normalisé par Typst (aucun `..` ne sort de la racine).
         let vpath = id.vpath();
-        self.entry
-            .files
-            .get(vpath.get_without_slash())
-            .ok_or_else(|| FileError::NotFound(PathBuf::from(vpath.get_with_slash())))
+        let not_found = || FileError::NotFound(PathBuf::from(vpath.get_with_slash()));
+        match id.root() {
+            // Seul l'instantané du template est consulté.
+            VirtualRoot::Project => self
+                .entry
+                .files
+                .get(vpath.get_without_slash())
+                .ok_or_else(not_found),
+            // Correspondance exacte dans les paquets intégrés ; un paquet ne voit que ses
+            // propres fichiers.
+            VirtualRoot::Package(spec) => crate::packages::get(spec)
+                .ok_or_else(|| FileError::Package(PackageError::NotFound(spec.clone())))?
+                .file(vpath.get_without_slash())
+                .ok_or_else(not_found),
+        }
+    }
+
+    fn parse(&self, id: FileId) -> FileResult<Source> {
+        let bytes = self.lookup(id)?;
+        let text = std::str::from_utf8(bytes).map_err(|_| FileError::InvalidUtf8)?;
+        Ok(Source::new(id, text.to_owned()))
     }
 }
 
@@ -112,14 +129,18 @@ impl World for SandboxWorld {
 
     fn source(&self, id: FileId) -> FileResult<Source> {
         self.check_cancelled()?;
-        let mut sources = self.sources.lock().expect("source cache poisoned");
-        if let Some(source) = sources.get(&id) {
+        let cache = match id.root() {
+            VirtualRoot::Project => &self.sources,
+            VirtualRoot::Package(_) => &*PACKAGE_SOURCES,
+        };
+        if let Some(source) = cache.lock().expect("source cache poisoned").get(&id) {
             return Ok(source.clone());
         }
-        let bytes = self.lookup(id)?;
-        let text = std::str::from_utf8(bytes).map_err(|_| FileError::InvalidUtf8)?;
-        let source = Source::new(id, text.to_owned());
-        sources.insert(id, source.clone());
+        let source = self.parse(id)?;
+        cache
+            .lock()
+            .expect("source cache poisoned")
+            .insert(id, source.clone());
         Ok(source)
     }
 
