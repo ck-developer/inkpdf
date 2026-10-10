@@ -366,4 +366,4 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 ## Phase 12: Polish (extension)
 
 - [X] T048 Mettre à jour `quickstart.md` (paramètres `download` et `filename`, `metadata`, `layout`, Bruno), `docs/templates.md` (métadonnées et `layout`), `synthese.md` et la mémoire du projet.
-- [ ] T049 Lancer `cargo fmt`, `clippy -D warnings` et `cargo test`. Rejouer la collection Bruno contre `docker compose up --build`, avec `bru run` si la CLI est disponible, sinon avec `curl` sur les mêmes requêtes.
+- [X] T049 Lancer `cargo fmt`, `clippy -D warnings` et `cargo test`. Rejouer la collection Bruno contre `docker compose up --build`, avec `bru run` si la CLI est disponible, sinon avec `curl` sur les mêmes requêtes.
