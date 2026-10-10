@@ -50,15 +50,15 @@ num_cpus = "1"
 [build-dependencies]
 flate2 = "1.1"
 tar = "0.4"
-sha2 = "0.10"
-toml = "0.8"
+sha2 = "0.11"
+toml = "1"
 serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
-sha2 = "0.10"
-toml = "0.8"
+sha2 = "0.11"
+toml = "1"
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 tempfile = "3"
-pdf-extract = "0.9"
-criterion = "0.7"
+pdf-extract = "0.12"
+criterion = "0.8"

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Rust 1.98. `rust-toolchain.toml` pins the toolchain, with `rustfmt` and `clippy`; `rustup`
+- Rust 1.99. `rust-toolchain.toml` pins the toolchain, with `rustfmt` and `clippy`; `rustup`
   installs it on first use.
 - Docker, to build and run the image (optional).
 - [mdBook](https://rust-lang.github.io/mdBook/), to preview this documentation site
