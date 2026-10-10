@@ -114,3 +114,78 @@ fn bundled_set_is_closed_under_imports() {
     }
     assert!(missing.is_empty(), "imports not bundled:\n{}", missing.into_iter().collect::<Vec<_>>().join("\n"));
 }
+
+#[derive(serde::Deserialize)]
+struct Lock {
+    package: Vec<LockEntry>,
+}
+
+#[derive(serde::Deserialize)]
+struct LockEntry {
+    namespace: String,
+    name: String,
+    version: String,
+    sha256: String,
+    role: String,
+}
+
+fn version_key(version: &str) -> Vec<u32> {
+    version.split('.').map(|p| p.parse().unwrap()).collect()
+}
+
+/// US4 — `packages/lock.toml` est la seule source de vérité et correspond aux archives et au
+/// binaire.
+#[test]
+fn lock_file_matches_archives_and_binary() {
+    use sha2::{Digest, Sha256};
+
+    let root = repo_root().join("packages");
+    let lock: Lock = toml::from_str(&fs::read_to_string(root.join("lock.toml")).unwrap()).unwrap();
+
+    // Empreintes.
+    for entry in &lock.package {
+        let archive = fs::read(root.join(format!("vendor/{}-{}.tar.gz", entry.name, entry.version)))
+            .unwrap_or_else(|_| panic!("archive missing for {} {}", entry.name, entry.version));
+        let digest: String = Sha256::digest(&archive).iter().map(|b| format!("{b:02x}")).collect();
+        assert_eq!(digest, entry.sha256, "{} {}", entry.name, entry.version);
+        assert_eq!(entry.namespace, "preview");
+        assert!(["selected", "dependency"].contains(&entry.role.as_str()));
+    }
+
+    // Chaque archive a une entrée.
+    let listed: BTreeSet<String> = lock
+        .package
+        .iter()
+        .map(|e| format!("{}-{}.tar.gz", e.name, e.version))
+        .collect();
+    for file in fs::read_dir(root.join("vendor")).unwrap() {
+        let name = file.unwrap().file_name().to_string_lossy().into_owned();
+        assert!(listed.contains(&name), "{name} is not listed in lock.toml");
+    }
+
+    // Au plus une version `selected` par nom, entrées triées.
+    let mut selected = BTreeSet::new();
+    for entry in lock.package.iter().filter(|e| e.role == "selected") {
+        assert!(selected.insert(&entry.name), "{}: several selected versions", entry.name);
+    }
+    let keys: Vec<_> = lock
+        .package
+        .iter()
+        .map(|e| (e.name.clone(), version_key(&e.version)))
+        .collect();
+    let mut sorted = keys.clone();
+    sorted.sort();
+    assert_eq!(keys, sorted, "lock.toml entries must be sorted by name then version");
+
+    // Le binaire contient exactement la même liste.
+    let bundled: Vec<_> = packages::all()
+        .iter()
+        .map(|p| (p.name().to_owned(), p.version().to_owned(), p.is_selected()))
+        .collect();
+    let locked: Vec<_> = lock
+        .package
+        .iter()
+        .map(|e| (e.name.clone(), e.version.clone(), e.role == "selected"))
+        .collect();
+    assert_eq!(bundled, locked);
+}

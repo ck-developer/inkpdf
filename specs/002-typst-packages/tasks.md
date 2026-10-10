@@ -165,7 +165,7 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T023 [P] [US4] Dans `tests/bundled_packages.rs`, écrire un test **d'intégrité du dépôt**. Il relit `packages/lock.toml` avec `toml` et `serde` en dev-dependencies, puis vérifie :
+- [X] T023 [P] [US4] Dans `tests/bundled_packages.rs`, écrire un test **d'intégrité du dépôt**. Il relit `packages/lock.toml` avec `toml` et `serde` en dev-dependencies, puis vérifie :
   - que le sha256 de chaque archive de `packages/vendor/` correspond, avec `sha2` en dev-dependency ;
   - que chaque archive a une entrée ;
   - qu'il y a au plus un `selected` par nom ;
@@ -174,8 +174,8 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ### Implementation for User Story 4
 
-- [ ] T024 [US4] Tester `scripts/add-package.sh` en mode remplacement sur une copie temporaire du dépôt. Par exemple, remplacer `showybox` 2.0.4 par une version antérieure publiée, puis vérifier que l'entrée est remplacée, l'ancienne archive supprimée et `cargo test --test bundled_packages` vert. Ne pas committer ce changement. Corriger le script si besoin.
-- [ ] T025 [P] [US4] Rédiger la section « Mainteneurs : faire évoluer les paquets » dans `docs/packages.md` (création du fichier si absent) : règles de contracts/lock-file.md (ajout, remplacement, retrait, échec avec le moteur) et usage du script.
+- [X] T024 [US4] Tester `scripts/add-package.sh` en mode remplacement sur une copie temporaire du dépôt. Par exemple, remplacer `showybox` 2.0.4 par une version antérieure publiée, puis vérifier que l'entrée est remplacée, l'ancienne archive supprimée et `cargo test --test bundled_packages` vert. Ne pas committer ce changement. Corriger le script si besoin.
+- [X] T025 [P] [US4] Rédiger la section « Mainteneurs : faire évoluer les paquets » dans `docs/packages.md` (création du fichier si absent) : règles de contracts/lock-file.md (ajout, remplacement, retrait, échec avec le moteur) et usage du script.
 
 **Checkpoint** : US4 vérifiée ; la procédure SC-007 (T007) est documentée.
 
