@@ -116,13 +116,13 @@ L'entrée validée (défauts appliqués) est disponible dans `sys.inputs` :
 
 ```typst
 #let data = sys.inputs.data
-#let layout = sys.inputs.layout
+#let opts = sys.inputs.layout  // pas `layout` : ce nom masquerait la fonction Typst `layout()`
 
-#set text(fill: rgb(layout.primaryColor))
+#set text(fill: rgb(opts.primaryColor))
 #let aligns = (left: left, center: center, right: right)
-#align(aligns.at(layout.align))[= #data.title]
+#align(aligns.at(opts.align))[= #data.title]
 #table(columns: 2, ..data.items.map(i => (i.label, str(i.value))).flatten())
-#if layout.showFooter [ #include "parts/footer.typ" ]
+#if opts.showFooter [ #include "parts/footer.typ" ]
 ```
 
 Si le schéma ne déclare pas `layout`, `sys.inputs.layout` est un dictionnaire vide.

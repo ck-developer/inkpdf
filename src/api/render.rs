@@ -32,6 +32,33 @@ pub struct RenderRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     layout: Option<Map<String, Value>>,
+    /// Métadonnées du PDF, toutes facultatives. Sans `author`, l'auteur par défaut du service
+    /// (`INKPDF_DEFAULT_AUTHOR`, `inkpdf` par défaut) ; sans `title`, celui du template, à
+    /// défaut son nom. `date` au format `AAAA-MM-JJ`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    metadata: Option<DocumentMetadataSchema>,
+}
+
+/// Schéma de `metadata` (fixe, défini par le service).
+pub struct DocumentMetadataSchema;
+
+impl Serialize for DocumentMetadataSchema {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_unit()
+    }
+}
+
+impl utoipa::PartialSchema for DocumentMetadataSchema {
+    fn schema() -> RefOr<Schema> {
+        serde_json::from_value(render::metadata::schema()).expect("valid OpenAPI schema")
+    }
+}
+
+impl ToSchema for DocumentMetadataSchema {
+    fn name() -> std::borrow::Cow<'static, str> {
+        "DocumentMetadata".into()
+    }
 }
 
 /// Document PDF renvoyé tel quel.
@@ -146,15 +173,26 @@ pub async fn render_template(
         );
     };
 
-    let prepared = match schema.prepare(body) {
-        Ok(prepared) => prepared,
-        Err(violations) => {
+    // `metadata` est validée par le schéma fixe du service, `data` et `layout` par celui du
+    // template ; toutes les violations sont renvoyées ensemble.
+    let mut body = body;
+    let metadata = match body.as_object_mut().map(render::metadata::extract) {
+        Some(Ok(metadata)) => Ok(metadata),
+        Some(Err(violations)) => Err(violations),
+        None => Ok(Default::default()),
+    };
+    let prepared = schema.prepare(body);
+    let (prepared, metadata) = match (prepared, metadata) {
+        (Ok(prepared), Ok(metadata)) => (prepared, metadata),
+        (prepared, metadata) => {
+            let mut violations = metadata.err().unwrap_or_default();
+            violations.extend(prepared.err().unwrap_or_default());
             log("validation_failed");
             return fail(ApiError::ValidationFailed { violations });
         }
     };
 
-    match render::render(entry.clone(), prepared, &state).await {
+    match render::render(entry.clone(), prepared, metadata, &state).await {
         Ok(pdf) => {
             log("ok");
             let disposition = format!("inline; filename=\"{id}.pdf\"");

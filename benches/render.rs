@@ -27,7 +27,16 @@ fn render_sample(c: &mut Criterion) {
     let body = entry.schema.as_ref().unwrap().prepare(request).unwrap();
 
     c.bench_function("render sample (20 rows)", |b| {
-        b.iter(|| compile_pdf(entry.clone(), &body, Arc::new(AtomicBool::new(false))).unwrap())
+        b.iter(|| {
+            compile_pdf(
+                entry.clone(),
+                &body,
+                &Default::default(),
+                "inkpdf",
+                Arc::new(AtomicBool::new(false)),
+            )
+            .unwrap()
+        })
     });
 }
 

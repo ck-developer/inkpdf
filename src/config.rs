@@ -39,6 +39,8 @@ pub struct Config {
     pub rescan_interval: Duration,
     pub max_template_bytes: u64,
     pub log_format: LogFormat,
+    /// Auteur des PDF quand ni la requête ni le template n'en donnent.
+    pub default_author: String,
 }
 
 impl Default for Config {
@@ -53,6 +55,7 @@ impl Default for Config {
             rescan_interval: Duration::from_secs(2),
             max_template_bytes: 50 * 1024 * 1024,
             log_format: LogFormat::Json,
+            default_author: "inkpdf".to_owned(),
         }
     }
 }
@@ -102,6 +105,9 @@ impl Config {
         }
         if let Some(v) = var("INKPDF_LOG_FORMAT") {
             config.log_format = parse("INKPDF_LOG_FORMAT", &v)?;
+        }
+        if let Some(v) = var("INKPDF_DEFAULT_AUTHOR") {
+            config.default_author = v.trim().to_owned();
         }
         Ok(config)
     }
@@ -162,6 +168,7 @@ mod tests {
         assert_eq!(config.rescan_interval, Duration::from_secs(2));
         assert_eq!(config.max_template_bytes, 52_428_800);
         assert_eq!(config.log_format, LogFormat::Json);
+        assert_eq!(config.default_author, "inkpdf");
     }
 
     #[test]
@@ -171,12 +178,14 @@ mod tests {
             ("INKPDF_LISTEN", "127.0.0.1:8080"),
             ("INKPDF_RENDER_TIMEOUT_SECS", "5"),
             ("INKPDF_LOG_FORMAT", "pretty"),
+            ("INKPDF_DEFAULT_AUTHOR", "ACME"),
         ]))
         .unwrap();
         assert_eq!(config.templates_dir, PathBuf::from("/tmp/t"));
         assert_eq!(config.listen.port(), 8080);
         assert_eq!(config.render_timeout, Duration::from_secs(5));
         assert_eq!(config.log_format, LogFormat::Pretty);
+        assert_eq!(config.default_author, "ACME");
     }
 
     #[test]

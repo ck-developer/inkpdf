@@ -1,6 +1,7 @@
 //! Pipeline de rendu : créneau, délai, compilation Typst, export PDF.
 
 pub mod fonts;
+pub mod metadata;
 pub mod value;
 pub mod world;
 
@@ -18,6 +19,7 @@ use typst_pdf::PdfOptions;
 use crate::AppState;
 use crate::error::{ApiError, Diagnostic};
 use crate::registry::TemplateEntry;
+use metadata::DocumentMetadata;
 use world::SandboxWorld;
 
 /// Profondeur conservée par le cache de compilation entre deux rendus.
@@ -32,6 +34,7 @@ const CACHE_MAX_AGE: usize = 10;
 pub async fn render(
     entry: Arc<TemplateEntry>,
     body: serde_json::Value,
+    metadata: DocumentMetadata,
     state: &AppState,
 ) -> Result<Vec<u8>, ApiError> {
     let permit = match tokio::time::timeout(
@@ -45,6 +48,7 @@ pub async fn render(
     };
 
     let cancel = Arc::new(AtomicBool::new(false));
+    let default_author = state.config.default_author.clone();
     let task = {
         let cancel = cancel.clone();
         tokio::task::spawn_blocking(move || {
@@ -54,7 +58,7 @@ pub async fn render(
                 cancel: cancel.clone(),
                 started: Instant::now(),
             };
-            compile_pdf(entry, &body, cancel)
+            compile_pdf(entry, &body, &metadata, &default_author, cancel)
         })
     };
 
@@ -106,14 +110,22 @@ impl Drop for RenderGuard {
 pub fn compile_pdf(
     entry: Arc<TemplateEntry>,
     body: &serde_json::Value,
+    metadata: &DocumentMetadata,
+    default_author: &str,
     cancel: Arc<AtomicBool>,
 ) -> Result<Vec<u8>, ApiError> {
     let ident = format!("{}@{}", entry.id, entry.fingerprint);
+    let template_name = entry.name.clone();
     let world = SandboxWorld::new(entry, body, cancel);
 
     let Warned { output, .. } = typst::compile::<PagedDocument>(&world);
     let result = output
-        .and_then(|document| {
+        .and_then(|mut document| {
+            let defaults = metadata::Defaults {
+                title: &template_name,
+                author: default_author,
+            };
+            metadata::apply(document.info_mut(), metadata, &defaults);
             let options = PdfOptions {
                 ident: Smart::Custom(ident),
                 timestamp: None,

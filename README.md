@@ -60,6 +60,7 @@ INKPDF_TEMPLATES_DIR=examples/templates cargo run --release
 | `INKPDF_RESCAN_INTERVAL_SECS` | `2` | rescan de secours du volume |
 | `INKPDF_MAX_TEMPLATE_BYTES` | `52428800` | taille max d'un template (chargé en mémoire) |
 | `INKPDF_LOG_FORMAT` | `json` | `json` ou `pretty` |
+| `INKPDF_DEFAULT_AUTHOR` | `inkpdf` | auteur des PDF quand ni la requête (`metadata.author`) ni le template n'en donnent |
 | `RUST_LOG` | `info` | niveau de logs |
 
 Une valeur mal formée empêche le démarrage avec un message explicite.

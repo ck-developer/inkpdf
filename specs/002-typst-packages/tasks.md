@@ -314,13 +314,13 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 
 ## Phase 9: US6 - Métadonnées (Priority: P2)
 
-- [ ] T040 [P] [US6] Écrire `tests/api_metadata.rs` :
+- [X] T040 [P] [US6] Écrire `tests/api_metadata.rs` :
   - métadonnées complètes, avec lecture des propriétés du PDF (`/Title`, `/Author`, `/Subject`, `/Keywords`, `/CreationDate`) via une recherche dans le flux XMP ou le dictionnaire `Info`, sans nouvelle dépendance ;
   - corps sans `metadata` : auteur `inkpdf`, titre égal au nom du template ;
   - `default_author` configuré ;
   - propriété inconnue ou type incorrect : 422, chemin `/metadata/...` ;
   - déterminisme.
-- [ ] T041 [US6] Créer `src/render/metadata.rs` :
+- [X] T041 [US6] Créer `src/render/metadata.rs` :
   - une struct `DocumentMetadata` ;
   - le schéma fixe de R17, validé par `jsonschema` ;
   - `extract(body) -> Result<(Value, Option<DocumentMetadata>), Vec<Violation>>` ;

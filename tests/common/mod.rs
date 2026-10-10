@@ -187,7 +187,13 @@ pub fn compile(
     entry: std::sync::Arc<inkpdf::registry::TemplateEntry>,
 ) -> Result<Vec<u8>, inkpdf::error::ApiError> {
     let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-    inkpdf::render::compile_pdf(entry, &serde_json::json!({ "data": {} }), cancel)
+    inkpdf::render::compile_pdf(
+        entry,
+        &serde_json::json!({ "data": {} }),
+        &Default::default(),
+        "inkpdf",
+        cancel,
+    )
 }
 
 /// Schéma minimal accepté par le chargeur.
