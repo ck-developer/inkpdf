@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-10
 
-**Status**: Draft
+**Status**: Implemented — 2026-10-10, PR #4 (44/44 tasks)
 
 **Input**: User description: "Make inkpdf a real open-source project. (1) Monorepo layout as a
 Cargo workspace … (2) A real documentation site in English … (3) Open-source hygiene … (4) CI/CD:
