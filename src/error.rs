@@ -14,6 +14,7 @@ pub const ERROR_TYPE_BASE: &str = "https://github.com/ck-developer/inkpdf/errors
 pub enum ErrorCode {
     TemplateNotFound,
     InvalidJson,
+    InvalidParameter,
     UnsupportedMediaType,
     ValidationFailed,
     PayloadTooLarge,
@@ -28,6 +29,7 @@ impl ErrorCode {
         match self {
             Self::TemplateNotFound => "template-not-found",
             Self::InvalidJson => "invalid-json",
+            Self::InvalidParameter => "invalid-parameter",
             Self::UnsupportedMediaType => "unsupported-media-type",
             Self::ValidationFailed => "validation-failed",
             Self::PayloadTooLarge => "payload-too-large",
@@ -41,7 +43,7 @@ impl ErrorCode {
     pub fn status(self) -> StatusCode {
         match self {
             Self::TemplateNotFound => StatusCode::NOT_FOUND,
-            Self::InvalidJson => StatusCode::BAD_REQUEST,
+            Self::InvalidJson | Self::InvalidParameter => StatusCode::BAD_REQUEST,
             Self::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
             Self::ValidationFailed => StatusCode::UNPROCESSABLE_ENTITY,
             Self::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
@@ -56,6 +58,7 @@ impl ErrorCode {
         match self {
             Self::TemplateNotFound => "Template not found",
             Self::InvalidJson => "Invalid JSON",
+            Self::InvalidParameter => "Invalid parameter",
             Self::UnsupportedMediaType => "Unsupported media type",
             Self::ValidationFailed => "Validation failed",
             Self::PayloadTooLarge => "Payload too large",
@@ -127,6 +130,8 @@ pub enum ApiError {
     TemplateNotFound,
     #[error("{message}")]
     InvalidJson { message: String },
+    #[error("invalid query parameter `{name}`: {message}")]
+    InvalidParameter { name: &'static str, message: String },
     #[error("expected Content-Type: application/json")]
     UnsupportedMediaType,
     #[error("{} violation(s)", violations.len())]
@@ -148,6 +153,7 @@ impl ApiError {
         match self {
             Self::TemplateNotFound => ErrorCode::TemplateNotFound,
             Self::InvalidJson { .. } => ErrorCode::InvalidJson,
+            Self::InvalidParameter { .. } => ErrorCode::InvalidParameter,
             Self::UnsupportedMediaType => ErrorCode::UnsupportedMediaType,
             Self::ValidationFailed { .. } => ErrorCode::ValidationFailed,
             Self::PayloadTooLarge { .. } => ErrorCode::PayloadTooLarge,

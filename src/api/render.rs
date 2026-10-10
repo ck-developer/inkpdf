@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use axum::body::Bytes;
 use axum::extract::rejection::BytesRejection;
-use axum::extract::{Path, State};
+use axum::extract::{Path, RawQuery, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
@@ -84,12 +84,12 @@ impl ToSchema for PdfDocument {}
     path = "/templates/{templateId}/render",
     tag = "render",
     operation_id = "renderTemplate",
-    params(TemplatePath),
+    params(TemplatePath, RenderQuery),
     request_body(content = RenderRequest, content_type = "application/json"),
     responses(
         (status = 200, description = "Document généré.", content_type = "application/pdf",
             body = inline(PdfDocument),
-            headers(("Content-Disposition" = String, description = "inline; filename=\"<templateId>.pdf\""))),
+            headers(("Content-Disposition" = String, description = "`inline` (affichage) ou `attachment` (téléchargement, `download=true`), avec `filename` et `filename*` (UTF-8)."))),
         (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
         (status = 409, response = crate::api::ProblemResponse),
@@ -105,6 +105,7 @@ impl ToSchema for PdfDocument {}
 pub async fn render_template(
     State(state): State<AppState>,
     Path(TemplatePath { template_id }): Path<TemplatePath>,
+    RawQuery(query): RawQuery,
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
@@ -117,6 +118,10 @@ pub async fn render_template(
             .into_response();
     };
     let fail = |error: ApiError| error.for_template(id.as_str()).into_response();
+    let query = match RenderQuery::parse(query.as_deref()) {
+        Ok(query) => query,
+        Err(error) => return fail(error),
+    };
 
     if !is_json(&headers) {
         return fail(ApiError::UnsupportedMediaType);
@@ -195,7 +200,8 @@ pub async fn render_template(
     match render::render(entry.clone(), prepared, metadata, &state).await {
         Ok(pdf) => {
             log("ok");
-            let disposition = format!("inline; filename=\"{id}.pdf\"");
+            let disposition =
+                content_disposition(id.as_str(), query.download, query.filename.as_deref());
             let mut response = (StatusCode::OK, pdf).into_response();
             let headers = response.headers_mut();
             headers.insert(
@@ -225,4 +231,156 @@ fn is_json(headers: &HeaderMap) -> bool {
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.split(';').next())
         .is_some_and(|mime| mime.trim().eq_ignore_ascii_case("application/json"))
+}
+
+/// Paramètres de requête de la génération (R18).
+#[derive(Debug, Default, PartialEq, Eq, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct RenderQuery {
+    /// `true` : réponse en téléchargement (`Content-Disposition: attachment`) au lieu d'un
+    /// affichage. Valeurs : `true`, `false`, `1`, `0`.
+    #[param(required = false, default = false)]
+    download: bool,
+    /// Nom du fichier (sans chemin ; `.pdf` ajouté). Défaut : `<templateId>.pdf`.
+    #[param(max_length = 200)]
+    filename: Option<String>,
+}
+
+impl RenderQuery {
+    fn parse(query: Option<&str>) -> Result<Self, ApiError> {
+        let mut parsed = Self::default();
+        let pairs = query.map(form_urlencoded_pairs).unwrap_or_default();
+        for (key, value) in pairs {
+            match key.as_str() {
+                "download" => {
+                    parsed.download = match value.as_str() {
+                        "true" | "1" => true,
+                        "false" | "0" => false,
+                        _ => {
+                            return Err(ApiError::InvalidParameter {
+                                name: "download",
+                                message: format!("expected `true` or `false`, got `{value}`"),
+                            });
+                        }
+                    }
+                }
+                "filename" => {
+                    if value.chars().count() > 200 {
+                        return Err(ApiError::InvalidParameter {
+                            name: "filename",
+                            message: "at most 200 characters".into(),
+                        });
+                    }
+                    parsed.filename = Some(value);
+                }
+                _ => {}
+            }
+        }
+        Ok(parsed)
+    }
+}
+
+/// Décode `a=b&c=d` (`application/x-www-form-urlencoded`).
+fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
+    fn decode(raw: &str) -> String {
+        let bytes = raw.as_bytes();
+        let mut out = Vec::with_capacity(bytes.len());
+        let mut i = 0;
+        while i < bytes.len() {
+            let hex = bytes
+                .get(i + 1..i + 3)
+                .and_then(|h| std::str::from_utf8(h).ok())
+                .and_then(|h| u8::from_str_radix(h, 16).ok());
+            match (bytes[i], hex) {
+                (b'+', _) => out.push(b' '),
+                (b'%', Some(byte)) => {
+                    out.push(byte);
+                    i += 2;
+                }
+                (byte, _) => out.push(byte),
+            }
+            i += 1;
+        }
+        String::from_utf8_lossy(&out).into_owned()
+    }
+    query
+        .split('&')
+        .filter(|pair| !pair.is_empty())
+        .map(|pair| {
+            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+            (decode(key), decode(value))
+        })
+        .collect()
+}
+
+/// En-tête `Content-Disposition` (RFC 6266) : nom nettoyé, repli ASCII et `filename*` UTF-8.
+fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> String {
+    let name = filename.map(clean_filename).filter(|n| !n.is_empty());
+    let name = format!("{}.pdf", name.as_deref().unwrap_or(id));
+    let ascii: String = name
+        .chars()
+        .map(|c| if c.is_ascii() { c } else { '_' })
+        .collect();
+    let encoded: String = name
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'!' | b'#' | b'$' | b'&' | b'+' | b'-'
+            | b'.' | b'^' | b'_' | b'`' | b'|' | b'~' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect();
+    let kind = if download { "attachment" } else { "inline" };
+    format!("{kind}; filename=\"{ascii}\"; filename*=UTF-8''{encoded}")
+}
+
+/// Retire chemins, guillemets et caractères de contrôle ; sans l'extension `.pdf`.
+fn clean_filename(raw: &str) -> String {
+    let kept: String = raw
+        .chars()
+        .filter(|c| !c.is_control() && !matches!(c, '/' | '\\' | '"' | ':' | '*' | '?' | '<' | '>' | '|'))
+        .collect();
+    let trimmed = kept.trim_matches(|c: char| c.is_whitespace() || c == '.');
+    let stem = if trimmed.to_ascii_lowercase().ends_with(".pdf") {
+        &trimmed[..trimmed.len() - 4]
+    } else {
+        trimmed
+    };
+    stem.trim_matches(|c: char| c.is_whitespace() || c == '.').to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn query_is_parsed() {
+        assert_eq!(RenderQuery::parse(None).unwrap(), RenderQuery::default());
+        let query = RenderQuery::parse(Some("download=1&filename=a%20b+c&x=y")).unwrap();
+        assert!(query.download);
+        assert_eq!(query.filename.as_deref(), Some("a b c"));
+        assert!(RenderQuery::parse(Some("download=yes")).is_err());
+    }
+
+    #[test]
+    fn filenames_are_cleaned() {
+        assert_eq!(clean_filename("../../etc/\"pass\"\n.PDF"), "etcpass");
+        assert_eq!(clean_filename("  Facture 042.pdf "), "Facture 042");
+        assert_eq!(clean_filename("..."), "");
+    }
+
+    #[test]
+    fn disposition_has_ascii_fallback_and_utf8_name() {
+        assert_eq!(
+            content_disposition("sample", false, None),
+            "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
+        );
+        assert_eq!(
+            content_disposition("sample", true, Some("Été")),
+            "attachment; filename=\"_t_.pdf\"; filename*=UTF-8''%C3%89t%C3%A9.pdf"
+        );
+        assert_eq!(
+            content_disposition("sample", true, Some("///")),
+            "attachment; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
+        );
+    }
 }

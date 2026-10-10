@@ -72,7 +72,7 @@ Une valeur mal formée empêche le démarrage avec un message explicite.
 | `GET` | `/templates` | liste des templates (`valid` / `invalid` avec `reason`) |
 | `GET` | `/templates/{templateId}` | détail d'un template, schéma compris |
 | `GET` | `/templates/{templateId}/schema` | `schema.json` brut (`application/schema+json`) |
-| `POST` | `/templates/{templateId}/render` | génération : corps `{ data, layout }` → `application/pdf` |
+| `POST` | `/templates/{templateId}/render` | génération : corps `{ data, layout, metadata? }` → `application/pdf` ; `?download=true&filename=…` pour un téléchargement |
 | `GET` | `/packages` | paquets Typst disponibles pour les templates |
 | `GET` | `/health` | vivacité |
 | `GET` | `/ready` | disponibilité (scan initial terminé) |
@@ -81,7 +81,7 @@ Une valeur mal formée empêche le démarrage avec un message explicite.
 
 Les erreurs suivent la RFC 9457 (`application/problem+json`) avec un champ `code` :
 `template-not-found` (404), `invalid-json` (400), `unsupported-media-type` (415),
-`validation-failed` (422, avec `violations[]`), `payload-too-large` (413),
+`invalid-parameter` (400), `validation-failed` (422, avec `violations[]`), `payload-too-large` (413),
 `template-invalid` (409), `render-failed` (500, avec `diagnostics[]`), `render-timeout` (504),
 `overloaded` (503).
 

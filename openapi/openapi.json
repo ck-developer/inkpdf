@@ -95,6 +95,7 @@
         "enum": [
           "template-not-found",
           "invalid-json",
+          "invalid-parameter",
           "unsupported-media-type",
           "validation-failed",
           "payload-too-large",
@@ -557,6 +558,26 @@
               "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
               "type": "string"
             }
+          },
+          {
+            "description": "`true` : réponse en téléchargement (`Content-Disposition: attachment`) au lieu d'un\naffichage. Valeurs : `true`, `false`, `1`, `0`.",
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Nom du fichier (sans chemin ; `.pdf` ajouté). Défaut : `<templateId>.pdf`.",
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -582,7 +603,7 @@
             "description": "Document généré.",
             "headers": {
               "Content-Disposition": {
-                "description": "inline; filename=\"<templateId>.pdf\"",
+                "description": "`inline` (affichage) ou `attachment` (téléchargement, `download=true`), avec `filename` et `filename*` (UTF-8).",
                 "schema": {
                   "type": "string"
                 }

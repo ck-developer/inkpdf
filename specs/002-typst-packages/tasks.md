@@ -330,14 +330,14 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 
 ## Phase 10: US5 - Téléchargement (Priority: P2)
 
-- [ ] T042 [P] [US5] Ajouter des tests dans `tests/api_render.rs` :
+- [X] T042 [P] [US5] Ajouter des tests dans `tests/api_render.rs` :
   - `?download=true&filename=Facture 042` donne `attachment; filename="Facture 042.pdf"; filename*=UTF-8''Facture%20042.pdf` ;
   - sans nom, `<id>.pdf` ;
   - nom dangereux nettoyé ;
   - nom accentué en ASCII de repli plus `filename*` ;
   - `download=oui` donne 400 `invalid-parameter` ;
   - sans paramètre, `inline` inchangé.
-- [ ] T043 [US5] Dans `src/api/render.rs`, ajouter une struct `RenderQuery` (`IntoParams`) et une fonction pure `content_disposition(id, download, filename)` avec ses tests unitaires. Ajouter `ErrorCode::InvalidParameter` (400) dans `src/error.rs`. Régénérer l'OpenAPI.
+- [X] T043 [US5] Dans `src/api/render.rs`, ajouter une struct `RenderQuery` (`IntoParams`) et une fonction pure `content_disposition(id, download, filename)` avec ses tests unitaires. Ajouter `ErrorCode::InvalidParameter` (400) dans `src/error.rs`. Régénérer l'OpenAPI.
 
 ## Phase 11: US8 - Exemples riches et Bruno (Priority: P2)
 

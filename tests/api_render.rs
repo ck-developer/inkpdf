@@ -27,7 +27,7 @@ async fn sample_request_renders_a_pdf() {
     assert_eq!(headers[header::CONTENT_TYPE], "application/pdf");
     assert_eq!(
         headers[header::CONTENT_DISPOSITION],
-        "inline; filename=\"sample.pdf\""
+        "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
     );
     assert!(body.starts_with(b"%PDF-"));
     let text = pdf_text(&body);
@@ -225,4 +225,61 @@ async fn error_inside_a_package_points_to_the_package_file() {
         }),
         "{problem}"
     );
+}
+
+async fn disposition(query: &str) -> (StatusCode, String) {
+    let volume = volume();
+    let app = test_app(test_config(&volume));
+    let (status, headers, _) =
+        post_json(&app, &format!("/templates/sample/render{query}"), &sample_request()).await;
+    let value = headers
+        .get(header::CONTENT_DISPOSITION)
+        .map(|v| v.to_str().unwrap().to_owned())
+        .unwrap_or_default();
+    (status, value)
+}
+
+/// 002/US5 : téléchargement nommé.
+#[tokio::test]
+async fn download_with_filename_is_an_attachment() {
+    let (status, value) = disposition("?download=true&filename=Facture%20042").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(
+        value,
+        "attachment; filename=\"Facture 042.pdf\"; filename*=UTF-8''Facture%20042.pdf"
+    );
+}
+
+#[tokio::test]
+async fn download_without_filename_uses_the_template_id() {
+    let (_, value) = disposition("?download=true").await;
+    assert_eq!(value, "attachment; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf");
+}
+
+#[tokio::test]
+async fn dangerous_and_accented_filenames_are_cleaned() {
+    let (_, value) = disposition("?download=true&filename=..%2F..%2Fetc%2F%22pass%22%0A.PDF").await;
+    assert_eq!(value, "attachment; filename=\"etcpass.pdf\"; filename*=UTF-8''etcpass.pdf");
+
+    let (_, value) = disposition("?download=1&filename=Situation%20n%C2%B03%20%C3%A9t%C3%A9").await;
+    assert_eq!(
+        value,
+        "attachment; filename=\"Situation n_3 _t_.pdf\"; filename*=UTF-8''Situation%20n%C2%B03%20%C3%A9t%C3%A9.pdf"
+    );
+}
+
+#[tokio::test]
+async fn invalid_download_value_is_a_bad_request() {
+    let volume = volume();
+    let app = test_app(test_config(&volume));
+    let (status, _, body) =
+        post_json(&app, "/templates/sample/render?download=oui", &sample_request()).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(problem(&body)["code"], "invalid-parameter");
+}
+
+#[tokio::test]
+async fn without_parameters_the_pdf_stays_inline() {
+    let (_, value) = disposition("").await;
+    assert_eq!(value, "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf");
 }
