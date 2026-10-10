@@ -1,0 +1,5069 @@
+[
+ {
+  "name": "a2c-nums",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit un nombre en caractères chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "aa-draw",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Transforme des dessins en caractères ASCII en schémas vectoriels.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ab-annotate",
+  "besoin": "Texte et typographie",
+  "usage": "Affiche résumés et notes sous chaque référence d'une bibliographie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "abbr",
+  "besoin": "Texte et typographie",
+  "usage": "Gère les abréviations et leur liste dans un document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "abbrev",
+  "besoin": "Texte et typographie",
+  "usage": "Gère abréviations, acronymes et glossaire.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "abntyp",
+  "besoin": "Documents métier",
+  "usage": "Met en forme des documents universitaires selon les normes brésiliennes ABNT.",
+  "priorite": "P3"
+ },
+ {
+  "name": "abyss-book",
+  "besoin": "Mise en page et blocs",
+  "usage": "Modèle de livre au thème sombre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "acrostiche",
+  "besoin": "Texte et typographie",
+  "usage": "Gère les acronymes et leurs définitions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "acrotastic",
+  "besoin": "Texte et typographie",
+  "usage": "Gère les acronymes et leurs définitions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "adaptive-dots",
+  "besoin": "Sciences et maths",
+  "usage": "Place les points de suspension correctement dans les formules mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "adequate-iso-7000",
+  "besoin": "Icônes et images",
+  "usage": "Fournit les pictogrammes normalisés ISO 7000 pour équipements et étiquettes.",
+  "priorite": "P2"
+ },
+ {
+  "name": "admon-blk",
+  "besoin": "Mise en page et blocs",
+  "usage": "Ajoute des encadrés d'avertissement ou de remarque.",
+  "priorite": "P3"
+ },
+ {
+  "name": "aimesymb",
+  "besoin": "Sciences et maths",
+  "usage": "Ajoute des symboles mathématiques de style AMS dans les formules.",
+  "priorite": "P3"
+ },
+ {
+  "name": "akatable",
+  "besoin": "Tableaux",
+  "usage": "Tableaux sobres aux formats de publication prédéfinis.",
+  "priorite": "P2"
+ },
+ {
+  "name": "alchemist",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des formules chimiques développées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "alertoni",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des encadrés d'alerte personnalisables (info, attention, erreur).",
+  "priorite": "P2"
+ },
+ {
+  "name": "alexandria",
+  "besoin": "Texte et typographie",
+  "usage": "Permet plusieurs bibliographies dans un même document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "algo",
+  "besoin": "Code et informatique",
+  "usage": "Met en forme des algorithmes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "algol-code",
+  "besoin": "Code et informatique",
+  "usage": "Met en forme des algorithmes en pseudo-code.",
+  "priorite": "P3"
+ },
+ {
+  "name": "algorithmic",
+  "besoin": "Code et informatique",
+  "usage": "Met en forme du pseudo-code à la manière de LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "algorythmst",
+  "besoin": "Code et informatique",
+  "usage": "Affiche des blocs de pseudo-code soignés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "alterlang",
+  "besoin": "Sciences et maths",
+  "usage": "Traduit les noms d'opérateurs mathématiques selon la langue.",
+  "priorite": "P3"
+ },
+ {
+  "name": "amlos",
+  "besoin": "Sciences et maths",
+  "usage": "Produit une liste des symboles utilisés dans le document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ampelmark",
+  "besoin": "Documents métier",
+  "usage": "Ajoute les mentions de confidentialité TLP (code couleur) sur un document.",
+  "priorite": "P2"
+ },
+ {
+  "name": "anatomy",
+  "besoin": "Texte et typographie",
+  "usage": "Visualise les dimensions et métriques d'une police.",
+  "priorite": "P3"
+ },
+ {
+  "name": "animo",
+  "besoin": "Présentations",
+  "usage": "Crée des présentations animées en HTML et PDF.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ankify",
+  "besoin": "Enseignement et examens",
+  "usage": "Génère des cartes de révision Anki depuis un document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ansi-render",
+  "besoin": "Code et informatique",
+  "usage": "Affiche du texte de terminal avec ses couleurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "answerly",
+  "besoin": "Enseignement et examens",
+  "usage": "Note et met en forme les réponses d'exercices.",
+  "priorite": "P3"
+ },
+ {
+  "name": "anti-matter",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérote séparément les pages d'introduction et d'annexe.",
+  "priorite": "P3"
+ },
+ {
+  "name": "aoran",
+  "besoin": "Dates et langues",
+  "usage": "Choisit l'article anglais « a » ou « an ».",
+  "priorite": "P3"
+ },
+ {
+  "name": "ape",
+  "besoin": "Mise en page et blocs",
+  "usage": "Ensemble de mises en page prêtes pour rapports.",
+  "priorite": "P3"
+ },
+ {
+  "name": "arabic-exam-kit",
+  "besoin": "Enseignement et examens",
+  "usage": "Mises en page d'examens de mathématiques en arabe.",
+  "priorite": "P3"
+ },
+ {
+  "name": "arborly",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des arbres syntaxiques de linguistique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "arch-plotter",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessins techniques d'architecture et de géomètre en 2D.",
+  "priorite": "P3"
+ },
+ {
+  "name": "arnoptical",
+  "besoin": "Texte et typographie",
+  "usage": "Choisit la variante de la police Arno Pro selon la taille.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ascii-ipa",
+  "besoin": "Dates et langues",
+  "usage": "Convertit une notation simplifiée en alphabet phonétique international.",
+  "priorite": "P3"
+ },
+ {
+  "name": "asciim",
+  "besoin": "Code et informatique",
+  "usage": "Affiche la table ASCII sous forme de grille.",
+  "priorite": "P3"
+ },
+ {
+  "name": "asian-power",
+  "besoin": "Dates et langues",
+  "usage": "Force la mise en gras ou italique des caractères asiatiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "astro",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des schémas d'astronomie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "atomic",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des atomes avec leurs couches d'électrons.",
+  "priorite": "P3"
+ },
+ {
+  "name": "atostate",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit les états atomiques en physique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "attributionistic",
+  "besoin": "Icônes et images",
+  "usage": "Liste automatiquement les crédits des images utilisées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-bidi",
+  "besoin": "Dates et langues",
+  "usage": "Gère automatiquement le sens d'écriture de l'hébreu, l'arabe et le persan.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-bihua",
+  "besoin": "Dates et langues",
+  "usage": "Ordre et nombre de traits des caractères chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-canto",
+  "besoin": "Dates et langues",
+  "usage": "Transcrit le chinois en romanisation cantonaise.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-div",
+  "besoin": "Sciences et maths",
+  "usage": "Pose automatiquement une division de polynômes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-jrubby",
+  "besoin": "Dates et langues",
+  "usage": "Ajoute automatiquement la lecture des caractères japonais.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "auto-mando",
+  "besoin": "Dates et langues",
+  "usage": "Transcrit le chinois en romanisation mandarine.",
+  "priorite": "P3"
+ },
+ {
+  "name": "auto-pinyin",
+  "besoin": "Dates et langues",
+  "usage": "Convertit le chinois en pinyin.",
+  "priorite": "P3"
+ },
+ {
+  "name": "autofletcher",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Simplifie la création de diagrammes avec fletcher.",
+  "priorite": "P3"
+ },
+ {
+  "name": "autograph",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Place automatiquement les nœuds d'un graphe fletcher.",
+  "priorite": "P3"
+ },
+ {
+  "name": "automosaic",
+  "besoin": "Icônes et images",
+  "usage": "Dispose automatiquement des photos en mosaïque.",
+  "priorite": "P3"
+ },
+ {
+  "name": "axiom",
+  "besoin": "Sciences et maths",
+  "usage": "Raccourcis de notations mathématiques courantes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "axodendron",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise la forme de neurones à partir de fichiers scientifiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "babble-bubbles",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des encadrés de remarque.",
+  "priorite": "P3"
+ },
+ {
+  "name": "babel",
+  "besoin": "Texte et typographie",
+  "usage": "Masque un texte en le remplaçant par des caractères aléatoires.",
+  "priorite": "P3"
+ },
+ {
+  "name": "backtrack",
+  "besoin": "Outils pour auteurs",
+  "usage": "Détecte la version de Typst utilisée.",
+  "priorite": "P3"
+ },
+ {
+  "name": "badgery",
+  "besoin": "Mise en page et blocs",
+  "usage": "Affiche des badges et étiquettes colorés dans le texte.",
+  "priorite": "P2"
+ },
+ {
+  "name": "baler",
+  "besoin": "Tableaux",
+  "usage": "Équilibre automatiquement la largeur des colonnes d'un tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "bar-point",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des positions de backgammon.",
+  "priorite": "P3"
+ },
+ {
+  "name": "basalt-backlinks",
+  "besoin": "Outils pour auteurs",
+  "usage": "Génère des renvois inverses entre parties d'un document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "basalt-lib",
+  "besoin": "Outils pour auteurs",
+  "usage": "Outils de prise de notes façon Zettelkasten.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "based",
+  "besoin": "Données et formats",
+  "usage": "Encode et décode du texte en base64, base32 ou base16.",
+  "priorite": "P3"
+ },
+ {
+  "name": "basho",
+  "besoin": "Dates et langues",
+  "usage": "Écrit le japonais verticalement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "beam",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des montages d'optique expérimentale.",
+  "priorite": "P3"
+ },
+ {
+  "name": "beautiframe",
+  "besoin": "Sciences et maths",
+  "usage": "Encadrés stylés pour théorèmes et définitions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "beautitled",
+  "besoin": "Mise en page et blocs",
+  "usage": "Styles de titres de chapitres et de sommaire.",
+  "priorite": "P3"
+ },
+ {
+  "name": "biaoge",
+  "besoin": "Tableaux",
+  "usage": "Regroupe, fusionne et totalise des données CSV en tableaux.",
+  "priorite": "P2"
+ },
+ {
+  "name": "biceps",
+  "besoin": "Mise en page et blocs",
+  "usage": "Dispose des éléments en ligne avec retour automatique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bidi-flow",
+  "besoin": "Dates et langues",
+  "usage": "Détecte le sens d'écriture dans les textes mêlant arabe, hébreu et latin.",
+  "priorite": "P3"
+ },
+ {
+  "name": "big-rati",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Calculs exacts sur de très grandes fractions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "big-todo",
+  "besoin": "Outils pour auteurs",
+  "usage": "Insère des repères « à faire » bien visibles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "blindex",
+  "besoin": "Texte et typographie",
+  "usage": "Crée un index des citations bibliques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "blinky",
+  "besoin": "Texte et typographie",
+  "usage": "Transforme les titres de la bibliographie en liens.",
+  "priorite": "P3"
+ },
+ {
+  "name": "blockcell",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Schémas de blocs pour formats de données et registres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "blockst",
+  "besoin": "Enseignement et examens",
+  "usage": "Dessine des blocs de programmation Scratch pour l'enseignement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "board-n-pieces",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche des échiquiers.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "bob-draw",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Transforme des dessins ASCII en schémas vectoriels.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bone",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des schémas de mécanique des structures.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bookletic",
+  "besoin": "Mise en page et blocs",
+  "usage": "Prépare des livrets imprimables pliés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "booktabs",
+  "besoin": "Tableaux",
+  "usage": "Style de tableaux professionnel avec filets horizontaux.",
+  "priorite": "P2"
+ },
+ {
+  "name": "booktyps",
+  "besoin": "Tableaux",
+  "usage": "Style de tableaux professionnel avec filets, très configurable.",
+  "priorite": "P2"
+ },
+ {
+  "name": "booticons",
+  "besoin": "Icônes et images",
+  "usage": "Fournit les icônes Bootstrap.",
+  "priorite": "P2"
+ },
+ {
+  "name": "boxproof",
+  "besoin": "Sciences et maths",
+  "usage": "Présente des preuves logiques encadrées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "boxr",
+  "besoin": "Icônes et images",
+  "usage": "Crée des patrons de boîtes en carton à découper.",
+  "priorite": "P3"
+ },
+ {
+  "name": "brain-transplant",
+  "besoin": "Autre",
+  "usage": "Convertit du code Brainfuck en Typst.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "breather",
+  "besoin": "Sciences et maths",
+  "usage": "Évite le chevauchement de lignes causé par les grandes formules.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bulb",
+  "besoin": "Icônes et images",
+  "usage": "Applique un effet de tramage aux images.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bullseye",
+  "besoin": "Outils pour auteurs",
+  "usage": "Adapte le style selon la sortie HTML ou PDF.",
+  "priorite": "P3"
+ },
+ {
+  "name": "burik",
+  "besoin": "Musique et loisirs",
+  "usage": "Illustre les algorithmes du Rubik's Cube.",
+  "priorite": "P3"
+ },
+ {
+  "name": "bytefield",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des en-têtes de protocoles réseau et des registres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cades",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère des QR codes.",
+  "priorite": "X",
+  "raison": "exécute du JavaScript (via jogs)"
+ },
+ {
+  "name": "calendaring",
+  "besoin": "Dates et langues",
+  "usage": "Dessine la grille d'un mois de calendrier.",
+  "priorite": "P3"
+ },
+ {
+  "name": "calepin",
+  "besoin": "Code et informatique",
+  "usage": "Exécute du code R, Python et Julia dans le document.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (R, Python, Julia)"
+ },
+ {
+  "name": "caletz",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des variétés de Calabi-Yau.",
+  "priorite": "P3"
+ },
+ {
+  "name": "callisto",
+  "besoin": "Code et informatique",
+  "usage": "Lit et exécute des notebooks Jupyter.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (Python)"
+ },
+ {
+  "name": "calloutly",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés de remarque façon Markdown, personnalisables.",
+  "priorite": "P2"
+ },
+ {
+  "name": "canto-parser",
+  "besoin": "Dates et langues",
+  "usage": "Affiche le cantonais avec sa prononciation.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cap-able",
+  "besoin": "Tableaux",
+  "usage": "Tableaux et figures académiques avec légendes bilingues.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cartao",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée des cartes de révision imprimables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "caterpillar",
+  "besoin": "Outils pour auteurs",
+  "usage": "Définit ses propres règles de syntaxe dans le texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "catppuccin",
+  "besoin": "Mise en page et blocs",
+  "usage": "Applique un thème de couleurs pastel.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ccicons",
+  "besoin": "Icônes et images",
+  "usage": "Fournit les icônes des licences Creative Commons.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cetz",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Bibliothèque de dessin : formes, schémas et graphiques.",
+  "priorite": "P1"
+ },
+ {
+  "name": "cetz-feynman-lite",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des diagrammes de Feynman.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cetz-fields",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des champs électriques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cetz-plot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Trace des courbes et des graphiques à barres ou camemberts.",
+  "priorite": "P1"
+ },
+ {
+  "name": "cetz-venn",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes de Venn à deux ou trois ensembles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cgreet",
+  "besoin": "Documents métier",
+  "usage": "Compose les formules de politesse allemandes avec les titres.",
+  "priorite": "P2"
+ },
+ {
+  "name": "chalkdeck",
+  "besoin": "Présentations",
+  "usage": "Présentations au style tableau noir ou cahier.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chalks",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessins et annotations au style crayon ou craie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "checkitoff",
+  "besoin": "Autre",
+  "usage": "Remplit des listes de contrôle pour articles médicaux.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chem-par",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit des formules et noms chimiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chemformula",
+  "besoin": "Sciences et maths",
+  "usage": "Met en forme des formules chimiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cheq",
+  "besoin": "Mise en page et blocs",
+  "usage": "Écrit facilement des cases à cocher.",
+  "priorite": "P2"
+ },
+ {
+  "name": "chiandiau",
+  "besoin": "Dates et langues",
+  "usage": "Affiche la prononciation tonale de langues chinoises.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chic-hdr",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des en-têtes et pieds de page élégants.",
+  "priorite": "P2"
+ },
+ {
+  "name": "chomp",
+  "besoin": "Texte et typographie",
+  "usage": "Raccourcit un texte trop long pour qu'il tienne dans sa place.",
+  "priorite": "P2"
+ },
+ {
+  "name": "chordx",
+  "besoin": "Musique et loisirs",
+  "usage": "Écrit des paroles de chansons avec accords.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chromo",
+  "besoin": "Icônes et images",
+  "usage": "Génère des pages de test couleur pour imprimantes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "chronos",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes de séquence.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cineca",
+  "besoin": "Dates et langues",
+  "usage": "Crée un calendrier avec des événements.",
+  "priorite": "P3"
+ },
+ {
+  "name": "circuiteria",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des schémas de circuits logiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "citegeist",
+  "besoin": "Texte et typographie",
+  "usage": "Lit une bibliographie BibTeX comme des données.",
+  "priorite": "P3"
+ },
+ {
+  "name": "citesugar",
+  "besoin": "Texte et typographie",
+  "usage": "Raccourcis pour citer des références.",
+  "priorite": "P3"
+ },
+ {
+  "name": "citrus",
+  "besoin": "Texte et typographie",
+  "usage": "Met en forme une bibliographie selon les styles CSL.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cjk-spacer",
+  "besoin": "Dates et langues",
+  "usage": "Améliore l'espacement du texte japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cjk-unbreak",
+  "besoin": "Dates et langues",
+  "usage": "Supprime les espaces parasites dans le texte chinois ou japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cjk-unshrink",
+  "besoin": "Dates et langues",
+  "usage": "Garde la pleine largeur de la ponctuation asiatique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "clanker-slop-nicematrix",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des matrices avec pointillés et blocs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "clatter",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère des codes-barres PDF417.",
+  "priorite": "P2"
+ },
+ {
+  "name": "clean-ats-cv",
+  "besoin": "Documents métier",
+  "usage": "Modèle de CV sobre et lisible par les logiciels de recrutement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cloudy",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Crée des nuages de mots.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "cmarker",
+  "besoin": "Données et formats",
+  "usage": "Convertit du texte Markdown en contenu mis en forme.",
+  "priorite": "P1"
+ },
+ {
+  "name": "cntopo",
+  "besoin": "Icônes et images",
+  "usage": "Icônes de topologie de réseaux informatiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codedis",
+  "besoin": "Code et informatique",
+  "usage": "Affiche du code source.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codeforth",
+  "besoin": "Code et informatique",
+  "usage": "Coloration syntaxique du langage Forth.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codegds",
+  "besoin": "Code et informatique",
+  "usage": "Coloration syntaxique du langage GDScript.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codelst",
+  "besoin": "Code et informatique",
+  "usage": "Affiche du code source avec numéros de ligne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codepoint",
+  "besoin": "Enseignement et examens",
+  "usage": "Outils pour TP et examens de programmation.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codetastic",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère codes-barres (EAN, Code128…) et QR codes.",
+  "priorite": "P1"
+ },
+ {
+  "name": "codex-woltiensis",
+  "besoin": "Musique et loisirs",
+  "usage": "Mise en page de recueils de chansons étudiantes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codez",
+  "besoin": "Code et informatique",
+  "usage": "Annote des blocs de code avec marques et formes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codly",
+  "besoin": "Code et informatique",
+  "usage": "Présentation soignée du code avec numérotation et surlignage.",
+  "priorite": "P3"
+ },
+ {
+  "name": "codly-languages",
+  "besoin": "Code et informatique",
+  "usage": "Icônes et réglages de langages pour codly.",
+  "priorite": "P3"
+ },
+ {
+  "name": "colophon",
+  "besoin": "Outils pour auteurs",
+  "usage": "Produit un PDF d'audit avec nombre de mots et figures.",
+  "priorite": "P3"
+ },
+ {
+  "name": "color-my-agda",
+  "besoin": "Code et informatique",
+  "usage": "Coloration syntaxique du langage Agda.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "colorful-boxes",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés colorés prédéfinis.",
+  "priorite": "P2"
+ },
+ {
+  "name": "combo",
+  "besoin": "Sciences et maths",
+  "usage": "Calculs de combinatoire.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "commute",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des diagrammes commutatifs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "computer-framer",
+  "besoin": "Icônes et images",
+  "usage": "Place un contenu dans un cadre de fenêtre d'ordinateur.",
+  "priorite": "P3"
+ },
+ {
+  "name": "conchord",
+  "besoin": "Musique et loisirs",
+  "usage": "Paroles avec accords, diagrammes et tablatures de guitare.",
+  "priorite": "P3"
+ },
+ {
+  "name": "concise-history",
+  "besoin": "Mise en page et blocs",
+  "usage": "Mise en page de livres d'histoire chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "confy",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des matrices de confusion.",
+  "priorite": "P3"
+ },
+ {
+  "name": "conic-toan",
+  "besoin": "Enseignement et examens",
+  "usage": "Figures, courbes et tableaux de variations pour les maths.",
+  "priorite": "P3"
+ },
+ {
+  "name": "conjak",
+  "besoin": "Dates et langues",
+  "usage": "Écrit les nombres selon les conventions chinoises, japonaises, coréennes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "consketcher",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des schémas-blocs d'automatique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "contexture",
+  "besoin": "Outils pour auteurs",
+  "usage": "Base technique pour documents liés : glossaire, index, annexes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "coordy",
+  "besoin": "Autre",
+  "usage": "Déplace un repère visuel avec des commandes clavier.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "corkscrew",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Génère des dégradés de couleurs cubehelix.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cross-circle",
+  "besoin": "Musique et loisirs",
+  "usage": "Implémentation du morpion.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "crossregex",
+  "besoin": "Musique et loisirs",
+  "usage": "Jeu de mots croisés à expressions régulières.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "crudo",
+  "besoin": "Code et informatique",
+  "usage": "Extrait des lignes d'un bloc de code.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ctheorems",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements numérotés pour théorèmes et preuves.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ctxjs",
+  "besoin": "Code et informatique",
+  "usage": "Exécute du JavaScript.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "ctyp",
+  "besoin": "Dates et langues",
+  "usage": "Aide à la typographie chinoise.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ctz-euclide",
+  "besoin": "Sciences et maths",
+  "usage": "Constructions de géométrie euclidienne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "curli",
+  "besoin": "Texte et typographie",
+  "usage": "Ligatures fantaisistes.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "curryst",
+  "besoin": "Sciences et maths",
+  "usage": "Arbres de règles d'inférence logique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "curvly",
+  "besoin": "Texte et typographie",
+  "usage": "Écrit du texte en arc de cercle, par exemple pour un tampon.",
+  "priorite": "P2"
+ },
+ {
+  "name": "cuti",
+  "besoin": "Texte et typographie",
+  "usage": "Simule gras, italique et petites capitales absents d'une police.",
+  "priorite": "P3"
+ },
+ {
+  "name": "cvssc",
+  "besoin": "Code et informatique",
+  "usage": "Calcule les scores de vulnérabilité CVSS.",
+  "priorite": "P3"
+ },
+ {
+  "name": "czbloch",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des sphères de Bloch.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dashy-todo",
+  "besoin": "Outils pour auteurs",
+  "usage": "Affiche des notes « à faire » dans la marge.",
+  "priorite": "P3"
+ },
+ {
+  "name": "datehog",
+  "besoin": "Dates et langues",
+  "usage": "Lit des dates et fait des calculs de durée.",
+  "priorite": "P2"
+ },
+ {
+  "name": "dati-basati",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes entité-relation.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "datify",
+  "besoin": "Dates et langues",
+  "usage": "Formate les dates dans toutes les langues.",
+  "priorite": "P1"
+ },
+ {
+  "name": "datify-core",
+  "besoin": "Dates et langues",
+  "usage": "Données de langues pour formater les dates, utilisées par datify.",
+  "priorite": "P2"
+ },
+ {
+  "name": "debug-city",
+  "besoin": "Outils pour auteurs",
+  "usage": "Aide à corriger les entrées de bibliographie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "decasify",
+  "besoin": "Texte et typographie",
+  "usage": "Met les majuscules aux titres selon la langue.",
+  "priorite": "P3"
+ },
+ {
+  "name": "deckz",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des cartes à jouer.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "deep-dish",
+  "besoin": "Outils pour auteurs",
+  "usage": "Fusionne des dictionnaires de données imbriqués.",
+  "priorite": "P3"
+ },
+ {
+  "name": "defined",
+  "besoin": "Outils pour auteurs",
+  "usage": "Compilation conditionnelle selon des variables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "deixis",
+  "besoin": "Mise en page et blocs",
+  "usage": "Notes, flèches et surlignages reliés au texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "delimitizer",
+  "besoin": "Sciences et maths",
+  "usage": "Ajuste la taille des parenthèses en maths.",
+  "priorite": "P3"
+ },
+ {
+  "name": "derive-it",
+  "besoin": "Sciences et maths",
+  "usage": "Preuves de déduction naturelle style Fitch.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dgs",
+  "besoin": "Sciences et maths",
+  "usage": "Géométrie dynamique façon GeoGebra.",
+  "priorite": "P3"
+ },
+ {
+  "name": "diagraph",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des graphes avec Graphviz.",
+  "priorite": "P3"
+ },
+ {
+  "name": "diagraph-layout",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Calcule la disposition de graphes avec Graphviz.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dice",
+  "besoin": "Autre",
+  "usage": "Génère des nombres aléatoires reproductibles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "diffst",
+  "besoin": "Outils pour auteurs",
+  "usage": "Compare deux documents côte à côte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "digestify",
+  "besoin": "Données et formats",
+  "usage": "Calcule des empreintes cryptographiques (hash).",
+  "priorite": "P3"
+ },
+ {
+  "name": "digidraw",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des chronogrammes de signaux numériques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dining-table",
+  "besoin": "Tableaux",
+  "usage": "Définit de grands tableaux colonne par colonne depuis des données.",
+  "priorite": "P2"
+ },
+ {
+  "name": "diorama",
+  "besoin": "Enseignement et examens",
+  "usage": "Illustrations de scènes pour problèmes de maths.",
+  "priorite": "P3"
+ },
+ {
+  "name": "discount",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des sous-compteurs liés aux titres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "distro",
+  "besoin": "Sciences et maths",
+  "usage": "Lois de probabilité et leurs propriétés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ditto",
+  "besoin": "Enseignement et examens",
+  "usage": "Composants pour fiches d'exercices de maths.",
+  "priorite": "P3"
+ },
+ {
+  "name": "diverential",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit facilement des différentielles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dol-theme",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèle de sujets pour l'Olympiade allemande de linguistique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dorodango",
+  "besoin": "Mise en page et blocs",
+  "usage": "Dessine des rectangles aux coins très arrondis.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dovenv",
+  "besoin": "Données et formats",
+  "usage": "Charge des variables depuis un fichier .env.",
+  "priorite": "X",
+  "raison": "ressources externes, inutile pour inkpdf"
+ },
+ {
+  "name": "down",
+  "besoin": "Sciences et maths",
+  "usage": "Prolonge les indices des sommes et intégrales à la ligne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "drafting",
+  "besoin": "Outils pour auteurs",
+  "usage": "Notes en marge et positionnement libre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dragonling",
+  "besoin": "Musique et loisirs",
+  "usage": "Contenus de jeu Donjons et Dragons.",
+  "priorite": "P3"
+ },
+ {
+  "name": "drawmatrix",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des matrices dans les formules.",
+  "priorite": "P3"
+ },
+ {
+  "name": "drawstring",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des diagrammes de cordes mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "droplet",
+  "besoin": "Texte et typographie",
+  "usage": "Lettrines en début de paragraphe.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dsek",
+  "besoin": "Documents métier",
+  "usage": "Modèles de documents d'une association étudiante suédoise.",
+  "priorite": "P3"
+ },
+ {
+  "name": "dtree",
+  "besoin": "Code et informatique",
+  "usage": "Affiche une arborescence de dossiers.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ea-nasir",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Comptabilité multi-devises et rapports à partir de fichiers beancount.",
+  "priorite": "P2"
+ },
+ {
+  "name": "easy-pinyin",
+  "besoin": "Dates et langues",
+  "usage": "Écrit facilement le pinyin chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "easy-typography",
+  "besoin": "Texte et typographie",
+  "usage": "Réglages typographiques par défaut raisonnables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "easytable",
+  "besoin": "Tableaux",
+  "usage": "Création simplifiée de tableaux.",
+  "priorite": "P3"
+ },
+ {
+  "name": "echarm",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques ECharts via JavaScript.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "edgeframe",
+  "besoin": "Mise en page et blocs",
+  "usage": "Réglages rapides de page.",
+  "priorite": "P3"
+ },
+ {
+  "name": "eeaabb",
+  "besoin": "Outils pour auteurs",
+  "usage": "Mesure la taille et la position des éléments.",
+  "priorite": "P3"
+ },
+ {
+  "name": "efilrst",
+  "besoin": "Mise en page et blocs",
+  "usage": "Listes dont on peut citer les éléments.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ega-numbering",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérotation de style EGA.",
+  "priorite": "P3"
+ },
+ {
+  "name": "eggs",
+  "besoin": "Dates et langues",
+  "usage": "Exemples linguistiques numérotés avec gloses.",
+  "priorite": "P3"
+ },
+ {
+  "name": "elembic",
+  "besoin": "Outils pour auteurs",
+  "usage": "Cadre pour créer ses propres éléments personnalisés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "embiggen",
+  "besoin": "Sciences et maths",
+  "usage": "Taille des parenthèses façon LaTeX.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "energy-dia",
+  "besoin": "Sciences et maths",
+  "usage": "Diagrammes de niveaux d'énergie.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "enja-bib",
+  "besoin": "Texte et typographie",
+  "usage": "Bibliographies BibTeX en anglais et japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "epsilon",
+  "besoin": "Sciences et maths",
+  "usage": "Résolution numérique d'équations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "eqalc",
+  "besoin": "Sciences et maths",
+  "usage": "Transforme des formules en fonctions calculables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "eqrun",
+  "besoin": "Sciences et maths",
+  "usage": "Calcule des équations et réutilise les résultats.",
+  "priorite": "P3"
+ },
+ {
+  "name": "equate",
+  "besoin": "Sciences et maths",
+  "usage": "Améliorations pour les équations mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ergo",
+  "besoin": "Enseignement et examens",
+  "usage": "Environnements pour notes de cours et devoirs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "erna",
+  "besoin": "Icônes et images",
+  "usage": "Dispose des images en rangées façon magazine.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "esotefy",
+  "besoin": "Autre",
+  "usage": "Interpréteur Brainfuck.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "examit",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèle d'examen inspiré de LaTeX exam.",
+  "priorite": "P3"
+ },
+ {
+  "name": "example",
+  "besoin": "Autre",
+  "usage": "Paquet d'exemple.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "examy",
+  "besoin": "Enseignement et examens",
+  "usage": "Examens et quiz avec numérotation et barème automatiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "exemel",
+  "besoin": "Données et formats",
+  "usage": "Convertit des données en XML et flux Atom.",
+  "priorite": "P3"
+ },
+ {
+  "name": "exercise-bank",
+  "besoin": "Enseignement et examens",
+  "usage": "Banque d'exercices avec solutions et filtres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "exercism",
+  "besoin": "Enseignement et examens",
+  "usage": "Organise des exercices et reporte les solutions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "exiftract",
+  "besoin": "Icônes et images",
+  "usage": "Lit les métadonnées Exif des photos.",
+  "priorite": "P3"
+ },
+ {
+  "name": "exmllent",
+  "besoin": "Données et formats",
+  "usage": "Convertit un tableau Excel XML en tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "ez-algo",
+  "besoin": "Code et informatique",
+  "usage": "Écrit des algorithmes facilement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ez-today",
+  "besoin": "Dates et langues",
+  "usage": "Affiche la date du jour.",
+  "priorite": "X",
+  "raison": "utilise la date du jour (non déterministe)"
+ },
+ {
+  "name": "ezchem",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des structures atomiques et ioniques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "faboxyst",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés colorés avec titre, très complets.",
+  "priorite": "P2"
+ },
+ {
+  "name": "facade",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Schémas de blocs pour vues d'architecture.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fancy-affil",
+  "besoin": "Documents métier",
+  "usage": "Gère les affiliations des auteurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fancy-tiling",
+  "besoin": "Icônes et images",
+  "usage": "Motifs de remplissage : rayures, damiers, nids d'abeille.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fancy-units",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Met en forme nombres et unités de mesure.",
+  "priorite": "P2"
+ },
+ {
+  "name": "fast-layout",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Calcule rapidement la disposition de graphes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fauxreilly",
+  "besoin": "Musique et loisirs",
+  "usage": "Couvertures parodiques façon O'Reilly.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "ferrmat",
+  "besoin": "Enseignement et examens",
+  "usage": "Boîte à outils visuelle en portugais pour cours et examens.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fervojo",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des diagrammes de syntaxe en rail.",
+  "priorite": "P3"
+ },
+ {
+  "name": "feyndrawgram",
+  "besoin": "Sciences et maths",
+  "usage": "Affiche des diagrammes de Feynman exportés.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "fibber",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de procédés de microfabrication.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ficons",
+  "besoin": "Icônes et images",
+  "usage": "Icônes vectorielles libres.",
+  "priorite": "P2"
+ },
+ {
+  "name": "fig-plucker",
+  "besoin": "Outils pour auteurs",
+  "usage": "Exporte séparément les figures d'un document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "figchild",
+  "besoin": "Enseignement et examens",
+  "usage": "Illustrations colorées pour activités d'enfants.",
+  "priorite": "P3"
+ },
+ {
+  "name": "finite",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des automates finis.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fitchcraft",
+  "besoin": "Sciences et maths",
+  "usage": "Preuves logiques style Fitch.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "fittable",
+  "besoin": "Tableaux",
+  "usage": "Répartit l'espace libre entre les colonnes d'un tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "flagada",
+  "besoin": "Icônes et images",
+  "usage": "Drapeaux des pays selon leur code ISO.",
+  "priorite": "P3"
+ },
+ {
+  "name": "flautomat",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des automates à partir de données JSON.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fleck",
+  "besoin": "Autre",
+  "usage": "Ajoute des taches de café décoratives.",
+  "priorite": "X",
+  "raison": "blague ou démo sans usage"
+ },
+ {
+  "name": "fletcher",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes de boîtes reliées par des flèches.",
+  "priorite": "P2"
+ },
+ {
+  "name": "flupke-headstamp",
+  "besoin": "Outils pour auteurs",
+  "usage": "Affiche des informations Git dans le document.",
+  "priorite": "X",
+  "raison": "ressources externes (dépôt Git)"
+ },
+ {
+  "name": "folio",
+  "besoin": "Documents métier",
+  "usage": "Génère des documents de gestion de projet depuis une source unique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fontawesome",
+  "besoin": "Icônes et images",
+  "usage": "Icônes Font Awesome.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "forensix",
+  "besoin": "Code et informatique",
+  "usage": "Éléments de rapports d'investigation numérique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "formal-homework",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèle de devoirs à rendre.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "frackable",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit des fractions typographiques (½, ¾).",
+  "priorite": "P3"
+ },
+ {
+  "name": "fractus",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Calculs sur les fractions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fractusist",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des fractales.",
+  "priorite": "P3"
+ },
+ {
+  "name": "frame-it",
+  "besoin": "Sciences et maths",
+  "usage": "Cadres personnalisés pour théorèmes et environnements.",
+  "priorite": "P3"
+ },
+ {
+  "name": "framefit",
+  "besoin": "Texte et typographie",
+  "usage": "Ajuste la taille du texte pour qu'il tienne dans un cadre.",
+  "priorite": "P1"
+ },
+ {
+  "name": "frederic",
+  "besoin": "Sciences et maths",
+  "usage": "Preuves de déduction naturelle style Fitch.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fretwork",
+  "besoin": "Musique et loisirs",
+  "usage": "Tablatures de guitare de qualité professionnelle.",
+  "priorite": "P3"
+ },
+ {
+  "name": "frogst",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit les nombres en toutes lettres en français (montants en lettres).",
+  "priorite": "P1"
+ },
+ {
+  "name": "fruitify",
+  "besoin": "Autre",
+  "usage": "Remplace les lettres des formules par des emojis de fruits.",
+  "priorite": "X",
+  "raison": "blague sans usage"
+ },
+ {
+  "name": "funarray",
+  "besoin": "Outils pour auteurs",
+  "usage": "Fonctions pratiques pour manipuler des listes dans les templates.",
+  "priorite": "P3"
+ },
+ {
+  "name": "functable",
+  "besoin": "Enseignement et examens",
+  "usage": "Tableaux de signes et de variations de fonctions, style lycée français.",
+  "priorite": "P3"
+ },
+ {
+  "name": "furiruby",
+  "besoin": "Dates et langues",
+  "usage": "Annotations de prononciation (furigana) au-dessus du texte japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "fy-docs-i18n",
+  "besoin": "Dates et langues",
+  "usage": "Choisit le texte traduit selon la langue du document.",
+  "priorite": "P2"
+ },
+ {
+  "name": "gairm-import",
+  "besoin": "Données et formats",
+  "usage": "Vérifie des données JSON selon un schéma et les normalise.",
+  "priorite": "P2"
+ },
+ {
+  "name": "game-theoryst",
+  "besoin": "Sciences et maths",
+  "usage": "Mise en forme de jeux en théorie des jeux.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "gantty",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes de Gantt à partir de dates pour plannings de projet.",
+  "priorite": "P2"
+ },
+ {
+  "name": "gb7714-bilingual",
+  "besoin": "Texte et typographie",
+  "usage": "Bibliographie au format chinois GB/T 7714, bilingue.",
+  "priorite": "P3"
+ },
+ {
+  "name": "genealotree",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des arbres généalogiques.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "genotypst",
+  "besoin": "Sciences et maths",
+  "usage": "Analyse et visualisation de données de bio-informatique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gentle-clues",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés colorés d'information, d'avertissement ou de conseil.",
+  "priorite": "P2"
+ },
+ {
+  "name": "geomtools",
+  "besoin": "Enseignement et examens",
+  "usage": "Dessine règles, équerres, rapporteurs et compas sur une figure.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gloss-awe",
+  "besoin": "Texte et typographie",
+  "usage": "Crée un glossaire des termes du document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "glossarium",
+  "besoin": "Texte et typographie",
+  "usage": "Glossaire personnalisable avec renvois vers les définitions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "glossy",
+  "besoin": "Texte et typographie",
+  "usage": "Glossaire simple avec présentation personnalisable.",
+  "priorite": "P3"
+ },
+ {
+  "name": "glotter",
+  "besoin": "Dates et langues",
+  "usage": "Détecte la langue d'un fragment de texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gradslide",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche une valeur entre 0 et 1 sur une jauge en dégradé.",
+  "priorite": "P3"
+ },
+ {
+  "name": "graph-gen",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche le graphe des liens entre notes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "grayness",
+  "besoin": "Icônes et images",
+  "usage": "Retouche simple d'images : niveaux de gris, recadrage.",
+  "priorite": "P3"
+ },
+ {
+  "name": "great-theorems",
+  "besoin": "Sciences et maths",
+  "usage": "Blocs théorème et démonstration pour documents mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gribouille",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques statistiques élégants selon la « grammaire des graphiques ».",
+  "priorite": "P2"
+ },
+ {
+  "name": "griddle",
+  "besoin": "Musique et loisirs",
+  "usage": "Conçoit et affiche des grilles de mots croisés.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "gridlock",
+  "besoin": "Mise en page et blocs",
+  "usage": "Aligne le texte sur une grille de lignes régulière.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gruvy",
+  "besoin": "Mise en page et blocs",
+  "usage": "Palette de couleurs Gruvbox.",
+  "priorite": "P3"
+ },
+ {
+  "name": "gviz",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des graphes décrits en langage Graphviz (dot).",
+  "priorite": "P3"
+ },
+ {
+  "name": "h-graph",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des graphes mathématiques avec une notation simple.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hagakiii",
+  "besoin": "Documents métier",
+  "usage": "Imprime des adresses sur des cartes postales japonaises.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hallon",
+  "besoin": "Outils pour auteurs",
+  "usage": "Petites fonctions utilitaires pour écrire des templates.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hamnosys-includer",
+  "besoin": "Dates et langues",
+  "usage": "Affiche la notation HamNoSys de langue des signes.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "handy-dora",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche des tuiles de mahjong.",
+  "priorite": "X",
+  "raison": "très lourd pour un intérêt quasi nul"
+ },
+ {
+  "name": "hane",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des diagrammes de parties de go.",
+  "priorite": "P3"
+ },
+ {
+  "name": "haw-hamburg",
+  "besoin": "Texte et typographie",
+  "usage": "Modèle de rapport ou thèse de la HAW Hambourg.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "headcount",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérote figures ou tableaux selon le numéro de section.",
+  "priorite": "P3"
+ },
+ {
+  "name": "herodot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des frises chronologiques linéaires.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "heroic",
+  "besoin": "Icônes et images",
+  "usage": "Ajoute les icônes Heroicons (vectorielles) au document.",
+  "priorite": "P2"
+ },
+ {
+  "name": "hes-so-core",
+  "besoin": "Texte et typographie",
+  "usage": "Base commune des modèles de la haute école HES-SO.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hidden-bib",
+  "besoin": "Texte et typographie",
+  "usage": "Bibliographie avec références non citées dans le texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hundouk",
+  "besoin": "Dates et langues",
+  "usage": "Affiche du chinois classique annoté pour lecture japonaise.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hy-dro-gen",
+  "besoin": "Dates et langues",
+  "usage": "Coupe les mots en fin de ligne selon la langue.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hydra",
+  "besoin": "Mise en page et blocs",
+  "usage": "Affiche le titre de la section en cours dans l'en-tête.",
+  "priorite": "P2"
+ },
+ {
+  "name": "hyperscript",
+  "besoin": "Code et informatique",
+  "usage": "Génère du HTML pour l'export web de Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "hypraw",
+  "besoin": "Code et informatique",
+  "usage": "Blocs de code allégés pour l'export HTML.",
+  "priorite": "P3"
+ },
+ {
+  "name": "i-am-acro",
+  "besoin": "Texte et typographie",
+  "usage": "Gère les sigles et acronymes, avec plusieurs langues.",
+  "priorite": "P3"
+ },
+ {
+  "name": "i-figured",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérote figures et équations par section.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ibanator",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Vérifie et met en forme les numéros IBAN.",
+  "priorite": "P1"
+ },
+ {
+  "name": "iconic-salmon-fa",
+  "besoin": "Icônes et images",
+  "usage": "Liens vers réseaux sociaux avec icônes Font Awesome.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "iconic-salmon-svg",
+  "besoin": "Icônes et images",
+  "usage": "Liens vers réseaux sociaux avec icônes vectorielles intégrées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "iconify",
+  "besoin": "Icônes et images",
+  "usage": "Accès à plus de 200 000 icônes Iconify.",
+  "priorite": "X",
+  "raison": "accès à des ressources externes"
+ },
+ {
+  "name": "icu-datetime",
+  "besoin": "Dates et langues",
+  "usage": "Formate dates et heures selon la langue (ex. « 10 octobre 2026 »).",
+  "priorite": "P2",
+  "raison": "4 Mo de WASM ; datify suffit"
+ },
+ {
+  "name": "identified",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Crée des diagrammes de processus IDEF.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "idwtet",
+  "besoin": "Outils pour auteurs",
+  "usage": "Montre côte à côte du code Typst et son rendu.",
+  "priorite": "P3"
+ },
+ {
+  "name": "implicplot",
+  "besoin": "Sciences et maths",
+  "usage": "Trace précisément des courbes définies par des équations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "in-dexter",
+  "besoin": "Texte et typographie",
+  "usage": "Crée un index des mots choisis en fin de document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "indenta",
+  "besoin": "Texte et typographie",
+  "usage": "Corrige le retrait du premier paragraphe.",
+  "priorite": "X",
+  "raison": "obsolète, remplacé par une fonction native de Typst"
+ },
+ {
+  "name": "indic-numerals",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Convertit les chiffres arabes en chiffres indiens et inversement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "inknertia",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des schémas de physique (Feynman, espace-temps).",
+  "priorite": "P3"
+ },
+ {
+  "name": "intextual",
+  "besoin": "Sciences et maths",
+  "usage": "Alignement et étiquettes de lignes dans les équations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "intl-math",
+  "besoin": "Sciences et maths",
+  "usage": "Traduit les noms de fonctions mathématiques selon la langue.",
+  "priorite": "P3"
+ },
+ {
+  "name": "intsketcher",
+  "besoin": "Enseignement et examens",
+  "usage": "Illustre les sommes de Riemann pour les cours d'intégrales.",
+  "priorite": "P3"
+ },
+ {
+  "name": "inv-cmarker",
+  "besoin": "Données et formats",
+  "usage": "Convertit du contenu Typst en texte Markdown.",
+  "priorite": "P3"
+ },
+ {
+  "name": "invaria",
+  "besoin": "Sciences et maths",
+  "usage": "Fournit des constantes physiques avec leurs métadonnées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ionio-illustrate",
+  "besoin": "Sciences et maths",
+  "usage": "Trace des spectres de masse annotés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ipsum",
+  "besoin": "Outils pour auteurs",
+  "usage": "Génère du faux texte pour tester une mise en page.",
+  "priorite": "P3"
+ },
+ {
+  "name": "iridis",
+  "besoin": "Code et informatique",
+  "usage": "Colore les parenthèses correspondantes dans le code.",
+  "priorite": "P3"
+ },
+ {
+  "name": "irif",
+  "besoin": "Sciences et maths",
+  "usage": "Méthodes numériques : intégrales, dérivées, recherche de racines.",
+  "priorite": "P3"
+ },
+ {
+  "name": "itemize",
+  "besoin": "Texte et typographie",
+  "usage": "Personnalise l'apparence des listes à puces et numérotées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "itemplate",
+  "besoin": "Code et informatique",
+  "usage": "Modèle de page HTML expérimental.",
+  "priorite": "P3"
+ },
+ {
+  "name": "its-scripted",
+  "besoin": "Texte et typographie",
+  "usage": "Mise en forme de scénarios de film ou théâtre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "iversymbols",
+  "besoin": "Code et informatique",
+  "usage": "Symboles des langages de programmation APL et apparentés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jiexi",
+  "besoin": "Outils pour auteurs",
+  "usage": "Générateur d'analyseurs syntaxiques pour templates avancés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jlyfish",
+  "besoin": "Code et informatique",
+  "usage": "Exécute du code Julia dans le document.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (Julia)"
+ },
+ {
+  "name": "jogs",
+  "besoin": "Code et informatique",
+  "usage": "Exécute du JavaScript dans le document.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "jsonpath",
+  "besoin": "Données et formats",
+  "usage": "Extrait des valeurs de données JSON par un chemin.",
+  "priorite": "P2"
+ },
+ {
+  "name": "jsonschemeyst",
+  "besoin": "Données et formats",
+  "usage": "Valide des données selon un schéma JSON.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jumble",
+  "besoin": "Code et informatique",
+  "usage": "Fonctions de hachage (empreintes) de textes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jurlstify",
+  "besoin": "Texte et typographie",
+  "usage": "Coupe proprement les longues adresses web en fin de ligne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jurz",
+  "besoin": "Documents métier",
+  "usage": "Numéros de paragraphes en marge pour textes juridiques allemands.",
+  "priorite": "P3"
+ },
+ {
+  "name": "jxl-loader",
+  "besoin": "Icônes et images",
+  "usage": "Lit les images au format JPEG XL.",
+  "priorite": "P3"
+ },
+ {
+  "name": "k-mapper",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des tableaux de Karnaugh (logique binaire).",
+  "priorite": "P3"
+ },
+ {
+  "name": "kalt",
+  "besoin": "Sciences et maths",
+  "usage": "Évalue des expressions mathématiques imbriquées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kangaroo",
+  "besoin": "Sciences et maths",
+  "usage": "Notation de preuves en cryptographie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kanjimo",
+  "besoin": "Enseignement et examens",
+  "usage": "Fiches d'entraînement à l'écriture des kanjis.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kantan",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Crée des tableaux kanban.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "karnaugh-express",
+  "besoin": "Sciences et maths",
+  "usage": "Tableaux de Karnaugh personnalisables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kauderwelsch",
+  "besoin": "Outils pour auteurs",
+  "usage": "Génère du faux texte multilingue pour tester une mise en page.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kebab-chart",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphique de périodes dans le temps.",
+  "priorite": "P3"
+ },
+ {
+  "name": "keepsake",
+  "besoin": "Mise en page et blocs",
+  "usage": "Cartes pliables imprimables pour occasions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "keyle",
+  "besoin": "Code et informatique",
+  "usage": "Affiche des raccourcis clavier stylés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "keyless",
+  "besoin": "Icônes et images",
+  "usage": "Rend transparentes certaines couleurs d'une image.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kinase",
+  "besoin": "Texte et typographie",
+  "usage": "Styles différents selon le type de lien (mail, web).",
+  "priorite": "P3"
+ },
+ {
+  "name": "kino",
+  "besoin": "Présentations",
+  "usage": "Prototype pour créer des animations.",
+  "priorite": "X",
+  "raison": "démo sans usage"
+ },
+ {
+  "name": "kip",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes décrits en langage Pikchr.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kleene",
+  "besoin": "Outils pour auteurs",
+  "usage": "Outil d'analyse syntaxique de texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "km",
+  "besoin": "Sciences et maths",
+  "usage": "Tableaux de Karnaugh simples.",
+  "priorite": "P3"
+ },
+ {
+  "name": "koma-labeling",
+  "besoin": "Texte et typographie",
+  "usage": "Listes à étiquettes alignées, façon KOMA-Script.",
+  "priorite": "P3"
+ },
+ {
+  "name": "komet",
+  "besoin": "Sciences et maths",
+  "usage": "Calculs numériques rapides.",
+  "priorite": "P3"
+ },
+ {
+  "name": "koty",
+  "besoin": "Dates et langues",
+  "usage": "Grammaire coréenne et nombres en coréen.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kouhu",
+  "besoin": "Outils pour auteurs",
+  "usage": "Génère du faux texte en chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "kuddle",
+  "besoin": "Données et formats",
+  "usage": "Lit des fichiers au format KDL.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lambdabe",
+  "besoin": "Code et informatique",
+  "usage": "Analyse et affiche des expressions de lambda-calcul.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lambdabus",
+  "besoin": "Code et informatique",
+  "usage": "Analyse et simplifie des expressions de lambda-calcul.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lamportian-dramatis",
+  "besoin": "Code et informatique",
+  "usage": "Diagrammes d'échanges de messages entre systèmes répartis.",
+  "priorite": "P3"
+ },
+ {
+  "name": "larnt",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessins 3D au trait.",
+  "priorite": "P3"
+ },
+ {
+  "name": "larrow",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des flèches entre éléments du document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lasagna",
+  "besoin": "Mise en page et blocs",
+  "usage": "Calques de contenu activables par étiquettes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lasaveur",
+  "besoin": "Sciences et maths",
+  "usage": "Raccourcis d'écriture mathématique inspirés de LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "laserly",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de montages optiques laser.",
+  "priorite": "P3"
+ },
+ {
+  "name": "latedef",
+  "besoin": "Outils pour auteurs",
+  "usage": "Utiliser une valeur avant de la définir.",
+  "priorite": "P3"
+ },
+ {
+  "name": "latex-compat",
+  "besoin": "Outils pour auteurs",
+  "usage": "Commandes de compatibilité avec LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "latex-lookalike",
+  "besoin": "Texte et typographie",
+  "usage": "Donne au document l'apparence d'un document LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "layout-ltd",
+  "besoin": "Outils pour auteurs",
+  "usage": "Limite les passes de mise en page pour déboguer.",
+  "priorite": "P3"
+ },
+ {
+  "name": "leetify",
+  "besoin": "Autre",
+  "usage": "Transforme le texte en « leet speak ».",
+  "priorite": "X",
+  "raison": "blague sans usage"
+ },
+ {
+  "name": "leipzig-glossing",
+  "besoin": "Dates et langues",
+  "usage": "Gloses linguistiques interlinéaires.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lemmify",
+  "besoin": "Sciences et maths",
+  "usage": "Mise en forme de théorèmes.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "lemming",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements mathématiques (théorèmes, définitions).",
+  "priorite": "P3"
+ },
+ {
+  "name": "lets-go",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des plateaux de jeu de go.",
+  "priorite": "P3"
+ },
+ {
+  "name": "libra",
+  "besoin": "Texte et typographie",
+  "usage": "Équilibre la longueur des lignes d'un paragraphe.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "lilaq",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques de données (courbes, barres, nuages de points) de qualité.",
+  "priorite": "P1"
+ },
+ {
+  "name": "lineal",
+  "besoin": "Présentations",
+  "usage": "Diapositives de présentation élégantes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lingotree",
+  "besoin": "Dates et langues",
+  "usage": "Arbres syntaxiques linguistiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "linguify",
+  "besoin": "Dates et langues",
+  "usage": "Charge les textes traduits selon la langue du document.",
+  "priorite": "P1"
+ },
+ {
+  "name": "linkify",
+  "besoin": "Texte et typographie",
+  "usage": "Génère des liens vers des contenus web.",
+  "priorite": "P3"
+ },
+ {
+  "name": "linkst",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des nœuds mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "linphon",
+  "besoin": "Dates et langues",
+  "usage": "Notations de phonologie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "litfass",
+  "besoin": "Mise en page et blocs",
+  "usage": "Mise en page d'affiches par tuiles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "longops",
+  "besoin": "Enseignement et examens",
+  "usage": "Opérations posées et calculs détaillés pour l'école.",
+  "priorite": "P3"
+ },
+ {
+  "name": "loom",
+  "besoin": "Outils pour auteurs",
+  "usage": "Moteur de données réactives pour templates complexes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lovelace",
+  "besoin": "Code et informatique",
+  "usage": "Algorithmes en pseudo-code.",
+  "priorite": "P3"
+ },
+ {
+  "name": "lucide",
+  "besoin": "Icônes et images",
+  "usage": "Icônes Lucide.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "lure",
+  "besoin": "Code et informatique",
+  "usage": "Analyse et normalise des adresses web.",
+  "priorite": "P3"
+ },
+ {
+  "name": "luzid-checkbox",
+  "besoin": "Texte et typographie",
+  "usage": "Listes de cases à cocher avec icônes.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "m-jaxon",
+  "besoin": "Sciences et maths",
+  "usage": "Rend des formules LaTeX via MathJax.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "magic-cubes",
+  "besoin": "Musique et loisirs",
+  "usage": "Représente des Rubik's cubes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "magnifying-glass",
+  "besoin": "Icônes et images",
+  "usage": "Effet loupe sur une partie d'image.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "mandolin",
+  "besoin": "Code et informatique",
+  "usage": "Convertit des pages de manuel Unix en PDF.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mannot",
+  "besoin": "Sciences et maths",
+  "usage": "Surligne et annote des formules mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "maquette",
+  "besoin": "Icônes et images",
+  "usage": "Affiche des modèles 3D en image.",
+  "priorite": "P3"
+ },
+ {
+  "name": "marge",
+  "besoin": "Mise en page et blocs",
+  "usage": "Notes dans la marge.",
+  "priorite": "P3"
+ },
+ {
+  "name": "marginalia",
+  "besoin": "Mise en page et blocs",
+  "usage": "Notes de marge et blocs pleine largeur.",
+  "priorite": "P3"
+ },
+ {
+  "name": "markly",
+  "besoin": "Mise en page et blocs",
+  "usage": "Traits de coupe et fonds perdus pour l'impression.",
+  "priorite": "P2"
+ },
+ {
+  "name": "mastermind",
+  "besoin": "Code et informatique",
+  "usage": "Diagrammes de classes UML.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "matador",
+  "besoin": "Données et formats",
+  "usage": "Lit des fichiers de données MATLAB (.mat).",
+  "priorite": "P3"
+ },
+ {
+  "name": "materia",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des structures cristallines.",
+  "priorite": "P3"
+ },
+ {
+  "name": "materialize",
+  "besoin": "Codes-barres et QR",
+  "usage": "Codes d'appairage Matter pour objets connectés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "materially",
+  "besoin": "Icônes et images",
+  "usage": "Icônes Google Material Symbols.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "matofletcher",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Simplifie les diagrammes de flèches.",
+  "priorite": "P3"
+ },
+ {
+  "name": "matset",
+  "besoin": "Sciences et maths",
+  "usage": "Évaluateur d'expressions mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mazed",
+  "besoin": "Musique et loisirs",
+  "usage": "Génère des labyrinthes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mcx",
+  "besoin": "Enseignement et examens",
+  "usage": "Examens QCM avec questions mélangées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "meander",
+  "besoin": "Mise en page et blocs",
+  "usage": "Habillage de texte autour des images, texte sur plusieurs zones.",
+  "priorite": "P2"
+ },
+ {
+  "name": "mechanical-system-cetz-34j",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de systèmes mécaniques (ressorts, masses).",
+  "priorite": "P3"
+ },
+ {
+  "name": "melt",
+  "besoin": "Outils pour auteurs",
+  "usage": "Inspecte les caractéristiques des polices.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mephistypsteles",
+  "besoin": "Outils pour auteurs",
+  "usage": "Exécute Typst à l'intérieur de Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mercator",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche des cartes géographiques (GeoJSON).",
+  "priorite": "P3"
+ },
+ {
+  "name": "merman",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche des diagrammes Mermaid.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mesa",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de composants semi-conducteurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "meshpad",
+  "besoin": "Enseignement et examens",
+  "usage": "Fonds quadrillés, lignés ou pointillés pour fiches imprimables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "messeji",
+  "besoin": "Musique et loisirs",
+  "usage": "Met en page des conversations de messagerie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "metalogo",
+  "besoin": "Texte et typographie",
+  "usage": "Logos LaTeX, XeLaTeX, etc.",
+  "priorite": "P3"
+ },
+ {
+  "name": "metro",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Nombres et unités de mesure bien formatés.",
+  "priorite": "P2"
+ },
+ {
+  "name": "minideck",
+  "besoin": "Présentations",
+  "usage": "Diapositives simples.",
+  "priorite": "P3"
+ },
+ {
+  "name": "minienvs",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements théorème minimalistes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "minitoc",
+  "besoin": "Mise en page et blocs",
+  "usage": "Table des matières d'une seule section.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "mino",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche des grilles de Tetris.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mise-en-place",
+  "besoin": "Musique et loisirs",
+  "usage": "Diagrammes de recettes de cuisine.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mitex",
+  "besoin": "Sciences et maths",
+  "usage": "Utilise des formules écrites en LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mmdr",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche des diagrammes Mermaid.",
+  "priorite": "P3"
+ },
+ {
+  "name": "modern-mailmerge",
+  "besoin": "Documents métier",
+  "usage": "Publipostage : lettres, attestations, étiquettes, badges, enveloppes.",
+  "priorite": "P1"
+ },
+ {
+  "name": "modiagram",
+  "besoin": "Sciences et maths",
+  "usage": "Diagrammes d'orbitales moléculaires.",
+  "priorite": "P3"
+ },
+ {
+  "name": "modpattern",
+  "besoin": "Mise en page et blocs",
+  "usage": "Corrige les bords des motifs de remplissage.",
+  "priorite": "P3"
+ },
+ {
+  "name": "molchemist",
+  "besoin": "Sciences et maths",
+  "usage": "Affiche des structures chimiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "molfig",
+  "besoin": "Sciences et maths",
+  "usage": "Affiche des structures moléculaires en 3D.",
+  "priorite": "P3"
+ },
+ {
+  "name": "monet-touying-cdu",
+  "besoin": "Présentations",
+  "usage": "Thème de diapositives pour l'université CDU.",
+  "priorite": "P3"
+ },
+ {
+  "name": "monthweave",
+  "besoin": "Mise en page et blocs",
+  "usage": "Calendriers mensuels et annuels imprimables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "moodular",
+  "besoin": "Enseignement et examens",
+  "usage": "Génère du contenu pour cours Moodle.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "mosaic",
+  "besoin": "Présentations",
+  "usage": "Diapositives avec thèmes et composants.",
+  "priorite": "P3"
+ },
+ {
+  "name": "moustaches",
+  "besoin": "Enseignement et examens",
+  "usage": "Statistiques scolaires françaises : tableaux et diagrammes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "mtret",
+  "besoin": "Texte et typographie",
+  "usage": "Modèle de rapport pour étudiants japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "muchpdf",
+  "besoin": "Icônes et images",
+  "usage": "Insère des pages PDF comme images.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "na-arabox",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés pour texte arabe (droite à gauche).",
+  "priorite": "P3"
+ },
+ {
+  "name": "naifs-islamic-research-toolkit",
+  "besoin": "Dates et langues",
+  "usage": "Affiche le texte coranique avec polices dédiées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "name-it",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit les nombres en toutes lettres en anglais.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "nassi",
+  "besoin": "Code et informatique",
+  "usage": "Diagrammes de structure de programmes (Nassi-Shneiderman).",
+  "priorite": "P3"
+ },
+ {
+  "name": "natrix",
+  "besoin": "Sciences et maths",
+  "usage": "Matrices mathématiques homogènes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "navigator",
+  "besoin": "Présentations",
+  "usage": "Outils de navigation pour présentations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "neoplot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques réalisés avec Gnuplot.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nerd-icons",
+  "besoin": "Icônes et images",
+  "usage": "Icônes Nerd Font.",
+  "priorite": "X",
+  "raison": "exige des polices installées sur la machine"
+ },
+ {
+  "name": "neural-netz",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas d'architectures de réseaux de neurones.",
+  "priorite": "P3"
+ },
+ {
+  "name": "neural-viz",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de réseaux de neurones.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nexus-tools",
+  "besoin": "Outils pour auteurs",
+  "usage": "Fonctions utilitaires pour développer des templates.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nibart",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Calligraphie, ornements et entrelacs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nine-patch",
+  "besoin": "Icônes et images",
+  "usage": "Images extensibles sans déformer les bords.",
+  "priorite": "P3"
+ },
+ {
+  "name": "niram-css",
+  "besoin": "Mise en page et blocs",
+  "usage": "Les 147 noms de couleurs CSS.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nomos",
+  "besoin": "Sciences et maths",
+  "usage": "Liste des symboles avec unités et descriptions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "non-unlabeled",
+  "besoin": "Mise en page et blocs",
+  "usage": "Ne numérote que les éléments référencés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nonodraw",
+  "besoin": "Musique et loisirs",
+  "usage": "Grilles de logigrammes (nonogrammes).",
+  "priorite": "P3"
+ },
+ {
+  "name": "nordic",
+  "besoin": "Mise en page et blocs",
+  "usage": "Palette de couleurs Nord.",
+  "priorite": "P3"
+ },
+ {
+  "name": "note-me",
+  "besoin": "Mise en page et blocs",
+  "usage": "Encadrés d'alerte style GitHub (note, attention…).",
+  "priorite": "P2"
+ },
+ {
+  "name": "notionly",
+  "besoin": "Mise en page et blocs",
+  "usage": "Donne au document l'apparence de Notion.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nth",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Ordinaux anglais (1st, 2nd, 3rd).",
+  "priorite": "P3"
+ },
+ {
+  "name": "nulite",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques décrits en Vega-Lite.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "num2words",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit les nombres en toutes lettres, plusieurs langues.",
+  "priorite": "P2"
+ },
+ {
+  "name": "numberingx",
+  "besoin": "Mise en page et blocs",
+  "usage": "Styles de numérotation étendus (romains, lettres…).",
+  "priorite": "P3"
+ },
+ {
+  "name": "numblex",
+  "besoin": "Mise en page et blocs",
+  "usage": "Aide à définir des numérotations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "numbly",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérotation différente par niveau de titre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "numera",
+  "besoin": "Mise en page et blocs",
+  "usage": "Numérotation des figures et équations par chapitre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "numeris-scribere",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Écrit les nombres en toutes lettres, plusieurs langues.",
+  "priorite": "P2"
+ },
+ {
+  "name": "numty",
+  "besoin": "Sciences et maths",
+  "usage": "Calcul sur matrices et vecteurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nup",
+  "besoin": "Mise en page et blocs",
+  "usage": "Aperçu de plusieurs pages sur une seule.",
+  "priorite": "P3"
+ },
+ {
+  "name": "nutrition-label-nam",
+  "besoin": "Documents métier",
+  "usage": "Étiquettes de valeurs nutritionnelles au format américain.",
+  "priorite": "P2"
+ },
+ {
+  "name": "nutthead-ebnf",
+  "besoin": "Code et informatique",
+  "usage": "Affiche des grammaires formelles (EBNF).",
+  "priorite": "P3"
+ },
+ {
+  "name": "oak-grove",
+  "besoin": "Enseignement et examens",
+  "usage": "Recueils d'exercices avec solutions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "oasis-align",
+  "besoin": "Mise en page et blocs",
+  "usage": "Place deux contenus côte à côte à hauteur égale.",
+  "priorite": "P2"
+ },
+ {
+  "name": "octique",
+  "besoin": "Icônes et images",
+  "usage": "Icônes GitHub Octicons.",
+  "priorite": "P2"
+ },
+ {
+  "name": "oicana",
+  "besoin": "Outils pour auteurs",
+  "usage": "Outil pour templates PDF utilisés depuis plusieurs langages.",
+  "priorite": "P3"
+ },
+ {
+  "name": "olaii-upn-qr",
+  "besoin": "Documents métier",
+  "usage": "Bulletin de paiement slovène UPN avec code QR.",
+  "priorite": "P2"
+ },
+ {
+  "name": "one-liner",
+  "besoin": "Texte et typographie",
+  "usage": "Ajuste la taille du texte pour tenir sur une ligne.",
+  "priorite": "P2"
+ },
+ {
+  "name": "orchid",
+  "besoin": "Texte et typographie",
+  "usage": "Identifiants chercheur ORCID avec logo.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ornacover",
+  "besoin": "Mise en page et blocs",
+  "usage": "Pages de couverture ornementées pour documents scolaires.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ornamentalyst",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des ornements décoratifs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ose-pic",
+  "besoin": "Mise en page et blocs",
+  "usage": "Images de fond ou de premier plan par page.",
+  "priorite": "P2"
+ },
+ {
+  "name": "ott-ng",
+  "besoin": "Code et informatique",
+  "usage": "Affiche des définitions de langages de programmation (Ott).",
+  "priorite": "P3"
+ },
+ {
+  "name": "ourchat",
+  "besoin": "Musique et loisirs",
+  "usage": "Imite des messages de messagerie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ouset",
+  "besoin": "Sciences et maths",
+  "usage": "Symboles placés au-dessus ou sous d'autres en maths.",
+  "priorite": "P3"
+ },
+ {
+  "name": "outline-summaryst",
+  "besoin": "Mise en page et blocs",
+  "usage": "Table des matières avec résumé par chapitre.",
+  "priorite": "P3"
+ },
+ {
+  "name": "outrageous",
+  "besoin": "Mise en page et blocs",
+  "usage": "Personnalise la table des matières.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "owlbear",
+  "besoin": "Musique et loisirs",
+  "usage": "Fiches pour Donjons et Dragons.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "oxdraw",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche des diagrammes Mermaid.",
+  "priorite": "P3"
+ },
+ {
+  "name": "oxifmt",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Formate textes et nombres (décimales, séparateurs, alignement).",
+  "priorite": "P1"
+ },
+ {
+  "name": "packrat",
+  "besoin": "Données et formats",
+  "usage": "Décode et extrait des données compressées ou encodées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "paiagram",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques horaires de transports.",
+  "priorite": "P3"
+ },
+ {
+  "name": "palimpsest",
+  "besoin": "Texte et typographie",
+  "usage": "Révisions de manuscrit et lettres de réponse aux relecteurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "palimset",
+  "besoin": "Texte et typographie",
+  "usage": "Montre les différences entre deux documents.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pannotyp",
+  "besoin": "Dates et langues",
+  "usage": "Prise en charge du hongrois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pardioid",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des courbes paramétriques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pariman",
+  "besoin": "Sciences et maths",
+  "usage": "Calculs d'ingénierie avec unités.",
+  "priorite": "P3"
+ },
+ {
+  "name": "parize",
+  "besoin": "Mise en page et blocs",
+  "usage": "Intègre des blocs dans un paragraphe.",
+  "priorite": "P3"
+ },
+ {
+  "name": "parsely",
+  "besoin": "Outils pour auteurs",
+  "usage": "Analyse des équations en arbres d'expressions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "patatrac",
+  "besoin": "Sciences et maths",
+  "usage": "Schémas de physique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "patstdlib",
+  "besoin": "Outils pour auteurs",
+  "usage": "Collection de petits outils variés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pavemat",
+  "besoin": "Sciences et maths",
+  "usage": "Mise en couleur de matrices.",
+  "priorite": "P3"
+ },
+ {
+  "name": "payqr-swiss",
+  "besoin": "Documents métier",
+  "usage": "Bulletin de paiement suisse QR-facture.",
+  "priorite": "P1"
+ },
+ {
+  "name": "pdf-decorating",
+  "besoin": "Données et formats",
+  "usage": "Mise en forme de contenus Markdown style web.",
+  "priorite": "P3"
+ },
+ {
+  "name": "peano",
+  "besoin": "Sciences et maths",
+  "usage": "Outils mathématiques : fractions, arithmétique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pedigrypst",
+  "besoin": "Sciences et maths",
+  "usage": "Arbres généalogiques médicaux (pedigrees).",
+  "priorite": "P3"
+ },
+ {
+  "name": "penpo",
+  "besoin": "Dates et langues",
+  "usage": "Correcteur pour la langue toki pona.",
+  "priorite": "P3"
+ },
+ {
+  "name": "percencode",
+  "besoin": "Code et informatique",
+  "usage": "Encode et décode les caractères dans les adresses web.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pergamon",
+  "besoin": "Texte et typographie",
+  "usage": "Gestion de bibliographie façon BibLaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "perlit",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphes de notes Obsidian.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pf2e-style",
+  "besoin": "Musique et loisirs",
+  "usage": "Mise en page pour jeu de rôle Pathfinder.",
+  "priorite": "P3"
+ },
+ {
+  "name": "phonokit",
+  "besoin": "Dates et langues",
+  "usage": "Représentations phonologiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "physica",
+  "besoin": "Sciences et maths",
+  "usage": "Notations mathématiques pour sciences et ingénierie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pi-games",
+  "besoin": "Sciences et maths",
+  "usage": "Diagrammes de théorie des jeux.",
+  "priorite": "P3"
+ },
+ {
+  "name": "piclabeler",
+  "besoin": "Icônes et images",
+  "usage": "Annote des images avec étiquettes et flèches.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pigmentpedia",
+  "besoin": "Mise en page et blocs",
+  "usage": "Grande bibliothèque de couleurs nommées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pillar",
+  "besoin": "Tableaux",
+  "usage": "Définit rapidement l'alignement des colonnes d'un tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "pillole",
+  "besoin": "Mise en page et blocs",
+  "usage": "Étiquettes bicolores en forme de pastille.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pinit",
+  "besoin": "Mise en page et blocs",
+  "usage": "Positionne des éléments par rapport à des repères.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pintorita",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes (séquence, Gantt, cartes mentales) via Pintora.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "pintorita-neo",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes via Pintora.",
+  "priorite": "X",
+  "raison": "exécute un autre langage (JavaScript)"
+ },
+ {
+  "name": "pivot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes d'analyse de cybermenaces.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pixel-family",
+  "besoin": "Icônes et images",
+  "usage": "Petits personnages en pixel art dans le texte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pleast",
+  "besoin": "Données et formats",
+  "usage": "Lit des fichiers de configuration plist.",
+  "priorite": "P3"
+ },
+ {
+  "name": "plotst",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Graphiques et courbes.",
+  "priorite": "X",
+  "raison": "obsolète, remplacé par lilaq ou CeTZ"
+ },
+ {
+  "name": "plotsy-3d",
+  "besoin": "Sciences et maths",
+  "usage": "Graphiques 3D de surfaces.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pointless-size",
+  "besoin": "Texte et typographie",
+  "usage": "Tailles de police chinoises traditionnelles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "polario-frame",
+  "besoin": "Icônes et images",
+  "usage": "Cadres photo décoratifs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "polly-style",
+  "besoin": "Code et informatique",
+  "usage": "Preuves pour un cours de programmation (CMU).",
+  "priorite": "P3"
+ },
+ {
+  "name": "polylux",
+  "besoin": "Présentations",
+  "usage": "Création de diapositives de présentation.",
+  "priorite": "P3"
+ },
+ {
+  "name": "polytonoi",
+  "besoin": "Dates et langues",
+  "usage": "Convertit des lettres latines en grec polytonique.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "postercise",
+  "besoin": "Mise en page et blocs",
+  "usage": "Affiches de recherche académique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "povrayst",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Images 3D par lancer de rayons.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "prefigure",
+  "besoin": "Sciences et maths",
+  "usage": "Diagrammes mathématiques PreFigure.",
+  "priorite": "X",
+  "raison": "licence GPL ou AGPL (copyleft fort)"
+ },
+ {
+  "name": "prequery",
+  "besoin": "Outils pour auteurs",
+  "usage": "Extrait des métadonnées pour un prétraitement externe.",
+  "priorite": "P3"
+ },
+ {
+  "name": "presentate",
+  "besoin": "Présentations",
+  "usage": "Crée des diapositives qui s'affichent progressivement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "presio",
+  "besoin": "Présentations",
+  "usage": "Ajoute notes d'orateur et médias aux diapositives PDF pour presio.xyz.",
+  "priorite": "P3"
+ },
+ {
+  "name": "primaviz",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Trace plus de 50 types de graphiques (barres, courbes, camemberts…) sans dépendance.",
+  "priorite": "P1"
+ },
+ {
+  "name": "prismath",
+  "besoin": "Sciences et maths",
+  "usage": "Colore les parenthèses des formules mathématiques pour mieux les lire.",
+  "priorite": "P3"
+ },
+ {
+  "name": "probabilitree",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des arbres de probabilités.",
+  "priorite": "P3"
+ },
+ {
+  "name": "profmaquette-minimal",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée des fiches d'exercices avec corrigés affichables ou non.",
+  "priorite": "P3"
+ },
+ {
+  "name": "prooflists",
+  "besoin": "Sciences et maths",
+  "usage": "Compose des arbres de preuve logique avec une syntaxe simple.",
+  "priorite": "P3"
+ },
+ {
+  "name": "prooftrees",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des arbres de preuve logique.",
+  "priorite": "X",
+  "raison": "Obsolète, remplacé par curryst"
+ },
+ {
+  "name": "proteograph",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des données de protéomique.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "proxim",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des schémas en blocs reliés par des flèches.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ptable-amat",
+  "besoin": "Sciences et maths",
+  "usage": "Affiche le tableau périodique des éléments.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pubmatter",
+  "besoin": "Outils pour auteurs",
+  "usage": "Gère et affiche les auteurs et affiliations d'une publication.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pull-eh",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des systèmes de poulies.",
+  "priorite": "P3"
+ },
+ {
+  "name": "pyrunner",
+  "besoin": "Code et informatique",
+  "usage": "Exécute du code Python dans le document.",
+  "priorite": "X",
+  "raison": "Exécute un autre langage (Python)"
+ },
+ {
+  "name": "pythagorean-spiral",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine la spirale de Théodore avec ses longueurs exactes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "qcm",
+  "besoin": "Mise en page et blocs",
+  "usage": "Fournit des palettes de couleurs pour distinguer des catégories.",
+  "priorite": "P3"
+ },
+ {
+  "name": "qec-thrust",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des codes quantiques de correction d'erreurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "qrypst",
+  "besoin": "Codes-barres et QR",
+  "usage": "Dessine des QR codes avec une taille d'impression exacte.",
+  "priorite": "P1"
+ },
+ {
+  "name": "quadrille",
+  "besoin": "Sciences et maths",
+  "usage": "Trace fonctions, points et vecteurs sur papier quadrillé.",
+  "priorite": "P3"
+ },
+ {
+  "name": "qualitree",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine et compare des matrices « maison de la qualité ».",
+  "priorite": "P3"
+ },
+ {
+  "name": "quan",
+  "besoin": "Texte et typographie",
+  "usage": "Affiche des numéros entourés d'un cercle.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quetta",
+  "besoin": "Musique et loisirs",
+  "usage": "Écrit en alphabet elfique Tengwar.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quick-cards",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée des cartes mémoire (flashcards) personnalisables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quick-maths",
+  "besoin": "Sciences et maths",
+  "usage": "Ajoute des raccourcis pour écrire plus vite les formules.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quick-vertex",
+  "besoin": "Sciences et maths",
+  "usage": "Trace les régions admissibles de programmes linéaires à deux variables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quill",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des circuits quantiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quiztime",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée de petits quiz.",
+  "priorite": "P3"
+ },
+ {
+  "name": "quonom",
+  "besoin": "Sciences et maths",
+  "usage": "Pose des divisions synthétiques de polynômes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "railynx",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des schémas de voies ferrées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ratchet",
+  "besoin": "Mise en page et blocs",
+  "usage": "Améliore la numérotation des figures, tableaux et équations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ratsch-bmim",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèles de documents universitaires d'UMIT Tirol.",
+  "priorite": "P3"
+ },
+ {
+  "name": "realhats",
+  "besoin": "Autre",
+  "usage": "Remplace les accents circonflexes par de vrais chapeaux.",
+  "priorite": "X",
+  "raison": "Blague sans usage"
+ },
+ {
+  "name": "relescope",
+  "besoin": "Code et informatique",
+  "usage": "Extrait et affiche une partie précise d'un code source.",
+  "priorite": "P3"
+ },
+ {
+  "name": "retrofit",
+  "besoin": "Outils pour auteurs",
+  "usage": "Ajoute des renvois cliquables depuis la bibliographie vers les citations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "rexllent",
+  "besoin": "Données et formats",
+  "usage": "Transforme un fichier Excel (xlsx) en tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "rfc-vibe",
+  "besoin": "Texte et typographie",
+  "usage": "Met en forme les mots-clés normatifs style RFC (DOIT, PEUT…).",
+  "priorite": "P3"
+ },
+ {
+  "name": "ribbony",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes de Sankey et en cordes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ribon",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise la structure secondaire de l'ARN.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "rich-counters",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des compteurs qui dépendent d'autres compteurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "riesketcher",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des sommes de Riemann.",
+  "priorite": "P3"
+ },
+ {
+  "name": "riffle",
+  "besoin": "Mise en page et blocs",
+  "usage": "Change les marges du texte en milieu de page.",
+  "priorite": "P3"
+ },
+ {
+  "name": "riichinator",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche des mains et parties de mahjong riichi.",
+  "priorite": "P3"
+ },
+ {
+  "name": "rivet",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des schémas de registres et d'instructions processeur.",
+  "priorite": "P3"
+ },
+ {
+  "name": "roremu",
+  "besoin": "Texte et typographie",
+  "usage": "Génère du faux texte japonais de remplissage.",
+  "priorite": "P3"
+ },
+ {
+  "name": "rose-pine",
+  "besoin": "Mise en page et blocs",
+  "usage": "Applique le thème de couleurs Rosé Pine.",
+  "priorite": "P3"
+ },
+ {
+  "name": "roster-cjk",
+  "besoin": "Dates et langues",
+  "usage": "Aligne des listes de noms chinois ou japonais en colonnes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "roumnd",
+  "besoin": "Icônes et images",
+  "usage": "Fournit de petites icônes arrondies dessinées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "rowmantic",
+  "besoin": "Tableaux",
+  "usage": "Écrit des tableaux ligne par ligne avec séparateurs simples.",
+  "priorite": "P2"
+ },
+ {
+  "name": "rubby",
+  "besoin": "Dates et langues",
+  "usage": "Ajoute des annotations de lecture (furigana) au texte.",
+  "priorite": "X",
+  "raison": "Licence AGPL"
+ },
+ {
+  "name": "rubrol-invoice",
+  "besoin": "Documents métier",
+  "usage": "Modèle de facture B2B conforme à la facturation électronique européenne.",
+  "priorite": "P2",
+  "raison": "modèle complet, plutôt un exemple qu'une brique"
+ },
+ {
+  "name": "rufish",
+  "besoin": "Texte et typographie",
+  "usage": "Génère du faux texte russe de remplissage.",
+  "priorite": "X",
+  "raison": "Très lourd pour intérêt quasi nul"
+ },
+ {
+  "name": "run-liners",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des listes écrites sur une seule ligne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "rustycure",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère rapidement des QR codes.",
+  "priorite": "P2"
+ },
+ {
+  "name": "salsa-dip",
+  "besoin": "Code et informatique",
+  "usage": "Crée des étiquettes de broches pour puces électroniques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sang-math",
+  "besoin": "Enseignement et examens",
+  "usage": "Macros d'examens vietnamiens en maths, physique et chimie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sanity",
+  "besoin": "Outils pour auteurs",
+  "usage": "Repère figures non citées, sources non citées et étiquettes perdues.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sanor",
+  "besoin": "Présentations",
+  "usage": "Crée des diapositives animées précises.",
+  "priorite": "P3"
+ },
+ {
+  "name": "satz",
+  "besoin": "Documents métier",
+  "usage": "Modèle unifié pour lettres, factures, rapports et dossiers.",
+  "priorite": "P2"
+ },
+ {
+  "name": "scaffolder",
+  "besoin": "Outils pour auteurs",
+  "usage": "Affiche les contours des zones de page pour la mise au point.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scenery",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des scènes en 2D et 3D.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scienceicons",
+  "besoin": "Icônes et images",
+  "usage": "Icônes pour articles scientifiques ouverts.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scorify",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche des partitions de musique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scoryst",
+  "besoin": "Musique et loisirs",
+  "usage": "Grave des partitions depuis plusieurs formats musicaux.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scrawl",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des formes à l'allure dessinée à la main.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scribe",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit des formules mathématiques en notation ASCII.",
+  "priorite": "P3"
+ },
+ {
+  "name": "scriptie",
+  "besoin": "Musique et loisirs",
+  "usage": "Modèle de scénario de film.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "scrutinize",
+  "besoin": "Enseignement et examens",
+  "usage": "Construit des examens et contrôles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sdust",
+  "besoin": "Enseignement et examens",
+  "usage": "Pages de garde aux couleurs de l'université SDU.",
+  "priorite": "P3"
+ },
+ {
+  "name": "se-jyutcitzi",
+  "besoin": "Dates et langues",
+  "usage": "Affiche les caractères cantonais Jyutcitzi.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sela",
+  "besoin": "Outils pour auteurs",
+  "usage": "Simplifie la sélection d'éléments pour les règles de style.",
+  "priorite": "P3"
+ },
+ {
+  "name": "self-example",
+  "besoin": "Outils pour auteurs",
+  "usage": "Affiche un code Typst et son résultat côte à côte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sepay",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère le QR code de virement SEPA (EPC) pour les factures.",
+  "priorite": "P1"
+ },
+ {
+  "name": "sertyp",
+  "besoin": "Outils pour auteurs",
+  "usage": "Convertit des contenus Typst vers un format binaire et inversement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "shadowed",
+  "besoin": "Mise en page et blocs",
+  "usage": "Ajoute des ombres portées aux blocs.",
+  "priorite": "P2"
+ },
+ {
+  "name": "sheetwise",
+  "besoin": "Mise en page et blocs",
+  "usage": "Dispose plusieurs éléments à imprimer sur une même planche.",
+  "priorite": "P2"
+ },
+ {
+  "name": "shiroa",
+  "besoin": "Présentations",
+  "usage": "Crée des livres en ligne modernes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "shiroa-mdbook",
+  "besoin": "Présentations",
+  "usage": "Thème façon mdbook pour les livres en ligne Shiroa.",
+  "priorite": "P3"
+ },
+ {
+  "name": "shiroa-starlight",
+  "besoin": "Présentations",
+  "usage": "Thème façon Starlight pour les livres en ligne Shiroa.",
+  "priorite": "P3"
+ },
+ {
+  "name": "showman",
+  "besoin": "Outils pour auteurs",
+  "usage": "Affiche un code Typst avec son résultat.",
+  "priorite": "P3"
+ },
+ {
+  "name": "showybox",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des encadrés colorés et personnalisables.",
+  "priorite": "P1"
+ },
+ {
+  "name": "shuimu-touying-zen",
+  "besoin": "Présentations",
+  "usage": "Modèle de diapositives de physique de l'université Tsinghua.",
+  "priorite": "P3"
+ },
+ {
+  "name": "shuxuejuan",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée des quiz et examens au format chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sicons",
+  "besoin": "Icônes et images",
+  "usage": "Logos vectoriels de marques connues.",
+  "priorite": "P2"
+ },
+ {
+  "name": "siddhi-syntax",
+  "besoin": "Code et informatique",
+  "usage": "Colore la syntaxe du langage Siddhi.",
+  "priorite": "P3"
+ },
+ {
+  "name": "siefken-syllabus",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèle de plan de cours universitaire.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sigfig",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Arrondit des nombres selon les chiffres significatifs et l'incertitude.",
+  "priorite": "P2"
+ },
+ {
+  "name": "simple-csp",
+  "besoin": "Code et informatique",
+  "usage": "Symboles d'opérateurs pour la théorie des processus CSP.",
+  "priorite": "P3"
+ },
+ {
+  "name": "simple-plot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Trace des courbes de fonctions mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "simple-receipt-printer",
+  "besoin": "Documents métier",
+  "usage": "Met en page des tickets pour imprimante thermique.",
+  "priorite": "P2"
+ },
+ {
+  "name": "simple-todo",
+  "besoin": "Outils pour auteurs",
+  "usage": "Ajoute des marqueurs « à faire » et leur liste.",
+  "priorite": "P3"
+ },
+ {
+  "name": "simplebnf",
+  "besoin": "Code et informatique",
+  "usage": "Met en forme des grammaires BNF.",
+  "priorite": "P3"
+ },
+ {
+  "name": "simpleplot",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Trace des courbes très simplement.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sitdown",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des plans de table et de placement.",
+  "priorite": "P2"
+ },
+ {
+  "name": "slashion",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit des fractions avec une barre oblique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "slate-geometry",
+  "besoin": "Mise en page et blocs",
+  "usage": "Formats de page adaptés à des liseuses et tablettes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "slipst",
+  "besoin": "Présentations",
+  "usage": "Crée des présentations qui défilent façon slipshow.",
+  "priorite": "P3"
+ },
+ {
+  "name": "slr8",
+  "besoin": "Code et informatique",
+  "usage": "Visualise les étapes d'un analyseur syntaxique SLR.",
+  "priorite": "P3"
+ },
+ {
+  "name": "smartaref",
+  "besoin": "Mise en page et blocs",
+  "usage": "Regroupe les renvois consécutifs (figures 1 à 3).",
+  "priorite": "P3"
+ },
+ {
+  "name": "socialhub-fa",
+  "besoin": "Icônes et images",
+  "usage": "Liens vers réseaux sociaux avec icônes Font Awesome.",
+  "priorite": "X",
+  "raison": "Exige des polices installées"
+ },
+ {
+  "name": "socialyst",
+  "besoin": "Icônes et images",
+  "usage": "Imite des publications de réseaux sociaux.",
+  "priorite": "P3"
+ },
+ {
+  "name": "solving-physics",
+  "besoin": "Enseignement et examens",
+  "usage": "Présente la résolution d'un problème de physique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "songb",
+  "besoin": "Musique et loisirs",
+  "usage": "Crée des recueils de chansons avec accords.",
+  "priorite": "P3"
+ },
+ {
+  "name": "songting-book",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des livres au style chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sourcecraft",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des diagrammes de classes UML.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sourcerer",
+  "besoin": "Code et informatique",
+  "usage": "Blocs de code source personnalisables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "splash",
+  "besoin": "Mise en page et blocs",
+  "usage": "Collection de palettes de couleurs.",
+  "priorite": "P3"
+ },
+ {
+  "name": "spreet",
+  "besoin": "Données et formats",
+  "usage": "Lit des tableurs (Excel, ODS, CSV) pour en extraire les données.",
+  "priorite": "P2"
+ },
+ {
+  "name": "sprig",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des cartes mentales autour d'un polygone central.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sprintf",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Formate des textes et nombres façon printf.",
+  "priorite": "P2"
+ },
+ {
+  "name": "spryst",
+  "besoin": "Icônes et images",
+  "usage": "Découpe une planche de sprites en images séparées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "stack-pointer",
+  "besoin": "Code et informatique",
+  "usage": "Visualise pas à pas l'exécution d'un programme.",
+  "priorite": "P3"
+ },
+ {
+  "name": "stacked",
+  "besoin": "Enseignement et examens",
+  "usage": "Dessine des empilements de cubes et des dés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "stair-division",
+  "besoin": "Sciences et maths",
+  "usage": "Pose des divisions de polynômes par la méthode de Ruffini.",
+  "priorite": "P3"
+ },
+ {
+  "name": "stargazing",
+  "besoin": "Sciences et maths",
+  "usage": "Met en forme des tableaux de résultats de régression.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "stash",
+  "besoin": "Mise en page et blocs",
+  "usage": "Met du contenu de côté pour l'afficher plus tard.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "statastic",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Calcule des statistiques sur des séries de nombres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "statementsp",
+  "besoin": "Sciences et maths",
+  "usage": "Encadrés d'énoncés avec renvois croisés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "staunton",
+  "besoin": "Musique et loisirs",
+  "usage": "Diagrammes et parties d'échecs.",
+  "priorite": "X",
+  "raison": "Licence en partie GPL"
+ },
+ {
+  "name": "staves",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des clés et armures musicales.",
+  "priorite": "P3"
+ },
+ {
+  "name": "stonewall",
+  "besoin": "Mise en page et blocs",
+  "usage": "Couleurs des drapeaux des fiertés pour dégradés.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "structogrammer",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des structogrammes (Nassi-Shneiderman).",
+  "priorite": "P3"
+ },
+ {
+  "name": "suboutline",
+  "besoin": "Mise en page et blocs",
+  "usage": "Affiche une table des matières limitée à une section.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "subpar",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des sous-figures numérotées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "sudokyst",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche et analyse des grilles de sudoku.",
+  "priorite": "P3"
+ },
+ {
+  "name": "suiji",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Génère des nombres pseudo-aléatoires à partir d'une graine.",
+  "priorite": "P3"
+ },
+ {
+  "name": "super-suboptimal",
+  "besoin": "Sciences et maths",
+  "usage": "Utilise les exposants et indices Unicode dans les formules.",
+  "priorite": "P3"
+ },
+ {
+  "name": "svgalpha",
+  "besoin": "Icônes et images",
+  "usage": "Rend une image SVG semi-transparente.",
+  "priorite": "P3"
+ },
+ {
+  "name": "swank-tex",
+  "besoin": "Texte et typographie",
+  "usage": "Affiche les logos TeX et LaTeX.",
+  "priorite": "P3"
+ },
+ {
+  "name": "swaralipi",
+  "besoin": "Musique et loisirs",
+  "usage": "Notation de la musique classique indienne.",
+  "priorite": "P3"
+ },
+ {
+  "name": "symbolica",
+  "besoin": "Sciences et maths",
+  "usage": "Effectue des calculs symboliques et numériques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "symbolist",
+  "besoin": "Sciences et maths",
+  "usage": "Crée une liste des symboles utilisés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "symbolx",
+  "besoin": "Texte et typographie",
+  "usage": "Définit des symboles personnalisés plus puissants.",
+  "priorite": "P3"
+ },
+ {
+  "name": "synapse",
+  "besoin": "Mise en page et blocs",
+  "usage": "Relie chaque mention d'un concept à sa définition.",
+  "priorite": "P3"
+ },
+ {
+  "name": "synkit",
+  "besoin": "Dates et langues",
+  "usage": "Représentations syntaxiques pour la linguistique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "syntree",
+  "besoin": "Dates et langues",
+  "usage": "Dessine des arbres syntaxiques linguistiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "t4t",
+  "besoin": "Outils pour auteurs",
+  "usage": "Utilitaires pour auteurs de paquets Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tabbyterms",
+  "besoin": "Tableaux",
+  "usage": "Présente une liste de termes sous forme de tableau.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tableau-icons",
+  "besoin": "Icônes et images",
+  "usage": "Insère les icônes Tabler.",
+  "priorite": "X",
+  "raison": "Exige des polices installées"
+ },
+ {
+  "name": "tableframe",
+  "besoin": "Tableaux",
+  "usage": "Manipule des données en tableau façon tableur.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tablem",
+  "besoin": "Tableaux",
+  "usage": "Écrit des tableaux simplement, comme en Markdown.",
+  "priorite": "P1"
+ },
+ {
+  "name": "tablex",
+  "besoin": "Tableaux",
+  "usage": "Tableaux avancés personnalisables.",
+  "priorite": "X",
+  "raison": "Obsolète, remplacé par les tableaux natifs"
+ },
+ {
+  "name": "tabut",
+  "besoin": "Tableaux",
+  "usage": "Affiche des données sous forme de tableau.",
+  "priorite": "P1"
+ },
+ {
+  "name": "tada",
+  "besoin": "Tableaux",
+  "usage": "Trie, filtre et calcule sur des données tabulaires.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tally",
+  "besoin": "Outils pour auteurs",
+  "usage": "Gère automatiquement les « à faire » du document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "taskize",
+  "besoin": "Enseignement et examens",
+  "usage": "Dispose des exercices en colonnes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tasteful-pairings",
+  "besoin": "Texte et typographie",
+  "usage": "Associations de polices choisies avec soin.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tbl",
+  "besoin": "Tableaux",
+  "usage": "Écrit des tableaux complexes de façon concise.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tblr",
+  "besoin": "Tableaux",
+  "usage": "Aide à créer et aligner des tableaux.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tdtr",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des arbres bien ordonnés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "teig",
+  "besoin": "Sciences et maths",
+  "usage": "Calcule les valeurs propres de matrices.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tenv",
+  "besoin": "Données et formats",
+  "usage": "Lit le contenu d'un fichier .env.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tessera",
+  "besoin": "Icônes et images",
+  "usage": "Assemble plusieurs images en mosaïque ou grille.",
+  "priorite": "P2"
+ },
+ {
+  "name": "testyfy",
+  "besoin": "Outils pour auteurs",
+  "usage": "Vérifie des conditions dans le document.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "text-dirr",
+  "besoin": "Dates et langues",
+  "usage": "Donne le sens d'écriture effectif du texte.",
+  "priorite": "X",
+  "raison": "Licence AGPL"
+ },
+ {
+  "name": "thaibreak",
+  "besoin": "Dates et langues",
+  "usage": "Coupe correctement les lignes de texte thaï.",
+  "priorite": "P3"
+ },
+ {
+  "name": "theofig",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements de théorèmes simples.",
+  "priorite": "P3"
+ },
+ {
+  "name": "theoframe",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements de théorèmes encadrés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "theoretic",
+  "besoin": "Sciences et maths",
+  "usage": "Met en forme théorèmes, lemmes et preuves.",
+  "priorite": "P3"
+ },
+ {
+  "name": "theorion",
+  "besoin": "Sciences et maths",
+  "usage": "Environnements de théorèmes multilingues personnalisables.",
+  "priorite": "P3"
+ },
+ {
+  "name": "thmbox",
+  "besoin": "Sciences et maths",
+  "usage": "Encadrés de théorèmes élégants.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tiago",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes décrits en langage D2.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tiaoma",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère codes-barres et QR codes de nombreux formats.",
+  "priorite": "P1"
+ },
+ {
+  "name": "tidy",
+  "besoin": "Outils pour auteurs",
+  "usage": "Génère la documentation de paquets Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tidymind",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des cartes mentales horizontales.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tiefbubbles",
+  "besoin": "Autre",
+  "usage": "Dessine des bulles de discussion façon messagerie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tieflang",
+  "besoin": "Dates et langues",
+  "usage": "Traductions pour les modèles Tief.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tierpist",
+  "besoin": "Musique et loisirs",
+  "usage": "Crée des classements par niveaux (tier lists).",
+  "priorite": "P3"
+ },
+ {
+  "name": "timeliney",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Crée des diagrammes de Gantt.",
+  "priorite": "P2"
+ },
+ {
+  "name": "tiny-bingo",
+  "besoin": "Musique et loisirs",
+  "usage": "Génère des grilles de bingo aléatoires.",
+  "priorite": "X",
+  "raison": "Licence AGPL"
+ },
+ {
+  "name": "tinyset",
+  "besoin": "Enseignement et examens",
+  "usage": "Modèle de devoir de mathématiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tiptoe",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Pointes de flèches et marques pour les traits.",
+  "priorite": "P3"
+ },
+ {
+  "name": "titleize",
+  "besoin": "Texte et typographie",
+  "usage": "Met des majuscules aux mots d'un titre (anglais).",
+  "priorite": "P3"
+ },
+ {
+  "name": "to-stuff",
+  "besoin": "Données et formats",
+  "usage": "Convertit du texte en valeurs Typst (longueurs, couleurs…).",
+  "priorite": "P2"
+ },
+ {
+  "name": "touying",
+  "besoin": "Présentations",
+  "usage": "Crée des présentations de diapositives.",
+  "priorite": "P3"
+ },
+ {
+  "name": "touying2video",
+  "besoin": "Présentations",
+  "usage": "Transforme des diapositives en vidéo commentée.",
+  "priorite": "X",
+  "raison": "Licence AGPL, outil externe"
+ },
+ {
+  "name": "transl",
+  "besoin": "Dates et langues",
+  "usage": "Traduit mots et expressions selon la langue du document.",
+  "priorite": "P2"
+ },
+ {
+  "name": "treet",
+  "besoin": "Mise en page et blocs",
+  "usage": "Crée des listes en arborescence.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tricorder",
+  "besoin": "Dates et langues",
+  "usage": "Aligne des noms chinois sur trois caractères.",
+  "priorite": "P3"
+ },
+ {
+  "name": "trivial",
+  "besoin": "Sciences et maths",
+  "usage": "Met en forme théorèmes et preuves.",
+  "priorite": "P3"
+ },
+ {
+  "name": "trompet",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des diagrammes lambda de Tromp.",
+  "priorite": "P3"
+ },
+ {
+  "name": "truthfy",
+  "besoin": "Sciences et maths",
+  "usage": "Crée des tables de vérité.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tschich",
+  "besoin": "Mise en page et blocs",
+  "usage": "Calcule des proportions de page harmonieuses.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tsinswreng-auto-heading",
+  "besoin": "Mise en page et blocs",
+  "usage": "Gère automatiquement les niveaux de titres.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ttt-utils",
+  "besoin": "Enseignement et examens",
+  "usage": "Outils pour faciliter le travail des enseignants.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tutor",
+  "besoin": "Enseignement et examens",
+  "usage": "Utilitaires pour créer des examens.",
+  "priorite": "P3"
+ },
+ {
+  "name": "twig",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Crée des arbres à partir de listes.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "tybloch",
+  "besoin": "Sciences et maths",
+  "usage": "Place des états sur une sphère de Bloch.",
+  "priorite": "P3"
+ },
+ {
+  "name": "tyipa",
+  "besoin": "Dates et langues",
+  "usage": "Écrit des transcriptions phonétiques (API).",
+  "priorite": "P3"
+ },
+ {
+  "name": "typ2anki",
+  "besoin": "Enseignement et examens",
+  "usage": "Convertit des fichiers Typst en cartes Anki.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typarium",
+  "besoin": "Texte et typographie",
+  "usage": "Crée des fiches de présentation de polices.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typart",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes pour affiches et présentations.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "typcas",
+  "besoin": "Sciences et maths",
+  "usage": "Calcul symbolique avec étapes détaillées.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typearea",
+  "besoin": "Mise en page et blocs",
+  "usage": "Règle zone de texte et marges façon KOMA-Script.",
+  "priorite": "P2"
+ },
+ {
+  "name": "typed-dsa",
+  "besoin": "Code et informatique",
+  "usage": "Diagrammes de structures de données et d'algorithmes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typed-physics",
+  "besoin": "Sciences et maths",
+  "usage": "Diagrammes de mécanique et circuits électriques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typed-scores",
+  "besoin": "Musique et loisirs",
+  "usage": "Grave des partitions de musique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typed-smiles",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des molécules à partir de notation SMILES.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typewind",
+  "besoin": "Mise en page et blocs",
+  "usage": "Couleurs de la palette Tailwind CSS.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typhoon",
+  "besoin": "Mise en page et blocs",
+  "usage": "Styles Tailwind CSS pour l'export HTML.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typhorm",
+  "besoin": "Documents métier",
+  "usage": "Aide à construire des formulaires complexes.",
+  "priorite": "P2"
+ },
+ {
+  "name": "typixel",
+  "besoin": "Icônes et images",
+  "usage": "Affiche du pixel art depuis images ou grilles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typograph",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Dessine des diagrammes avec nœuds et liens.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typograph-zx",
+  "besoin": "Sciences et maths",
+  "usage": "Notation ZX-calculus pour typograph.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typpuccino",
+  "besoin": "Mise en page et blocs",
+  "usage": "Palette de couleurs Catppuccin.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typshade",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des alignements de séquences biologiques.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "typsite",
+  "besoin": "Présentations",
+  "usage": "Bibliothèque standard pour sites web Typsite.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typsium",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit formules et réactions chimiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typsium-atomic",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine atomes et configurations électroniques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typsium-ghs",
+  "besoin": "Documents métier",
+  "usage": "Affiche pictogrammes et mentions de danger chimique GHS.",
+  "priorite": "P2"
+ },
+ {
+  "name": "typsium-iso-7010",
+  "besoin": "Documents métier",
+  "usage": "Affiche les panneaux de sécurité ISO 7010.",
+  "priorite": "P2"
+ },
+ {
+  "name": "typsqlite",
+  "besoin": "Données et formats",
+  "usage": "Interroge une base SQLite à la compilation.",
+  "priorite": "X",
+  "raison": "Exécute un autre langage (SQL)"
+ },
+ {
+  "name": "typstage",
+  "besoin": "Présentations",
+  "usage": "Présentations HTML animées et support PDF.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typsy",
+  "besoin": "Outils pour auteurs",
+  "usage": "Outils de programmation avancés pour Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "typwire",
+  "besoin": "Outils pour auteurs",
+  "usage": "Encodeur de données pour plugins Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "umbra",
+  "besoin": "Mise en page et blocs",
+  "usage": "Ajoute des ombres simples.",
+  "priorite": "P3"
+ },
+ {
+  "name": "underhell",
+  "besoin": "Musique et loisirs",
+  "usage": "Modèle de documents pour jeux de rôle.",
+  "priorite": "P3"
+ },
+ {
+  "name": "unichar",
+  "besoin": "Texte et typographie",
+  "usage": "Informations sur les caractères Unicode.",
+  "priorite": "P3"
+ },
+ {
+  "name": "unidep",
+  "besoin": "Dates et langues",
+  "usage": "Dessine des arbres de dépendances linguistiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "unify",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Formate nombres, unités et intervalles.",
+  "priorite": "P2"
+ },
+ {
+  "name": "uniwarn",
+  "besoin": "Outils pour auteurs",
+  "usage": "Permet aux paquets d'émettre des avertissements.",
+  "priorite": "P3"
+ },
+ {
+  "name": "untypsignia",
+  "besoin": "Texte et typographie",
+  "usage": "Imite les logos de logiciels de composition.",
+  "priorite": "P3"
+ },
+ {
+  "name": "upsetter",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Diagrammes UpSet d'intersections d'ensembles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "use-academicons",
+  "besoin": "Icônes et images",
+  "usage": "Icônes académiques.",
+  "priorite": "X",
+  "raison": "Exige des polices installées"
+ },
+ {
+  "name": "use-tabler-icons",
+  "besoin": "Icônes et images",
+  "usage": "Icônes Tabler via police.",
+  "priorite": "X",
+  "raison": "Exige des polices installées"
+ },
+ {
+  "name": "uuidkit",
+  "besoin": "Données et formats",
+  "usage": "Lit et génère des identifiants uniques reproductibles.",
+  "priorite": "P2"
+ },
+ {
+  "name": "v-exam",
+  "besoin": "Enseignement et examens",
+  "usage": "Compose et mélange des examens au format vietnamien.",
+  "priorite": "P3"
+ },
+ {
+  "name": "valkyrie",
+  "besoin": "Données et formats",
+  "usage": "Vérifie que les données reçues ont le bon format.",
+  "priorite": "P2",
+  "raison": "doublon : inkpdf valide déjà par JSON Schema"
+ },
+ {
+  "name": "vanilla-aruco",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère des marqueurs ArUco pour la vision par ordinateur.",
+  "priorite": "P3"
+ },
+ {
+  "name": "varioref",
+  "besoin": "Mise en page et blocs",
+  "usage": "Renvois avec numéro de page si nécessaire.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vartable",
+  "besoin": "Sciences et maths",
+  "usage": "Crée des tableaux de variations.",
+  "priorite": "P3"
+ },
+ {
+  "name": "verseatile",
+  "besoin": "Texte et typographie",
+  "usage": "Met en forme de la poésie.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vhdl-parse",
+  "besoin": "Code et informatique",
+  "usage": "Extrait des informations d'un fichier VHDL.",
+  "priorite": "P3"
+ },
+ {
+  "name": "visual-cetz",
+  "besoin": "Outils pour auteurs",
+  "usage": "Montre un dessin CeTZ et son code côte à côte.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vitis",
+  "besoin": "Dates et langues",
+  "usage": "Coupe les lignes des langues écrites sans espaces.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vlna",
+  "besoin": "Dates et langues",
+  "usage": "Ajoute les espaces insécables du tchèque.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vmesh",
+  "besoin": "Sciences et maths",
+  "usage": "Visualise des maillages Gmsh 2D et 3D.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vonsim",
+  "besoin": "Code et informatique",
+  "usage": "Coloration syntaxique pour VonSim.",
+  "priorite": "X",
+  "raison": "Licence AGPL"
+ },
+ {
+  "name": "voronay",
+  "besoin": "Sciences et maths",
+  "usage": "Triangulations de Delaunay et diagrammes de Voronoï.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vote-card",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Affiche des résultats de vote avec barres de progression.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vtzone",
+  "besoin": "Dates et langues",
+  "usage": "Écriture verticale pour textes chinois et japonais.",
+  "priorite": "P3"
+ },
+ {
+  "name": "vuln-calc",
+  "besoin": "Code et informatique",
+  "usage": "Calcule des scores de vulnérabilité CVSS 4.0.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wavy",
+  "besoin": "Code et informatique",
+  "usage": "Dessine des chronogrammes numériques avec WaveDrom.",
+  "priorite": "P3"
+ },
+ {
+  "name": "weave",
+  "besoin": "Outils pour auteurs",
+  "usage": "Aide à enchaîner des fonctions.",
+  "priorite": "P3"
+ },
+ {
+  "name": "weeklendar",
+  "besoin": "Dates et langues",
+  "usage": "Dessine des calendriers hebdomadaires.",
+  "priorite": "P2"
+ },
+ {
+  "name": "whalogen",
+  "besoin": "Sciences et maths",
+  "usage": "Écrit des formules chimiques.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wicked",
+  "besoin": "Sciences et maths",
+  "usage": "Contractions de Wick en physique.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wordc",
+  "besoin": "Enseignement et examens",
+  "usage": "Crée des fiches de vocabulaire et synonymes.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wordometer",
+  "besoin": "Outils pour auteurs",
+  "usage": "Compte les mots et donne des statistiques du document.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wrap-indent",
+  "besoin": "Outils pour auteurs",
+  "usage": "Applique une fonction au contenu par simple indentation.",
+  "priorite": "P3"
+ },
+ {
+  "name": "wrap-it",
+  "besoin": "Mise en page et blocs",
+  "usage": "Fait couler le texte autour d'une image.",
+  "priorite": "P2"
+ },
+ {
+  "name": "wubrg",
+  "besoin": "Musique et loisirs",
+  "usage": "Affiche les symboles de mana de Magic.",
+  "priorite": "P3"
+ },
+ {
+  "name": "xarrow",
+  "besoin": "Sciences et maths",
+  "usage": "Flèches de longueur variable.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "xmlit",
+  "besoin": "Données et formats",
+  "usage": "Génère et valide des documents XML.",
+  "priorite": "P2"
+ },
+ {
+  "name": "xodec",
+  "besoin": "Outils pour auteurs",
+  "usage": "Donne le nom Typst des symboles.",
+  "priorite": "P3"
+ },
+ {
+  "name": "xyzrender-rustyp",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des structures moléculaires XYZ.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yak",
+  "besoin": "Données et formats",
+  "usage": "Filtre des données avec des requêtes jq.",
+  "priorite": "X",
+  "raison": "Exécute un autre langage (jq)"
+ },
+ {
+  "name": "yaml-dadaism",
+  "besoin": "Dates et langues",
+  "usage": "Calendrier mensuel rempli depuis un fichier YAML.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yap",
+  "besoin": "Présentations",
+  "usage": "Ajoute vidéos et notes d'orateur aux documents.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yats",
+  "besoin": "Données et formats",
+  "usage": "Sérialise des données Typst.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yemianfengge",
+  "besoin": "Mise en page et blocs",
+  "usage": "Gère les styles de page.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yi",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des hexagrammes du Yi Jing.",
+  "priorite": "P3"
+ },
+ {
+  "name": "yinsh-record",
+  "besoin": "Musique et loisirs",
+  "usage": "Dessine des parties du jeu Yinsh.",
+  "priorite": "P3"
+ },
+ {
+  "name": "ytableausp",
+  "besoin": "Sciences et maths",
+  "usage": "Crée des tableaux de Young.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zap",
+  "besoin": "Sciences et maths",
+  "usage": "Dessine des circuits électroniques normalisés.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zebra",
+  "besoin": "Codes-barres et QR",
+  "usage": "Génère QR codes et Data Matrix en dessin natif.",
+  "priorite": "P1"
+ },
+ {
+  "name": "zebra-notes",
+  "besoin": "Outils pour auteurs",
+  "usage": "Notes de relecture numérotées et tableau récapitulatif.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zebraw",
+  "besoin": "Code et informatique",
+  "usage": "Affiche du code avec numéros de ligne et surlignage.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zeitline",
+  "besoin": "Graphiques et diagrammes",
+  "usage": "Trace des frises chronologiques.",
+  "priorite": "P2"
+ },
+ {
+  "name": "zero",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Formate précisément nombres et unités (séparateurs, arrondis).",
+  "priorite": "P1"
+ },
+ {
+  "name": "zero-calc",
+  "besoin": "Nombres, montants et unités",
+  "usage": "Calcule et affiche des grandeurs formatées par zero.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zettyp-lsp",
+  "besoin": "Outils pour auteurs",
+  "usage": "Déclare des informations pour l'éditeur (LSP).",
+  "priorite": "P3"
+ },
+ {
+  "name": "zh-format",
+  "besoin": "Dates et langues",
+  "usage": "Gras, italique et souligné adaptés au chinois.",
+  "priorite": "P3"
+ },
+ {
+  "name": "zh-kit",
+  "besoin": "Dates et langues",
+  "usage": "Prise en charge de base du chinois (polices, etc.).",
+  "priorite": "P3"
+ },
+ {
+  "name": "zhconv",
+  "besoin": "Dates et langues",
+  "usage": "Convertit le chinois traditionnel et simplifié.",
+  "priorite": "X",
+  "raison": "Licence GPL"
+ },
+ {
+  "name": "zheyan",
+  "besoin": "Texte et typographie",
+  "usage": "Masque une partie d'un texte (ex. numéro de carte).",
+  "priorite": "P2"
+ }
+]
