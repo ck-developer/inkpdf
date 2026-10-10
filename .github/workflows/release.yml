@@ -3,6 +3,13 @@ name: Release
 on:
   push:
     branches: [main]
+  # Republishes the images of an existing release tag (e.g. after a failed publication).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish, e.g. v0.1.0
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,13 +18,12 @@ permissions:
 
 jobs:
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
-      created: ${{ steps.release.outputs.release_created }}
-      tag: ${{ steps.release.outputs.tag_name }}
-      major: ${{ steps.release.outputs.major }}
-      minor: ${{ steps.release.outputs.minor }}
-      patch: ${{ steps.release.outputs.patch }}
+      # The package lives in crates/inkpdf: release-please prefixes its outputs with that path.
+      created: ${{ steps.release.outputs['crates/inkpdf--release_created'] }}
+      tag: ${{ steps.release.outputs['crates/inkpdf--tag_name'] }}
     steps:
       - id: release
         uses: googleapis/release-please-action@v5
@@ -25,18 +31,42 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # A merged release PR: publish X.Y.Z, X.Y and latest.
-  image:
+  # Image tags from the release tag: vX.Y.Z → X.Y.Z, X.Y, latest.
+  version:
     needs: release-please
-    if: needs.release-please.outputs.created == 'true'
+    if: always() && (needs.release-please.outputs.created == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.parse.outputs.tag }}
+      version: ${{ steps.parse.outputs.version }}
+      tags: ${{ steps.parse.outputs.tags }}
+    steps:
+      - id: parse
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag }}
+        run: |
+          version="${TAG#v}"
+          if ! [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::not a release tag: $TAG"; exit 1
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$version"
+            echo "tags<<EOF"
+            echo "$version"
+            echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+            echo "latest"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  image:
+    needs: version
+    if: always() && needs.version.result == 'success'
     permissions:
       contents: read
       packages: write
     uses: ./.github/workflows/image.yml
     with:
-      ref: ${{ needs.release-please.outputs.tag }}
-      version: ${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}.${{ needs.release-please.outputs.patch }}
-      tags: |
-        ${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}.${{ needs.release-please.outputs.patch }}
-        ${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}
-        latest
+      ref: ${{ needs.version.outputs.tag }}
+      version: ${{ needs.version.outputs.version }}
+      tags: ${{ needs.version.outputs.tags }}
