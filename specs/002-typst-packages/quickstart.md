@@ -19,7 +19,7 @@ cargo test --release --test perf -- --ignored
 ```
 
 Résultats attendus :
-- `bundled_packages` : les 29 paquets s'importent, les 21 paquets sélectionnés s'utilisent,
+- `bundled_packages` : les 29 paquets s'importent, les 21 paquets mis à disposition s'utilisent,
   l'ensemble est fermé, et `docs/packages.md` est synchrone avec le lock.
 - `perf` : le p95 de `sample` reste à moins de 5 % de la V1, et celui de `packages-demo` sous
   1 s.
@@ -51,7 +51,8 @@ En local sans Docker : `INKPDF_TEMPLATES_DIR=examples/templates cargo run`.
 curl -s localhost:3000/packages | jq '.packages | length, .[0]'
 ```
 
-Attendu : `29`, puis un objet complet (`import`, `license`, `role`…).
+Attendu : `21` (les paquets mis à disposition), puis un objet complet
+(`import: "@preview/…"`, `version`, `license`…).
 
 ### P2 — Génération avec paquets (US1)
 
@@ -66,22 +67,25 @@ Le template `packages-demo` importe ses paquets **sans version** (`#import "@pre
 Attendu : un PDF contenant un QR code, un montant formaté (« 1 234,56 ») et un graphique.
 Deux appels identiques donnent des fichiers identiques (`cmp`).
 
-### P3 — Paquet non intégré, détecté au dépôt (US2)
+### P3 — Import incorrect, détecté au dépôt (US2)
 
-Copier un template qui importe `@preview/zero:0.5.0` dans le volume, puis :
+Copier dans le volume un template qui importe `@preview/zero:0.7.1`, version écrite, puis un
+autre qui importe `@preview/foo`, paquet inconnu :
 
 ```bash
 curl -s localhost:3000/templates/<id> | jq '.status, .reason'
 ```
 
-Attendu : `"invalid"`, avec la raison
-`main.typ:N: package @preview/zero:0.5.0 is not bundled with inkpdf (available versions: 0.6.1, 0.7.1)`.
-Une génération sur ce template répond **409** `template-invalid`.
+Résultats attendus :
+- statut `"invalid"` ;
+- raisons respectives : `main.typ:N: remove the version: write @preview/zero (inkpdf uses its installed version)`
+  et `main.typ:N: package @preview/foo is not available in inkpdf (see GET /packages)` ;
+- une génération sur ces templates répond **409** `template-invalid`.
 
-### P4 — Import dynamique (US2)
+### P4 — Import construit par calcul
 
 Avec la fixture `tests/fixtures/templates/dynamic-import`, la génération répond **500**
-`render-failed`, avec un diagnostic qui nomme le paquet.
+`render-failed` (non pris en charge, règle 4 de [template-imports.md](./contracts/template-imports.md)).
 
 ### P5 — Confinement (FR-012)
 

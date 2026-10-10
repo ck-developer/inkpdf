@@ -14,10 +14,13 @@ name = "zero"
 version = "0.7.1"
 sha256 = "<64 caractères hexadécimaux>"
 license = "MIT"
-role = "selected"        # "selected" | "dependency"
+role = "selected"        # "selected" (mis à disposition des templates) | "dependency"
 ```
 
 - Les entrées sont triées par `name`, puis par `version`.
+- **Une seule entrée `selected` par nom** : c'est la version que les templates obtiennent avec
+  `#import "@preview/<name>"`. D'autres versions du même nom peuvent exister, avec le rôle
+  `dependency`, si un paquet les importe.
 - Chaque entrée correspond exactement à une archive `packages/vendor/<name>-<version>.tar.gz`,
   téléchargée telle quelle depuis `https://packages.typst.org/preview/<name>-<version>.tar.gz`.
 
@@ -34,6 +37,7 @@ La compilation échoue, en nommant le paquet, dans les cas suivants :
 | Entrypoint absent | `zero 0.7.1: entrypoint lib.typ not found` |
 | Chemin absolu ou `..` dans l'archive | `zero 0.7.1: unsafe path …` |
 | Archive sans entrée dans le lock | `packages/vendor/foo-1.0.0.tar.gz not listed in lock.toml` |
+| Deux entrées `selected` pour un même nom | `zero: several selected versions (0.6.1, 0.7.1)` |
 
 ## Vérifications par les tests (`cargo test`)
 
@@ -44,13 +48,14 @@ La compilation échoue, en nommant le paquet, dans les cas suivants :
 
 ## Règles d'évolution
 
-1. **Ajouter un paquet** : lancer `scripts/add-package.sh <name> <version>`, puis ajouter ses
-   dépendances (`--dependency`) jusqu'à ce que le test de fermeture passe, puis une fixture
-   d'usage et une ligne dans `docs/packages.md`.
-2. **Mettre à jour un paquet** : **ajouter** la nouvelle version à côté de l'ancienne. Les
-   templates qui importent l'ancienne continuent de fonctionner.
-3. **Retirer une version** : c'est une rupture pour les templates qui l'importent, qui
-   deviennent `invalid`. À faire seulement par décision explicite, notée dans la PR et le
-   changelog.
+1. **Ajouter un paquet** : lancer `scripts/add-package.sh <name> <version>`, qui crée une entrée
+   `selected`. Ajouter ensuite ses dépendances (`--dependency`) jusqu'à ce que le test de
+   fermeture passe, puis une fixture d'usage et une ligne dans `docs/packages.md`.
+2. **Changer la version d'un paquet** : **remplacer** son entrée `selected` (nouvelle archive,
+   nouvelle empreinte). Tous les templates utilisent la nouvelle version à la prochaine version
+   du service. Vérifier les templates d'exemple ; noter le changement dans la PR et le changelog.
+   L'ancienne archive n'est conservée que si un autre paquet l'importe (`dependency`).
+3. **Retirer un paquet** : c'est une rupture pour les templates qui l'importent, qui deviennent
+   `invalid`. À faire seulement par décision explicite.
 4. **Un paquet qui échoue aux tests avec la version de Typst du service** est retiré, et non
    corrigé localement.

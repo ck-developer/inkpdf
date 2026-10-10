@@ -12,10 +12,10 @@ construction et figées dans le binaire, soit **dérivées** au chargement d'un 
 | `version` | chaîne `MAJ.MIN.PATCH` | exacte ; égale à la `version` du `typst.toml` |
 | `sha256` | 64 caractères hexadécimaux en minuscules | empreinte de `packages/vendor/<name>-<version>.tar.gz` |
 | `license` | chaîne SPDX | recopiée de `typst.toml` (revue humaine) |
-| `role` | `selected` \| `dependency` | `selected` = l'un des paquets choisis ; `dependency` = ajouté pour fermer l'ensemble |
+| `role` | `selected` \| `dependency` | `selected` = mis à disposition des templates (une seule version par nom) ; `dependency` = ajouté pour fermer l'ensemble |
 
-Unicité : le couple (`name`, `version`) est unique. Plusieurs versions d'un même nom sont
-autorisées.
+Unicité : le couple (`name`, `version`) est unique, et il y a **au plus une** entrée `selected`
+par `name`. Plusieurs versions d'un même nom ne coexistent que via des entrées `dependency`.
 
 ## BundledPackage (table statique générée, module `src/packages`)
 
@@ -35,32 +35,29 @@ autorisées.
 
 **Opérations** :
 - `get(&PackageSpec) -> Option<&BundledPackage>` ;
-- `versions_of(name) -> Vec<PackageVersion>` ;
-- `default_version(name) -> Option<PackageVersion>` : la plus récente version intégrée de ce
-  nom ;
+- `selected(name) -> Option<&BundledPackage>` : la version mise à disposition des templates
+  pour ce nom ;
 - `all() -> &[BundledPackage]`.
 
 ## PackageInfo (représentation API, `GET /packages`)
 
-Projection publique de `BundledPackage` : `namespace`, `name`, `version`, `default` (s'agit-il
-de la version par défaut ?), `import` (`@preview/name` si c'est la version par défaut, sinon
-`@preview/name:version`), `description`, `license`, `role`. Voir
-[contracts/api.md](./contracts/api.md).
+Projection publique des paquets `selected` : `name`, `import` (`@preview/name`), `version`,
+`description`, `license`. Voir [contracts/api.md](./contracts/api.md).
 
-## PackageImport (dérivé au chargement d'un template, `src/template/imports.rs`)
+## TemplateImport (dérivé au chargement d'un template, `src/template/imports.rs`)
 
 | Champ | Type | Sens |
 |---|---|---|
 | `file` | chemin relatif au template | fichier `.typ` contenant l'import |
 | `line` | entier, à partir de 1 | ligne de l'import |
-| `raw` | chaîne | littéral tel qu'écrit, par exemple `@preview/zero` ou `@preview/zero:0.7.1` |
-| `resolved` | `PackageSpec` ou rien | version effectivement utilisée (la version par défaut si elle est omise) |
-| `outcome` | `Bundled` \| `Invalid(spec_error)` \| `NotBundled { available: Vec<version> }` | résultat de la résolution |
+| `raw` | chaîne | littéral tel qu'écrit, par exemple `@preview/zero` |
+| `outcome` | `Resolved(spec)` \| `VersionWritten` \| `OtherNamespace` \| `Unavailable` \| `Malformed` | résultat |
 
-**Effet sur le template.** Si au moins un import n'est pas `Bundled`, le template passe à
-`TemplateStatus::Invalid { reason }`, où `reason` liste les imports fautifs (format dans
-[contracts/template-imports.md](./contracts/template-imports.md)). Sinon, le statut ne change
-pas.
+**Effets au chargement.**
+- Si tous les imports sont `Resolved`, le texte des fichiers `.typ` de l'instantané est
+  **réécrit une fois** : chaque `@preview/nom` devient `@preview/nom:<version installée>`.
+- Sinon, le template passe à `TemplateStatus::Invalid { reason }`, avec une ligne par import
+  fautif (format dans [contracts/template-imports.md](./contracts/template-imports.md)).
 
 ## Transitions d'état d'un template (existantes, complétées)
 
@@ -68,7 +65,7 @@ pas.
 fichiers déposés ──► chargement ──► valid
                          │
                          ├─(schéma, manifeste, taille… : V1)──► invalid
-                         └─(NOUVEAU : import de paquet non intégré)──► invalid
+                         └─(NOUVEAU : import incorrect : version écrite, paquet indisponible…)──► invalid
 invalid ──(correction des fichiers, rechargement à chaud)──► valid
 ```
 

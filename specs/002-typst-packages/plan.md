@@ -6,36 +6,39 @@
 
 ## Summary
 
-Intégrer au binaire `inkpdf` un ensemble **fixe** de paquets Typst Universe, soit 21 paquets
-validés et leurs dépendances (29 au total), pour que tout template puisse écrire
-`#import "@preview/nom"`, **sans version** (la plus récente version intégrée est alors
-utilisée), ou `#import "@preview/nom:version"` pour figer une version, sans réseau.
+Intégrer au binaire `inkpdf` un ensemble **fixe** de paquets Typst Universe : 21 paquets
+**mis à disposition des templates**, chacun dans une seule version, plus leurs dépendances,
+soit 29 au total. Un template importe un paquet **par son seul nom**
+(`#import "@preview/zero"`) ; la version installée est utilisée et écrire une version est refusé.
 
 **Fichiers du dépôt**
 - Les archives officielles sont **versionnées dans le dépôt** sous `packages/vendor/`
   (1,7 Mo compressés).
-- Un **fichier de verrouillage** `packages/lock.toml` donne, pour chaque paquet, le nom, la
-  version, l'empreinte sha256, la licence et le rôle (`selected` ou `dependency`).
+- Un **fichier de verrouillage** `packages/lock.toml` donne, pour chaque paquet, son nom, sa
+  version, son empreinte sha256, sa licence et son rôle : `selected` (mis à disposition, au plus
+  un par nom) ou `dependency`.
 
 **Construction**
-- Un `build.rs` vérifie chaque empreinte et fait échouer la compilation en cas d'écart.
-- Il décompresse les archives et génère une table statique `include_bytes!`. Les paquets
-  font donc **partie du binaire** : aucun téléchargement, aucune lecture disque, coût nul
-  au démarrage.
+- Un `build.rs` vérifie les empreintes et fait échouer la compilation en cas d'écart.
+- Il décompresse les archives et génère une table statique `include_bytes!` : les paquets font
+  **partie du binaire**.
+
+**Chargement d'un template** (une seule fois, jamais à chaque génération)
+- Ses imports littéraux sont analysés avec le parseur Typst.
+- Chaque `@preview/nom` est **réécrit** en `@preview/nom:<version installée>` dans l'instantané
+  en mémoire.
+- Tout autre import rend le template `invalid` : version écrite, paquet indisponible ou autre
+  namespace.
 
 **Rendu**
-- `SandboxWorld` résout `VirtualRoot::Package(spec)` dans cette table (correspondance exacte).
-- Toute autre référence donne un diagnostic explicite qui cite les versions disponibles.
-
-**Chargement d'un template**
-- Les imports littéraux de ses `.typ` sont analysés avec le parseur Typst.
-- Un paquet non intégré rend le template `invalid`.
+- `SandboxWorld` résout `VirtualRoot::Package(spec)` par correspondance exacte dans la table,
+  sans vérification supplémentaire.
 
 **API, tests et documentation**
-- Une route `GET /packages` liste l'ensemble intégré ; elle est ajoutée à l'OpenAPI verrouillé.
-- Les tests prouvent trois choses : chaque paquet s'importe, chaque paquet sélectionné
-  s'utilise, et l'ensemble est **fermé** (aucune dépendance manquante).
-- La documentation est tenue synchrone par un test.
+- Une route `GET /packages` liste les paquets mis à disposition ; elle est ajoutée à l'OpenAPI
+  verrouillé.
+- Les tests prouvent que chaque paquet s'importe, que chaque paquet mis à disposition
+  s'utilise, et que l'ensemble est **fermé**.
 
 Détails : [research.md](./research.md).
 
@@ -136,10 +139,9 @@ src/
 ├── packages/
 │   └── mod.rs                 # NOUVEAU : BundledPackage, index (spec → paquet), versions_of
 ├── template/
-│   └── imports.rs             # NOUVEAU : imports littéraux `@ns/nom:version` d'un .typ
-├── registry/loader.rs         # MODIFIÉ : template invalide si import non intégré
-├── render/world.rs            # MODIFIÉ : résolution VirtualRoot::Package, version complétée
-│                              #   pour les imports sans version (R15), diagnostics, cache
+│   └── imports.rs             # NOUVEAU : analyse et réécriture des imports `@preview/nom` (R8, R15)
+├── registry/loader.rs         # MODIFIÉ : réécrit les imports ; template invalide si import incorrect
+├── render/world.rs            # MODIFIÉ : résolution VirtualRoot::Package, diagnostics, cache
 ├── render/mod.rs              # MODIFIÉ : chemin de diagnostic « @preview/nom:ver/… »
 ├── api/packages.rs            # NOUVEAU : GET /packages
 └── api/mod.rs                 # MODIFIÉ : route + schémas OpenAPI
@@ -148,7 +150,7 @@ tests/
 ├── api_packages.rs            # NOUVEAU : contrat de GET /packages
 ├── sandbox.rs                 # MODIFIÉ : import non intégré refusé, confinement des paquets
 ├── fixtures/package-smoke/    # NOUVEAU : un .typ minimal par paquet sélectionné
-└── fixtures/templates/        # NOUVEAU : missing-package, wrong-version, dynamic-import
+└── fixtures/templates/        # NOUVEAU : unknown-package, version-written, dynamic-import
 examples/templates/packages-demo/  # NOUVEAU : QR code + montant formaté + graphique (FR-018)
 docs/packages.md               # NOUVEAU : paquets disponibles, usages, licences
 docs/templates.md              # MODIFIÉ : section « Utiliser un paquet »

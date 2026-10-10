@@ -100,36 +100,34 @@ nomme le paquet :
 - Le surcoût est faible : environ 6 Mo.
 - Filtrer les fichiers (tests, docs) risquerait de casser un paquet qui les importe.
 
-## R5 — Résolution dans `SandboxWorld`
+## R5 — Résolution des paquets dans `SandboxWorld`
 
 **Décision.** `lookup(id)` branche sur `id.root()` :
 
 - `VirtualRoot::Project` : comportement inchangé (instantané du template).
-- `VirtualRoot::Package(spec)` :
-  - si `spec.namespace == "preview"` et que le paquet est dans la table, on renvoie le fichier
-    `vpath` du paquet, ou `FileError::NotFound` s'il n'existe pas ;
-  - sinon, on renvoie `FileError::Package(PackageError::Other(Some(msg)))`, où `msg` vaut
-    « package @preview/x:1.2.3 is not bundled with inkpdf (available versions: 0.7.1) » ou
-    « … (no version of this package is bundled; see GET /packages) ».
+- `VirtualRoot::Package(spec)` : correspondance **exacte** dans la table statique (namespace,
+  nom, version). On renvoie le fichier `vpath` du paquet, ou `FileError::NotFound`.
+
+Une spec absente de la table renvoie `FileError::Package(PackageError::NotFound(spec))`. Ce cas
+ne peut se produire que par un import interne de paquet non couvert, ce qu'exclut le test de
+fermeture (R11), car les imports des templates ont déjà été résolus au chargement (R8, R15).
+
+Il n'y a **aucune vérification supplémentaire au rendu** : la résolution d'un template se fait
+une fois, à son chargement (FR-006).
 
 L'isolation est **native** :
 
 - la racine `Package(spec)` est étanche ;
 - `..` au-delà de la racine est refusé par `VirtualPath` ;
 - un paquet ne peut pas construire un chemin `Project` ;
-- seul un `path`, des `bytes` ou une `image` passés explicitement par le template traversent
-  (research/typst.md §1.6, FR-012).
+- seuls une valeur `path`, des `bytes` ou une `image` passés explicitement par le template
+  traversent (research/typst.md §1.6, FR-013).
 
-Un dossier `packages/` présent dans un template reste un simple fichier de projet : il n'est
-jamais consulté pour résoudre un import (spec, edge case).
+Un dossier `packages/` présent dans un template reste un simple fichier de projet, jamais
+utilisé pour résoudre un import.
 
-**Rationale.**
-- C'est le point d'extension prévu par Typst (`FileId` porte la racine).
-- Le message répond à FR-008 et à l'US2 (il cite les versions disponibles).
-
-**Alternatives écartées.**
-- *`PackageError::NotFound`* : son message Typst ne permet pas d'indiquer les versions
-  disponibles ni que les téléchargements sont impossibles.
+**Rationale.** C'est le point d'extension prévu par Typst (`FileId` porte la racine). Le chemin
+de rendu reste aussi simple qu'en V1.
 
 ## R6 — Cache des sources de paquets
 
@@ -162,39 +160,43 @@ jamais consulté pour résoudre un import (spec, edge case).
 **Rationale.** Couvre FR-011. Le préfixe `@…` ne peut pas être confondu avec un chemin du
 template.
 
-## R8 — Détection des imports au chargement d'un template
+## R8 — Résolution des imports au chargement d'un template
 
-**Décision.** Le nouveau module `src/template/imports.rs` procède ainsi pour chaque fichier
-`.typ` de l'instantané du template :
+**Décision.** Le nouveau module `src/template/imports.rs`, appelé par le chargeur
+(`registry/loader.rs`) **une fois par chargement** (dépôt, modification, rechargement à chaud),
+procède ainsi pour chaque fichier `.typ` de l'instantané :
 
 1. `typst::syntax::parse(text)` ;
 2. parcours récursif des `SyntaxNode` ;
 3. pour chaque `ast::ModuleImport` ou `ast::ModuleInclude`, lecture de `.source()` ;
-4. si c'est un `ast::Expr::Str` commençant par `@`, `PackageSpec::from_str`.
+4. si c'est un `ast::Expr::Str` dont la valeur commence par `@`, classement de l'import :
 
-Les erreurs possibles sont les suivantes :
+| Forme | Résultat |
+|---|---|
+| `@preview/<nom>` avec un paquet `selected` de ce nom | `Resolved` |
+| `@preview/<nom>` sans paquet `selected` de ce nom | `Unavailable` |
+| `@preview/<nom>:<…>` | `VersionWritten` |
+| `@<autre>/…` | `OtherNamespace` |
+| `@`, `@preview/`, `@preview/A` (nom invalide) | `Malformed` |
 
-- spec invalide (version manquante ou partielle) ;
-- namespace différent de `preview` ;
-- spec absente de la table.
+Ensuite :
 
-Les imports sans version sont d'abord résolus vers la version par défaut (R15). Les erreurs
-sont rassemblées, et le template passe à l'état
-`TemplateStatus::Invalid { reason }`, avec une raison qui liste chaque import fautif sous la
-forme `fichier:ligne`. Les imports calculés dynamiquement restent couverts par le contrôle au
-rendu (R5).
+- **Tous `Resolved`** : on réécrit le littéral dans le texte (`@preview/zero` devient
+  `@preview/zero:0.7.1`) et l'instantané stocke le **texte réécrit** (R15).
+- **Sinon** : `TemplateStatus::Invalid { reason }`, avec une ligne `fichier:ligne: message` par
+  import fautif.
 
 **Rationale.**
-- L'auteur voit l'erreur dès le dépôt, sans générer (US2, FR-009).
-- Le parseur Typst est exact sur la syntaxe, sans les faux positifs d'une expression régulière.
+- Il n'y a qu'**un** contrôle, fait une seule fois, et rien à chaque génération (FR-006). C'est
+  la demande de l'utilisateur : pas de double vérification au runtime.
+- L'auteur voit l'erreur dès le dépôt (US2).
+- Le parseur Typst est exact : pas de faux positifs dans les commentaires ou les chaînes
+  ordinaires.
 
-**Alternatives écartées.**
-- *Liste de dépendances déclarée dans `template.json`* : ce serait une seconde source de vérité
-  qui divergerait.
-- *Contrôle au rendu seulement* : l'erreur serait tardive.
-
-**Note.** Le code mort (une branche jamais exécutée) qui importe un paquet absent rend aussi le
-template invalide. C'est un choix assumé, plus strict et documenté.
+**Limites assumées.**
+- Un import construit par calcul n'est pas pris en charge (Typst échoue au rendu avec
+  « missing version »).
+- Un import placé dans du code jamais exécuté est tout de même contrôlé.
 
 ## R9 — Namespaces
 
@@ -206,15 +208,17 @@ template invalide. C'est un choix assumé, plus strict et documenté.
 ## R10 — Route `GET /packages`
 
 **Décision.**
-- La route renvoie `{ "packages": [PackageInfo] }`, trié par nom puis par version.
-- `PackageInfo` contient `namespace`, `name`, `version`, `import` (chaîne prête à copier),
-  `description`, `license`, `role`.
+- La route renvoie `{ "packages": [PackageInfo] }`, avec **uniquement les paquets `selected`**,
+  triés par nom.
+- `PackageInfo` contient `name`, `import` (`@preview/name`), `version` (information),
+  `description` et `license`.
 - Aucun paramètre ; la réponse est constante pour un binaire donné.
 - La route est décrite dans l'OpenAPI ; l'instantané `openapi/openapi.json` est régénéré.
 
 Contrat : [contracts/api.md](./contracts/api.md).
 
-**Rationale.** Couvre FR-013 et l'US3. La route est simple et cachable.
+**Rationale.** Couvre FR-014 et l'US3. Les dépendances internes ne sont pas importables, il est
+donc inutile de les exposer.
 
 ## R11 — Vérifications automatiques (FR-007) et documentation (FR-017)
 
@@ -252,61 +256,59 @@ Ces tests s'exécutent avec `cargo test`, donc dans le job `test` de la CI, sans
 **Rationale.** `wasmi` n'expose pas de limite d'exécution dans Typst 0.15.1. Ajouter un
 mécanisme demanderait de forker Typst, ce qui est hors périmètre (research/architecture.md B6).
 
-## R13 — Ajout ou mise à jour d'un paquet
+## R13 — Ajout ou changement de version d'un paquet
 
-**Décision.** Le script `scripts/add-package.sh <nom> <version>` :
+**Décision.** Le script `scripts/add-package.sh <nom> <version> [--dependency]` :
 
 1. télécharge l'archive dans `packages/vendor/` ;
 2. calcule le sha256 ;
 3. lit la licence dans `typst.toml` ;
-4. ajoute l'entrée au lock, avec `role = "selected"` par défaut ou `--dependency`.
+4. écrit l'entrée du lock. En mode `selected`, il **remplace** l'entrée `selected` existante de
+   ce nom.
 
 Les dépendances manquantes sont signalées par le test de fermeture (R11). L'accès réseau n'est
 nécessaire qu'à ce moment, sur le poste du mainteneur.
 
-**Règles d'évolution.** Elles sont détaillées dans
-[contracts/lock-file.md](./contracts/lock-file.md) :
+**Règles d'évolution** (détaillées dans [contracts/lock-file.md](./contracts/lock-file.md)) :
 
-- une mise à jour **ajoute** une version ;
-- le retrait d'une version est une rupture, à signaler dans le changelog.
+- une seule version `selected` par nom ;
+- changer de version la change pour tous les templates ;
+- retirer un paquet est une rupture.
 
-## R15 — Import sans version (`@preview/nom`)
+## R15 — Import par le nom seul : réécriture au chargement
 
 **Décision.**
-- inkpdf complète la version d'un import qui n'en a pas **avant** que Typst n'évalue le
-  fichier.
-- La réécriture se fait dans `SandboxWorld::source`, pour les fichiers de la racine `Project`
-  uniquement (jamais pour ceux des paquets) :
-  1. le texte est analysé avec `typst::syntax::parse` ;
-  2. chaque littéral de `ModuleImport` ou `ModuleInclude` de la forme `@preview/<nom>`, sans
-     `:`, est réécrit en `@preview/<nom>:<version par défaut>` ;
-  3. la `Source` est construite sur ce texte réécrit.
-- La version par défaut est **la plus récente version intégrée** de ce nom (ordre SemVer),
-  calculée une seule fois à partir de la table statique.
-- Un nom dont aucune version n'est intégrée n'est pas réécrit. Le chargement (R8) le signale
-  avec un message clair, avant que Typst ne lève son erreur « missing version » au rendu.
+- Dans un template, un paquet s'importe **uniquement** par son nom (`@preview/zero`) ; écrire
+  une version est refusé (R8).
+- La version installée est **injectée une seule fois**, au chargement : le chargeur réécrit le
+  littéral `@preview/<nom>` en `@preview/<nom>:<version selected>` dans le texte du fichier
+  `.typ`, et l'instantané en mémoire contient ce texte réécrit.
+- `SandboxWorld::source` reste inchangé : il construit les `Source` à partir de l'instantané,
+  comme en V1.
+- Les fichiers des paquets ne sont jamais réécrits ; leurs imports internes versionnés sont
+  résolus exactement (R5).
 
 **Rationale.**
-- C'est la demande de l'utilisateur : les auteurs ne veulent pas écrire de version.
+- C'est la demande de l'utilisateur : une seule façon d'importer, aucune version à retenir, et
+  aucun contrôle à chaque génération.
 - Typst exige la version **à l'évaluation** (`typst-eval-0.15.1/src/import.rs` l. 213,
-  `PackageSpec::from_str`), pas à l'analyse syntaxique. Comme le `World` fournit le texte des
-  sources, c'est le seul endroit où l'on peut intervenir, et cela suffit.
+  `PackageSpec::from_str`), pas à l'analyse syntaxique. Fournir à Typst un texte déjà complété
+  est donc la seule intervention nécessaire, et la faire au chargement la rend gratuite au rendu.
 - Seul le contenu d'une chaîne change, sur sa propre ligne. Les numéros de ligne des
-  diagnostics restent exacts ; seule la colonne peut se décaler sur cette ligne.
-- Le chargement (R8) applique la même résolution : un import sans version d'un paquet intégré
-  est donc valide.
+  diagnostics restent exacts.
+- L'empreinte du template (`fingerprint`) reste celle des fichiers sur disque, et le rechargement
+  à chaud est inchangé.
 
 **Conséquences, documentées pour les auteurs.**
-- Un template sans version suit la version par défaut, qui peut changer quand une nouvelle
-  version est intégrée (R13). Pour figer un rendu, l'auteur écrit la version.
-- Un tel template ne se compile pas avec l'outil Typst standard, qui exige une version.
+- Changer la version d'un paquet dans le service la change pour tous les templates.
+- Un template inkpdf ne se compile pas tel quel avec l'outil Typst standard, qui exige une
+  version.
 
 **Alternatives écartées.**
-- *Exiger la version* : c'est contraire à la demande.
-- *Réécrire aussi les fichiers des paquets* : ils sont déjà versionnés, et les modifier
-  casserait leur cohérence.
-- *Un namespace maison sans version* (`@inkpdf/zero`) : Typst exige la version pour tous les
-  namespaces.
+- *Version facultative* : deux façons d'écrire, donc deux chemins de contrôle (refusé par
+  l'utilisateur).
+- *Réécriture à chaque rendu dans `World::source`* : ce serait un coût à chaque génération.
+- *Un namespace maison* (`@inkpdf/zero`) : Typst exige la version pour tout namespace.
 
 ## R14 — Performance
 

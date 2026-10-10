@@ -11,7 +11,8 @@
 (`research/`, `synthese.md`), décision de l'utilisateur : les paquets utiles sont **intégrés à
 l'application dès sa construction**, selon une **liste fixée et validée** (priorité P1 de
 `research/carte-paquets.md`, sans `cmarker`) ; pas de dossier de paquets partagé, pas de
-paquet de helpers maison, pas de paquets P3 pour le moment.
+paquet de helpers maison, pas de paquets P3 pour le moment. Dans les templates, un paquet
+s'importe par son seul nom, **sans version** (décision du 2026-10-10).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -21,97 +22,93 @@ paquet de helpers maison, pas de paquets P3 pour le moment.
 - **Mainteneur d'inkpdf** : décide quels paquets et quelles versions sont intégrés.
 - **Application appelante** : demande des générations ; peut consulter les paquets disponibles.
 
-### User Story 1 - Utiliser un paquet intégré dans un template (Priority: P1)
+### User Story 1 - Utiliser un paquet du service dans un template (Priority: P1)
 
-Un auteur veut un QR code, un graphique ou un montant bien formaté dans son document. Il
-écrit dans son template l'import du paquet **sans préciser de version**
-(`#import "@preview/zero"`) ; il peut aussi préciser une version (`@preview/zero:0.7.1`) s'il
-veut la figer. Sans rien déposer d'autre dans le dossier du template, les
-générations produisent le document attendu, sans aucun accès réseau.
+Un auteur veut un QR code, un graphique ou un montant bien formaté dans son document. Il écrit
+dans son template l'import du paquet **par son seul nom**, par exemple `#import "@preview/zero"`.
+Il n'écrit jamais de version : le service utilise celle qu'il a installée. Sans rien déposer
+d'autre, les générations produisent le document attendu, sans aucun accès réseau.
 
 **Why this priority**: c'est la raison d'être de la fonctionnalité.
 
-**Independent Test**: déposer un template qui importe un paquet de la liste, demander une
-génération réseau coupé, vérifier que le PDF contient le rendu du paquet.
+**Independent Test**: déposer un template qui importe un paquet du service par son nom, demander
+une génération réseau coupé, vérifier que le PDF contient le rendu du paquet.
 
 **Acceptance Scenarios**:
 
-1. **Given** un paquet présent dans la liste intégrée, **When** un template l'importe par son
-   seul nom (`@preview/zero`) et qu'une génération valide est demandée, **Then** le PDF est
-   produit avec la version par défaut de ce paquet.
-2. **Given** le même paquet, **When** un template l'importe avec une version exacte intégrée
-   (`@preview/zero:0.7.1`), **Then** c'est cette version qui est utilisée.
-3. **Given** un paquet intégré qui dépend d'autres paquets, **When** il est importé, **Then** ses
-   dépendances sont résolues sans action de l'auteur.
-4. **Given** un template utilisant des paquets intégrés, **When** deux générations identiques
+1. **Given** un paquet mis à disposition par le service, **When** un template l'importe par son
+   nom (`@preview/zero`) et qu'une génération valide est demandée, **Then** le PDF est produit
+   avec la version installée de ce paquet.
+2. **Given** un paquet du service qui dépend d'autres paquets, **When** il est importé, **Then**
+   ses dépendances sont résolues sans action de l'auteur.
+3. **Given** un template utilisant des paquets du service, **When** deux générations identiques
    sont demandées, **Then** les deux PDF sont identiques octet pour octet.
-5. **Given** le service démarré sans aucun accès réseau, **When** des générations utilisant des
+4. **Given** le service démarré sans aucun accès réseau, **When** des générations utilisant des
    paquets sont demandées, **Then** elles aboutissent toutes.
 
 ---
 
-### User Story 2 - Comprendre immédiatement qu'un paquet n'est pas disponible (Priority: P2)
+### User Story 2 - Être prévenu d'un import incorrect (Priority: P2)
 
-Un auteur importe un paquet absent de la liste, ou une version qui n'y figure pas. Il doit
-comprendre l'erreur sans lire le code du service : le message nomme le paquet et la version
-demandés et, si d'autres versions du même paquet sont disponibles, les cite.
+Un auteur importe un paquet que le service ne met pas à disposition, ou écrit une version dans
+l'import. Il doit comprendre l'erreur sans lire le code du service.
 
-**Why this priority**: la liste est volontairement restreinte ; un refus doit être explicite.
+**Why this priority**: une seule façon d'importer, et une erreur claire dans tous les autres cas.
 
-**Independent Test**: déposer un template important un paquet hors liste, puis un autre important
-une version absente, et vérifier les messages.
+**Independent Test**: déposer un template qui importe un paquet inconnu, puis un autre qui écrit
+une version, et vérifier les messages.
 
 **Acceptance Scenarios**:
 
-1. **Given** un template qui importe un paquet hors de la liste, **When** le template est chargé,
-   **Then** il est signalé comme invalide avec un diagnostic nommant le paquet et la version, et
-   indiquant que seuls les paquets intégrés sont disponibles.
-2. **Given** un template qui importe `@preview/zero:0.5.0` alors que seule la `0.7.1` est
-   intégrée, **When** l'erreur est signalée, **Then** le message cite la version `0.7.1` comme
-   disponible.
-3. **Given** un import de paquet construit dynamiquement (non détectable au chargement), **When**
-   une génération est demandée, **Then** elle échoue avec le même diagnostic, sans accès réseau.
-4. **Given** une erreur à l'intérieur du code d'un paquet intégré, **When** elle est signalée,
-   **Then** le diagnostic indique le paquet, le fichier et la ligne concernés.
+1. **Given** un template qui importe un paquet que le service ne met pas à disposition, **When**
+   le template est chargé, **Then** il est signalé comme invalide avec un message qui nomme le
+   paquet et renvoie à la liste des paquets disponibles.
+2. **Given** un template qui écrit une version dans un import (`@preview/zero:0.7.1`), **When** le
+   template est chargé, **Then** il est signalé comme invalide avec un message indiquant d'écrire
+   `@preview/zero`.
+3. **Given** une erreur à l'intérieur du code d'un paquet, **When** elle est signalée, **Then** le
+   diagnostic indique le paquet, le fichier et la ligne concernés.
 
 ---
 
 ### User Story 3 - Découvrir les paquets disponibles (Priority: P3)
 
-Un auteur ou une application appelante consulte la liste des paquets intégrés (nom, version,
-description, licence) via l'API et via la documentation, pour savoir ce qu'il peut utiliser.
+Un auteur ou une application appelante consulte la liste des paquets mis à disposition (nom,
+version installée, description, licence) via l'API et via la documentation.
 
 **Why this priority**: utile pour écrire des templates, mais la génération fonctionne sans.
 
 **Independent Test**: appeler la route de liste des paquets et vérifier qu'elle renvoie exactement
-la liste intégrée.
+les paquets mis à disposition.
 
 **Acceptance Scenarios**:
 
 1. **Given** le service démarré, **When** l'appelant demande la liste des paquets, **Then** il
-   obtient chaque paquet intégré avec son namespace, son nom, sa version, sa description et sa
-   licence, dépendances comprises.
-2. **Given** la documentation des auteurs, **When** un auteur la consulte, **Then** il y trouve la
-   liste des paquets intégrés avec, pour chacun, ce qu'il fait et un exemple d'import.
+   obtient chaque paquet mis à disposition avec son nom, la ligne d'import à écrire, sa version
+   installée, sa description et sa licence.
+2. **Given** la documentation des auteurs, **When** un auteur la consulte, **Then** il y trouve
+   chaque paquet avec ce qu'il fait et un exemple d'import.
 
 ---
 
 ### User Story 4 - Faire évoluer la liste en toute sécurité (Priority: P2)
 
-Le mainteneur ajoute un paquet ou une nouvelle version d'un paquet existant. Il modifie la liste
+Le mainteneur ajoute un paquet ou change la version installée d'un paquet. Il modifie la liste
 fixée dans le dépôt ; la construction de l'application vérifie l'intégrité de chaque paquet et
-qu'il fonctionne avec le moteur, sinon elle échoue. Les templates qui utilisent une ancienne
-version continuent de fonctionner.
+qu'il fonctionne avec le moteur, sinon elle échoue. Changer la version d'un paquet la change pour
+tous les templates à la prochaine version du service.
 
 **Why this priority**: sans règle d'évolution, la liste se dégrade ou casse les templates.
 
-**Independent Test**: ajouter une version à la liste, construire, vérifier qu'elle est disponible
-et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la construction échoue.
+**Independent Test**: changer la version d'un paquet dans la liste, construire, vérifier que
+les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la construction
+échoue.
 
 **Acceptance Scenarios**:
 
-1. **Given** la liste fixée, **When** le mainteneur ajoute une nouvelle version d'un paquet déjà
-   intégré, **Then** les deux versions sont disponibles après construction.
+1. **Given** la liste fixée, **When** le mainteneur remplace la version d'un paquet mis à
+   disposition, **Then** après construction les templates qui l'importent utilisent la nouvelle
+   version, sans modification.
 2. **Given** une archive de paquet dont le contenu ne correspond pas à l'empreinte notée,
    **When** l'application est construite, **Then** la construction échoue en nommant le paquet.
 3. **Given** un paquet de la liste qui ne fonctionne pas avec la version du moteur, **When** les
@@ -121,20 +118,20 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 
 ### Edge Cases
 
-- Un import sans version (`@preview/zero`) utilise la **version par défaut** du paquet (la plus
-  récente intégrée). Une version partielle (`0.7`) est refusée avec un diagnostic.
-- Quand une nouvelle version d'un paquet est intégrée, les templates qui l'importent sans
-  version suivent automatiquement la nouvelle version par défaut ; ceux qui précisent une
-  version restent sur la leur.
-- Un import avec un autre namespace que `@preview` (ex. `@local/...`) : refusé comme un paquet
-  absent.
-- Un paquet intégré tente de lire un fichier hors de son propre dossier (template, autre paquet,
+- Un import avec une version (`@preview/zero:0.7.1`), une version partielle ou un autre namespace
+  que `@preview` (ex. `@local/x`) dans un template : refusé, le template est invalide.
+- Un import construit par calcul (ex. `"@preview/" + nom`) : non pris en charge ; la génération
+  échoue. Les imports doivent être écrits tels quels.
+- Les paquets ajoutés uniquement comme dépendances d'autres paquets ne sont pas importables par
+  les templates.
+- Un paquet dépend d'une version d'un autre paquet différente de celle mise à disposition (ex.
+  `lilaq` utilise `zero` 0.6.1, les templates ont `zero` 0.7.1) : les deux sont intégrées ; la
+  version interne reste invisible pour les templates.
+- Un paquet tente de lire un fichier hors de son propre dossier (template, autre paquet,
   système) : refusé. Un template peut en revanche transmettre explicitement une image ou des
   données à un paquet.
-- Un paquet dépend de deux versions différentes d'un autre paquet : les deux versions sont
-  intégrées et coexistent.
 - Un template embarque lui-même un dossier `packages/` : il n'est pas utilisé pour résoudre les
-  imports (seuls les paquets intégrés le sont).
+  imports.
 - Un paquet contient des polices : elles ne sont pas chargées (seules les polices du service et
   celles du dossier `fonts/` du template le sont).
 - Un paquet effectue un calcul très long : la génération reste soumise à la durée maximale ; la
@@ -144,58 +141,57 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 
 ### Functional Requirements
 
-- **FR-001**: Le service DOIT mettre à disposition de tous les templates un ensemble fixe de
-  paquets Typst, intégré à l'application lors de sa construction.
-- **FR-002**: Cet ensemble DOIT comprendre les 21 paquets validés (P1, voir Assumptions) et
-  toutes leurs dépendances, chacun dans une version exacte.
-- **FR-003**: Un import `@preview/nom:version` DOIT être résolu uniquement parmi les paquets
-  intégrés, avec une correspondance exacte du nom et de la version.
-- **FR-003b**: Un import **sans version** `@preview/nom` DOIT être accepté dans les fichiers du
-  template et résolu vers la **version par défaut** du paquet, c'est-à-dire la plus récente
-  version intégrée. La version utilisée DOIT être visible (liste des paquets, diagnostics).
-- **FR-004**: Le service NE DOIT jamais télécharger de paquet ni accéder au réseau pendant son
-  fonctionnement ; aucun paquet ne doit être lu ailleurs que dans l'ensemble intégré.
-- **FR-005**: La liste des paquets intégrés DOIT être définie dans un fichier versionné du dépôt
-  indiquant pour chaque paquet son nom, sa version, une empreinte d'intégrité et sa licence.
-- **FR-006**: La construction de l'application DOIT vérifier l'empreinte de chaque paquet et
+- **FR-001**: Le service DOIT intégrer, lors de sa construction, un ensemble fixe de paquets
+  Typst.
+- **FR-002**: Cet ensemble DOIT comprendre les 21 paquets validés (voir Assumptions), **mis à
+  disposition des templates dans une seule version chacun**, et toutes leurs dépendances.
+- **FR-003**: Dans un template, un paquet DOIT s'importer **par son seul nom**
+  (`@preview/nom`) ; le service utilise la version installée.
+- **FR-004**: Un import qui précise une version, utilise un autre namespace, ou nomme un paquet
+  non mis à disposition DOIT rendre le template invalide, avec un message qui nomme l'import
+  fautif (fichier et ligne) et renvoie à la liste des paquets disponibles.
+- **FR-005**: Le service NE DOIT jamais télécharger de paquet ni accéder au réseau pendant son
+  fonctionnement.
+- **FR-006**: La vérification et la résolution des imports d'un template DOIVENT avoir lieu une
+  fois, au chargement du template, sans coût ajouté à chaque génération.
+- **FR-007**: Les imports internes des paquets (versionnés par leurs auteurs) DOIVENT être résolus
+  exactement parmi les paquets intégrés.
+- **FR-008**: La liste des paquets intégrés DOIT être définie dans un fichier versionné du dépôt
+  indiquant pour chaque paquet son nom, sa version, une empreinte d'intégrité, sa licence et s'il
+  est mis à disposition des templates ou seulement dépendance.
+- **FR-009**: La construction de l'application DOIT vérifier l'empreinte de chaque paquet et
   échouer si l'une ne correspond pas.
-- **FR-007**: Les vérifications automatiques du projet DOIVENT prouver que chaque paquet intégré
+- **FR-010**: Les vérifications automatiques du projet DOIVENT prouver que chaque paquet intégré
   s'importe et produit un document avec la version du moteur utilisée ; un paquet qui échoue ne
   peut pas figurer dans la liste.
-- **FR-008**: Faire évoluer un paquet DOIT se faire par ajout d'une version ; retirer une version
-  de la liste est une décision explicite, signalée comme incompatible pour les templates qui
-  l'utilisent.
-- **FR-009**: Au chargement d'un template, les imports de paquets écrits littéralement DOIVENT
-  être contrôlés ; un import vers un paquet ou une version non intégrés rend le template invalide
-  avec un diagnostic nommant le paquet, la version et, le cas échéant, les versions disponibles.
-- **FR-010**: Au rendu, un import non résolu (y compris construit dynamiquement) DOIT faire
-  échouer la génération avec le même diagnostic.
-- **FR-011**: Un diagnostic d'erreur survenant dans le code d'un paquet DOIT indiquer le paquet,
+- **FR-011**: Changer la version d'un paquet mis à disposition DOIT se faire en remplaçant sa
+  version dans la liste ; la nouvelle version s'applique à tous les templates.
+- **FR-012**: Un diagnostic d'erreur survenant dans le code d'un paquet DOIT indiquer le paquet,
   le fichier et la ligne.
-- **FR-012**: Un paquet NE DOIT pouvoir lire que ses propres fichiers ; un template peut lui
+- **FR-013**: Un paquet NE DOIT pouvoir lire que ses propres fichiers ; un template peut lui
   transmettre explicitement une image, des données ou un chemin vers ses propres fichiers.
-- **FR-013**: Le service DOIT exposer une route listant les paquets intégrés (namespace, nom,
-  version, description, licence, indication de la version par défaut), décrite dans le document
-  OpenAPI.
-- **FR-014**: Les PDF produits avec des paquets DOIVENT rester déterministes.
-- **FR-015**: Les générations utilisant des paquets DOIVENT rester soumises aux bornes existantes
+- **FR-014**: Le service DOIT exposer une route listant les paquets mis à disposition (nom, ligne
+  d'import, version installée, description, licence), décrite dans le document OpenAPI.
+- **FR-015**: Les PDF produits avec des paquets DOIVENT rester déterministes.
+- **FR-016**: Les générations utilisant des paquets DOIVENT rester soumises aux bornes existantes
   (taille de requête, durée, concurrence).
-- **FR-016**: Les licences des paquets intégrés DOIVENT être conservées dans l'application et
+- **FR-017**: Les licences des paquets intégrés DOIVENT être conservées dans l'application et
   listées dans la documentation.
-- **FR-017**: La documentation des auteurs DOIT présenter les paquets intégrés (ce que fait
-  chacun, exemple d'import) et les limites (version exacte, pas d'autres paquets, accès aux
+- **FR-018**: La documentation des auteurs DOIT présenter les paquets disponibles (ce que fait
+  chacun, exemple d'import) et les règles (import par le nom seul, écrit tel quel, accès aux
   fichiers).
-- **FR-018**: Le dépôt DOIT fournir au moins un template d'exemple utilisant des paquets intégrés
-  (au minimum un QR code et un montant formaté), servant de référence et de test.
+- **FR-019**: Le dépôt DOIT fournir au moins un template d'exemple utilisant des paquets du
+  service (au minimum un QR code et un montant formaté), servant de référence et de test.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Paquet intégré** : paquet Typst figé dans l'application ; identifié par namespace, nom et
-  version ; porte une description, une licence et une empreinte d'intégrité.
+- **Paquet intégré** : paquet Typst figé dans l'application ; identifié par son nom et sa
+  version ; porte une description, une licence, une empreinte d'intégrité et un rôle (mis à
+  disposition des templates, ou dépendance seulement).
 - **Liste des paquets** : fichier versionné du dépôt qui définit exactement les paquets intégrés ;
   seule source de vérité.
-- **Référence de paquet** : `@namespace/nom:version`, ou `@namespace/nom` dans un template ;
-  résolue à l'identique, ou vers la version par défaut si la version est omise, sinon refusée.
+- **Import de template** : `@preview/nom` écrit dans un fichier du template ; résolu vers la
+  version installée du paquet mis à disposition, ou refusé.
 
 ## Success Criteria *(mandatory)*
 
@@ -205,8 +201,8 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
   vérifications automatiques.
 - **SC-002**: 100 % des générations utilisant des paquets aboutissent sans aucune tentative
   d'accès réseau.
-- **SC-003**: 100 % des imports non disponibles produisent un message nommant le paquet et la
-  version en cause.
+- **SC-003**: 100 % des imports incorrects (paquet inconnu, version écrite) produisent un message
+  nommant l'import en cause.
 - **SC-004**: Un auteur ajoute un QR code ou un montant formaté à un template en moins de
   5 minutes en suivant la documentation.
 - **SC-005**: Le temps de génération du template de démonstration existant (sans paquet) ne se
@@ -227,7 +223,7 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 - `cmarker` est exclu (il peut exécuter du code contenu dans le Markdown). Les paquets P2 pourront
   être ajoutés plus tard par simple évolution de la liste ; les P3 ne sont pas intégrés.
 - Seul le namespace `@preview` (Typst Universe) est servi.
-- L'import sans version est une facilité propre à inkpdf : un tel template ne se compile pas
+- L'import par le nom seul est une règle propre à inkpdf : un tel template ne se compile pas
   tel quel avec l'outil Typst standard (qui exige une version). Les paquets intégrés gardent
   leurs imports versionnés d'origine.
 - Les paquets sont téléchargés uniquement au moment de la construction de l'application ;
