@@ -383,7 +383,8 @@
   "info": {
     "description": "Internal service (private VPC, no authentication). Templates are hot-loaded from a mounted volume; the caller sends only JSON (`data` + `layout`), validated against the template's JSON Schema before generation.",
     "license": {
-      "name": "TODO(LICENSE) — MIT OR Apache-2.0 proposed"
+      "identifier": "MIT OR Apache-2.0",
+      "name": "MIT OR Apache-2.0"
     },
     "title": "inkpdf",
     "version": "0.1.0"

@@ -1,6 +1,12 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.2 → 1.0.3
+Bump rationale: PATCH — résolution du TODO(LICENSE) différé : double licence
+`MIT OR Apache-2.0` (convention Rust, compatible avec Typst sous Apache-2.0). Aucune règle
+ajoutée ni modifiée.
+
+Historique 1.0.2 :
 Version change: 1.0.1 → 1.0.2
 Bump rationale: PATCH — la dimension « paramètres de design » est renommée « paramètres de mise
 en page » (clé `layout` dans le corps, les schémas et `sys.inputs`) ; même concept, aucune règle
@@ -49,7 +55,7 @@ Templates dépendants (lus au runtime, non modifiés par cette commande) :
 - .specify/templates/tasks-template.md : aucun changement requis
 
 TODO différés :
-- TODO(LICENSE) : choix entre MIT et Apache-2.0 (ou double licence MIT OR Apache-2.0) à trancher
+- ~~TODO(LICENSE)~~ résolu en 1.0.3 : double licence MIT OR Apache-2.0. (Texte d'origine : choix entre MIT et Apache-2.0 (ou double licence MIT OR Apache-2.0) à trancher
   avant la première publication de la crate et de l'image.
 -->
 
@@ -173,8 +179,8 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 
 - **Nom** : inkpdf — **Dépôt** : github.com/ck-developer/inkpdf — **Crate** : `inkpdf` —
   **Image** : `ghcr.io/ck-developer/inkpdf`.
-- **Licence** : open source permissive. TODO(LICENSE) : MIT ou Apache-2.0 (ou double licence
-  `MIT OR Apache-2.0`, convention de l'écosystème Rust) à trancher avant la première release.
+- **Licence** : double licence `MIT OR Apache-2.0` (fichiers `LICENSE-MIT` et `LICENSE-APACHE`).
+  Les paquets Typst intégrés conservent leur propre licence, livrée avec eux.
 - **Langage** : Rust stable. Le service est livré sous forme d'un binaire unique.
 - **Distribution** : image Docker minimale contenant le binaire et ses ressources embarquées ;
   les templates sont fournis par un volume monté en lecture seule, dont le chemin est
@@ -221,4 +227,4 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les décisions différées (TODO) DOIVENT être résolues par un amendement PATCH ou MINOR dès
   qu'elles sont tranchées.
 
-**Version**: 1.0.2 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-10
+**Version**: 1.0.3 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-10
