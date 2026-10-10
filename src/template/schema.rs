@@ -1,4 +1,4 @@
-//! Schéma `schema.json` d'un template : chargement, défauts de `layout`, validation.
+//! A template's `schema.json`: loading, `layout` defaults, validation.
 
 use jsonschema::{Draft, Validator};
 use serde_json::{Map, Value};
@@ -6,11 +6,11 @@ use typst::foundations::Bytes;
 
 use crate::error::Violation;
 
-/// Schéma compilé d'un template.
+/// Compiled schema of a template.
 pub struct TemplateSchema {
-    /// Octets d'origine du fichier, exposés tels quels (constitution VI).
+    /// Original bytes of the file, exposed as is (constitution VI).
     raw: Bytes,
-    /// Schéma tel qu'écrit par l'auteur (sans l'`additionalProperties` ajouté).
+    /// Schema as written by the author (without the added `additionalProperties`).
     value: Value,
     validator: Validator,
 }
@@ -24,7 +24,7 @@ impl std::fmt::Debug for TemplateSchema {
 }
 
 impl TemplateSchema {
-    /// Charge et compile un schéma ; l'erreur est destinée à l'auteur du template.
+    /// Loads and compiles a schema; the error is meant for the template author.
     pub fn load(raw: Bytes) -> Result<Self, String> {
         let value: Value = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
         let root = value
@@ -69,23 +69,22 @@ impl TemplateSchema {
         })
     }
 
-    /// Octets d'origine de `schema.json`.
+    /// Original bytes of `schema.json`.
     pub fn raw(&self) -> &Bytes {
         &self.raw
     }
 
-    /// Schéma tel qu'écrit par l'auteur.
+    /// Schema as written by the author.
     pub fn value(&self) -> &Value {
         &self.value
     }
 
-    /// Applique les défauts de `layout` puis valide le corps.
+    /// Applies the `layout` defaults, then validates the body.
     ///
-    /// Le corps doit être un objet JSON (vérifié par l'appelant). Toutes les violations sont
-    /// renvoyées.
+    /// The body must be a JSON object (checked by the caller). All violations are returned.
     pub fn prepare(&self, mut body: Value) -> Result<Value, Vec<Violation>> {
-        // `layout` n'est initialisé que si le schéma le déclare : sinon la clé ajoutée serait
-        // refusée par `additionalProperties: false`.
+        // `layout` is initialized only if the schema declares it: otherwise the added key would
+        // be rejected by `additionalProperties: false`.
         if let (Some(root), Some(layout_schema)) = (
             body.as_object_mut(),
             self.value.pointer("/properties/layout"),
@@ -116,7 +115,7 @@ impl TemplateSchema {
     }
 }
 
-/// Insère les `default` des propriétés absentes, récursivement sur les sous-objets.
+/// Inserts the `default` of missing properties, recursively into sub-objects.
 fn apply_defaults(schema: &Value, target: &mut Map<String, Value>) {
     let Some(properties) = schema.get("properties").and_then(Value::as_object) else {
         return;
@@ -138,7 +137,7 @@ fn apply_defaults(schema: &Value, target: &mut Map<String, Value>) {
     }
 }
 
-/// Vrai si une propriété de ce (sous-)schéma, à n'importe quelle profondeur, a un `default`.
+/// True if a property of this (sub-)schema, at any depth, has a `default`.
 fn has_defaults(schema: &Value) -> bool {
     schema
         .get("properties")

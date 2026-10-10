@@ -1,4 +1,4 @@
-//! 002/US6 : métadonnées du PDF (`metadata` facultatif, auteur par défaut configurable).
+//! 002/US6: PDF metadata (optional `metadata`, configurable default author).
 
 mod common;
 
@@ -19,7 +19,7 @@ async fn render(config: Config, body: &Value) -> (StatusCode, Vec<u8>) {
     (status, body.to_vec())
 }
 
-/// Texte du flux XMP (non compressé par Typst).
+/// Text of the XMP stream (Typst does not compress it).
 fn xmp(pdf: &[u8]) -> String {
     let text = String::from_utf8_lossy(pdf);
     let start = text.find("<x:xmpmeta").expect("XMP metadata");
@@ -32,19 +32,22 @@ async fn request_metadata_is_written_to_the_pdf() {
     let volume = volume();
     let mut body = sample_request();
     body["metadata"] = json!({
-        "title": "Rapport trimestriel",
-        "author": ["ACME Corp", "Service comptable"],
-        "subject": "Synthese du trimestre",
-        "keywords": ["rapport", "T3"],
+        "title": "Quarterly report",
+        "author": ["ACME Corp", "Accounting department"],
+        "subject": "Quarter summary",
+        "keywords": ["report", "Q3"],
         "date": "2026-10-01"
     });
     let (status, pdf) = render(test_config(&volume), &body).await;
     assert_eq!(status, StatusCode::OK);
     let xmp = xmp(&pdf);
-    assert!(xmp.contains("Rapport trimestriel"), "{xmp}");
-    assert!(xmp.contains("ACME Corp") && xmp.contains("Service comptable"), "{xmp}");
-    assert!(xmp.contains("Synthese du trimestre"), "{xmp}");
-    assert!(xmp.contains("rapport") && xmp.contains("T3"), "{xmp}");
+    assert!(xmp.contains("Quarterly report"), "{xmp}");
+    assert!(
+        xmp.contains("ACME Corp") && xmp.contains("Accounting department"),
+        "{xmp}"
+    );
+    assert!(xmp.contains("Quarter summary"), "{xmp}");
+    assert!(xmp.contains("report") && xmp.contains("Q3"), "{xmp}");
     assert!(xmp.contains("2026-10-01"), "{xmp}");
 }
 
@@ -54,21 +57,27 @@ async fn defaults_apply_without_metadata() {
     let (status, pdf) = render(test_config(&volume), &sample_request()).await;
     assert_eq!(status, StatusCode::OK);
     let xmp = xmp(&pdf);
-    // Titre = nom du template (template.json), auteur = auteur par défaut du service.
-    assert!(xmp.contains("<dc:title>") && xmp.contains("Exemple"), "{xmp}");
-    assert!(xmp.contains("<dc:creator>") && xmp.contains("inkpdf"), "{xmp}");
+    // Title = template name (template.json), author = the service's default author.
+    assert!(
+        xmp.contains("<dc:title>") && xmp.contains("Sample"),
+        "{xmp}"
+    );
+    assert!(
+        xmp.contains("<dc:creator>") && xmp.contains("inkpdf"),
+        "{xmp}"
+    );
 }
 
 #[tokio::test]
 async fn default_author_is_configurable() {
     let volume = volume();
     let config = Config {
-        default_author: "Bureau d'études".into(),
+        default_author: "O'Neill & Partners".into(),
         ..test_config(&volume)
     };
     let (_, pdf) = render(config, &sample_request()).await;
     let xmp = xmp(&pdf);
-    assert!(xmp.contains("Bureau d") && !xmp.contains(">inkpdf<"), "{xmp}");
+    assert!(xmp.contains("Neill") && !xmp.contains(">inkpdf<"), "{xmp}");
 }
 
 #[tokio::test]
@@ -89,7 +98,10 @@ async fn invalid_metadata_is_rejected_before_compilation() {
         .collect();
     assert!(paths.contains(&"/metadata/title"), "{paths:?}");
     assert!(paths.contains(&"/metadata/date"), "{paths:?}");
-    assert!(paths.contains(&"/metadata"), "unknown key `producer`: {paths:?}");
+    assert!(
+        paths.contains(&"/metadata"),
+        "unknown key `producer`: {paths:?}"
+    );
 }
 
 #[tokio::test]

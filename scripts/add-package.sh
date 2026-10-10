@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Ajoute (ou remplace) un paquet Typst Universe dans la liste intégrée à inkpdf.
+# Adds (or replaces) a Typst Universe package in the list embedded in inkpdf.
 #
 #   scripts/add-package.sh <name> <version> [--dependency]
 #
-# - télécharge l'archive officielle dans packages/vendor/ ;
-# - calcule son empreinte sha256 et lit sa licence dans typst.toml ;
-# - écrit l'entrée dans packages/lock.toml (triée par nom puis version).
+# - downloads the official archive into packages/vendor/;
+# - computes its sha256 digest and reads its license from typst.toml;
+# - writes the entry to packages/lock.toml (sorted by name, then version).
 #
-# Rôle `selected` (défaut) : version mise à disposition des templates, une seule par nom ;
-# une entrée `selected` existante du même nom est remplacée. Rôle `dependency` : version
-# présente seulement parce qu'un autre paquet l'importe.
-# Voir specs/002-typst-packages/contracts/lock-file.md.
+# Role `selected` (default): version made available to templates, one per name; an
+# existing `selected` entry with the same name is replaced. Role `dependency`: version
+# present only because another package imports it.
+# See specs/002-typst-packages/contracts/lock-file.md.
 set -euo pipefail
 
 usage() { echo "usage: $0 <name> <version> [--dependency]" >&2; exit 2; }
@@ -40,7 +40,7 @@ license=$(tar -xzOf "$tmp" typst.toml | sed -n 's/^[[:space:]]*license[[:space:]
 [[ -n $license ]] || license="UNKNOWN"
 mv "$tmp" "$vendor/$archive"
 
-# Entrées existantes -> lignes « name|version|sha256|license|role ».
+# Existing entries -> "name|version|sha256|license|role" lines.
 entries=$(
   if [[ -f $lock ]]; then
     awk -F' = ' '
@@ -52,7 +52,7 @@ entries=$(
   fi
 )
 
-# Retire l'entrée de même version et, en mode selected, l'ancienne version selected.
+# Drops the entry with the same version and, in selected mode, the previous selected version.
 kept="" removed=""
 while IFS='|' read -r n v s l r; do
   [[ -z ${n:-} ]] && continue
@@ -65,15 +65,15 @@ done <<<"$entries"
 kept+="$name|$version|$sha|$license|$role"$'\n'
 
 {
-  echo "# Paquets Typst intégrés à inkpdf. Modifier via scripts/add-package.sh."
-  echo "# Contrat : specs/002-typst-packages/contracts/lock-file.md"
+  echo "# Typst packages embedded in inkpdf. Edit via scripts/add-package.sh."
+  echo "# Contract: specs/002-typst-packages/contracts/lock-file.md"
   printf '%s' "$kept" | grep -v '^$' | sort -t'|' -k1,1 -k2,2V | while IFS='|' read -r n v s l r; do
     printf '\n[[package]]\nnamespace = "preview"\nname = "%s"\nversion = "%s"\nsha256 = "%s"\nlicense = "%s"\nrole = "%s"\n' "$n" "$v" "$s" "$l" "$r"
   done
 } >"$tmp.lock"
 mv "$tmp.lock" "$lock"
 
-# Supprime l'archive remplacée si plus aucune entrée ne la référence.
+# Deletes the replaced archive once no entry references it anymore.
 while IFS= read -r old; do
   [[ -z $old ]] && continue
   base=${old%.tar.gz}; oname=${base%-*}; over=${base##*-}

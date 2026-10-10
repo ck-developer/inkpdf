@@ -1,3 +1,3 @@
-= Erreur dans un paquet
+= Error inside a package
 #import "@preview/zero": num
 #num(none)

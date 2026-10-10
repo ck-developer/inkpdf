@@ -1,6 +1,6 @@
-//! Benchmark du pipeline de rendu (SC-001) : `examples/templates/sample` avec
-//! `examples/requests/sample.json`. Mesure fine et comparable entre versions ; le seuil
-//! bloquant (p95 < 200 ms) est vérifié par `tests/perf.rs`.
+//! Rendering pipeline benchmark (SC-001): `examples/templates/sample` with
+//! `examples/requests/sample.json`. Fine-grained and comparable across versions; the
+//! blocking threshold (p95 < 200 ms) is checked by `tests/perf.rs`.
 
 use std::path::Path;
 use std::sync::Arc;

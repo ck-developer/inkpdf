@@ -1,19 +1,19 @@
-//! Imports de paquets d'un template : `#import "@preview/<nom>"`, sans version.
+//! Package imports of a template: `#import "@preview/<name>"`, without a version.
 //!
-//! Résolus une seule fois, au chargement : chaque import est réécrit avec la version installée
-//! (`@preview/zero` → `@preview/zero:0.7.1`) dans l'instantané, ce qui ne laisse au rendu qu'une
-//! correspondance exacte. Tout autre import est une erreur. Contrat :
+//! Resolved once, at load time: each import is rewritten with the installed version
+//! (`@preview/zero` → `@preview/zero:0.7.1`) in the snapshot, which leaves rendering with only
+//! an exact match. Any other import is an error. Contract:
 //! specs/002-typst-packages/contracts/template-imports.md.
 
 use typst::syntax::{SyntaxKind, SyntaxNode, ast, is_ident};
 
 use crate::packages;
 
-/// Import incorrect, localisé pour l'auteur du template.
+/// Incorrect import, located for the template author.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportError {
     pub file: String,
-    /// Ligne, à partir de 1.
+    /// Line, 1-based.
     pub line: usize,
     pub message: String,
 }
@@ -24,17 +24,17 @@ impl std::fmt::Display for ImportError {
     }
 }
 
-/// Chaîne d'import littérale trouvée dans la source.
+/// Literal import string found in the source.
 struct Literal {
-    /// Plage d'octets du littéral, guillemets compris.
+    /// Byte range of the literal, quotes included.
     range: std::ops::Range<usize>,
     value: String,
 }
 
-/// Résout les imports de paquets de `text` (fichier `path` du template).
+/// Resolves the package imports of `text` (file `path` of the template).
 ///
-/// Renvoie le texte réécrit, `None` s'il n'y a aucun import de paquet, ou la liste des imports
-/// incorrects.
+/// Returns the rewritten text, `None` if there is no package import, or the list of incorrect
+/// imports.
 pub fn resolve_imports(path: &str, text: &str) -> Result<Option<String>, Vec<ImportError>> {
     let mut literals = Vec::new();
     collect(&typst::syntax::parse(text), 0, &mut literals);
@@ -65,11 +65,11 @@ pub fn resolve_imports(path: &str, text: &str) -> Result<Option<String>, Vec<Imp
     Ok(Some(rewritten))
 }
 
-/// Littéraux `@…` des `import` et `include` ; `offset` = position de `node` dans le texte.
+/// `@…` literals of `import` and `include`; `offset` = position of `node` in the text.
 fn collect(node: &SyntaxNode, offset: usize, found: &mut Vec<Literal>) {
     if node.is::<ast::ModuleImport>() || node.is::<ast::ModuleInclude>() {
-        // La source est le premier enfant expression ; un import calculé (parenthèses,
-        // variable…) n'est pas une chaîne et reste hors de portée (règle 4 du contrat).
+        // The source is the first expression child; a computed import (parentheses,
+        // variable…) is not a string and stays out of scope (rule 4 of the contract).
         let mut child_offset = offset;
         for child in node.children() {
             if child.kind() == SyntaxKind::Str {
@@ -98,7 +98,7 @@ fn collect(node: &SyntaxNode, offset: usize, found: &mut Vec<Literal>) {
     }
 }
 
-/// `@preview/<nom>` → `@preview/<nom>:<version installée>`, ou message d'erreur du contrat.
+/// `@preview/<name>` → `@preview/<name>:<installed version>`, or the contract's error message.
 fn resolve(value: &str) -> Result<String, String> {
     let Some((namespace, rest)) = value[1..].split_once('/') else {
         return Err(format!("invalid package import \"{value}\""));
@@ -145,12 +145,12 @@ mod tests {
 
     #[test]
     fn name_only_import_is_rewritten_with_installed_version() {
-        let text = "= Titre\n#import \"@preview/zero\": num\n#num(1)\n";
+        let text = "= Title\n#import \"@preview/zero\": num\n#num(1)\n";
         let rewritten = resolve_imports("main.typ", text).unwrap().unwrap();
         assert_eq!(
             rewritten,
             format!(
-                "= Titre\n#import \"@preview/zero:{}\": num\n#num(1)\n",
+                "= Title\n#import \"@preview/zero:{}\": num\n#num(1)\n",
                 version("zero")
             )
         );
@@ -192,7 +192,7 @@ mod tests {
                 "main.typ:1: package @preview/does-not-exist is not available in inkpdf (see GET /packages)"
             ]
         );
-        // Une dépendance interne n'est pas mise à disposition des templates.
+        // An internal dependency is not made available to templates.
         assert_eq!(errors("#import \"@preview/komet\"").len(), 1);
     }
 

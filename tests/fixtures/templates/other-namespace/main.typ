@@ -1,2 +1,2 @@
-= Autre namespace
+= Other namespace
 #import "@local/zero"

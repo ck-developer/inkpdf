@@ -1,7 +1,7 @@
-// Template de démonstration neutre : un titre et un tableau de libellés/valeurs.
-// L'entrée validée est fournie par le service dans `sys.inputs`.
+// Neutral demo template: a title and a table of labels and values.
+// The service passes the validated input in `sys.inputs`.
 #let data = sys.inputs.data
-#let opts = sys.inputs.layout  // pas `layout` : ce nom masquerait la fonction Typst `layout()`
+#let opts = sys.inputs.layout  // not `layout`: that name would shadow Typst's `layout()` function
 
 #let primary = rgb(opts.primaryColor)
 #let aligns = (left: left, center: center, right: right)

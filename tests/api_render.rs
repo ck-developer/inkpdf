@@ -1,4 +1,4 @@
-//! US1 : génération d'un PDF par `POST /templates/{id}/render`.
+//! US1: PDF generation with `POST /templates/{id}/render`.
 
 mod common;
 
@@ -31,7 +31,7 @@ async fn sample_request_renders_a_pdf() {
     );
     assert!(body.starts_with(b"%PDF-"));
     let text = pdf_text(&body);
-    assert!(text.contains("Exemple"), "{text}");
+    assert!(text.contains("Sample"), "{text}");
     assert!(text.contains("Alpha"), "{text}");
 }
 
@@ -194,14 +194,14 @@ async fn template_using_bundled_packages_renders() {
     assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
     assert_eq!(headers["content-type"], "application/pdf");
     let text = pdf_text(&body);
-    assert!(text.contains("Démonstration des paquets"), "{text}");
-    // `zero` compose le nombre en mode mathématique : l'extraction espace chaque chiffre.
+    assert!(text.contains("Package demo"), "{text}");
+    // `zero` typesets the number in math mode: text extraction spaces out each digit.
     let compact: String = text.chars().filter(|c| !c.is_whitespace()).collect();
-    assert!(compact.contains("1234,56€"), "{text}");
+    assert!(compact.contains("€1,234.56"), "{text}");
     assert!(text.contains("DEMO-2026-0001"), "{text}");
 }
 
-/// FR-012 : une erreur dans le code d'un paquet indique le paquet, le fichier et la ligne.
+/// FR-012: an error inside a package's code reports the package, the file and the line.
 #[tokio::test]
 async fn error_inside_a_package_points_to_the_package_file() {
     let volume = TestVolume::new();
@@ -230,8 +230,12 @@ async fn error_inside_a_package_points_to_the_package_file() {
 async fn disposition(query: &str) -> (StatusCode, String) {
     let volume = volume();
     let app = test_app(test_config(&volume));
-    let (status, headers, _) =
-        post_json(&app, &format!("/templates/sample/render{query}"), &sample_request()).await;
+    let (status, headers, _) = post_json(
+        &app,
+        &format!("/templates/sample/render{query}"),
+        &sample_request(),
+    )
+    .await;
     let value = headers
         .get(header::CONTENT_DISPOSITION)
         .map(|v| v.to_str().unwrap().to_owned())
@@ -239,7 +243,7 @@ async fn disposition(query: &str) -> (StatusCode, String) {
     (status, value)
 }
 
-/// 002/US5 : téléchargement nommé.
+/// 002/US5: named download.
 #[tokio::test]
 async fn download_with_filename_is_an_attachment() {
     let (status, value) = disposition("?download=true&filename=Facture%20042").await;
@@ -253,13 +257,19 @@ async fn download_with_filename_is_an_attachment() {
 #[tokio::test]
 async fn download_without_filename_uses_the_template_id() {
     let (_, value) = disposition("?download=true").await;
-    assert_eq!(value, "attachment; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf");
+    assert_eq!(
+        value,
+        "attachment; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
+    );
 }
 
 #[tokio::test]
 async fn dangerous_and_accented_filenames_are_cleaned() {
     let (_, value) = disposition("?download=true&filename=..%2F..%2Fetc%2F%22pass%22%0A.PDF").await;
-    assert_eq!(value, "attachment; filename=\"etcpass.pdf\"; filename*=UTF-8''etcpass.pdf");
+    assert_eq!(
+        value,
+        "attachment; filename=\"etcpass.pdf\"; filename*=UTF-8''etcpass.pdf"
+    );
 
     let (_, value) = disposition("?download=1&filename=Situation%20n%C2%B03%20%C3%A9t%C3%A9").await;
     assert_eq!(
@@ -272,8 +282,12 @@ async fn dangerous_and_accented_filenames_are_cleaned() {
 async fn invalid_download_value_is_a_bad_request() {
     let volume = volume();
     let app = test_app(test_config(&volume));
-    let (status, _, body) =
-        post_json(&app, "/templates/sample/render?download=oui", &sample_request()).await;
+    let (status, _, body) = post_json(
+        &app,
+        "/templates/sample/render?download=oui",
+        &sample_request(),
+    )
+    .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(problem(&body)["code"], "invalid-parameter");
 }
@@ -281,5 +295,8 @@ async fn invalid_download_value_is_a_bad_request() {
 #[tokio::test]
 async fn without_parameters_the_pdf_stays_inline() {
     let (_, value) = disposition("").await;
-    assert_eq!(value, "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf");
+    assert_eq!(
+        value,
+        "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
+    );
 }

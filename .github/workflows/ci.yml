@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-# Un nouveau push annule le run en cours de la même branche.
+# A new push cancels the in-progress run for the same branch.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -53,6 +53,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: perf
-      # Seul le binaire du test de performance est compilé en release.
+      # Only the performance test binary is compiled in release mode.
       - name: Performance tests
         run: cargo test --release --test perf -- --ignored

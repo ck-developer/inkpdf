@@ -1,5 +1,5 @@
-//! Garanties du bac à sable : paquets (seuls les paquets intégrés, confinés à leur racine),
-//! lecture hors du dossier, liens sortants, injection.
+//! Sandbox guarantees: packages (bundled packages only, confined to their root),
+//! reads outside the folder, outgoing links, injection.
 
 mod common;
 
@@ -21,8 +21,8 @@ async fn render(volume: &TestVolume, id: &str) -> (StatusCode, serde_json::Value
 
 #[tokio::test]
 async fn package_not_offered_by_the_service_is_refused() {
-    // `evil-package` importe un paquet absent (et écrit une version) : template invalide,
-    // aucune compilation, aucun téléchargement.
+    // `evil-package` imports a missing package (and writes a version): invalid template,
+    // no compilation, no download.
     let volume = TestVolume::new();
     volume.copy_template(&fixture("evil-package"), "evil-package");
     let (status, problem) = render(&volume, "evil-package").await;
@@ -58,14 +58,14 @@ fn package_cannot_read_template_files() {
         Arc::new(AtomicBool::new(false)),
     );
     let zero = inkpdf::packages::selected("zero").unwrap().spec().clone();
-    // Dans la racine du paquet, `/main.typ` ne désigne jamais le fichier du template.
+    // Inside the package root, `/main.typ` never refers to the template's file.
     let id = RootedPath::new(
         VirtualRoot::Package(zero),
         VirtualPath::new("main.typ").unwrap(),
     )
     .intern();
     assert!(world.file(id).is_err());
-    // Et un paquet inconnu n'expose rien.
+    // And an unknown package exposes nothing.
     let unknown = "@preview/unknown:1.0.0".parse().unwrap();
     let id = RootedPath::new(
         VirtualRoot::Package(unknown),

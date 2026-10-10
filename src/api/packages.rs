@@ -1,4 +1,4 @@
-//! Paquets Typst mis à disposition des templates (specs/002-typst-packages, contracts/api.md).
+//! Typst packages made available to templates (specs/002-typst-packages, contracts/api.md).
 
 use axum::Json;
 use serde::Serialize;
@@ -6,40 +6,40 @@ use utoipa::ToSchema;
 
 use crate::packages;
 
-/// Paquet importable par un template.
+/// Package a template can import.
 #[derive(Debug, Serialize, ToSchema)]
 pub struct PackageInfo {
-    /// Nom du paquet sur Typst Universe.
+    /// Package name on Typst Universe.
     #[schema(pattern = "^[a-z0-9][a-z0-9-]*$", example = "zero")]
     pub name: String,
-    /// Ligne d'import à écrire dans un template (jamais de version).
+    /// Import line to write in a template (never with a version).
     #[schema(example = "@preview/zero")]
     pub import: String,
-    /// Version installée dans le service (information seulement).
+    /// Version installed in the service (informational only).
     #[schema(pattern = "^\\d+\\.\\d+\\.\\d+$", example = "0.7.1")]
     pub version: String,
     pub description: String,
-    /// Identifiant ou expression SPDX.
+    /// SPDX identifier or expression.
     #[schema(example = "MIT")]
     pub license: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct PackageList {
-    /// Triés par nom ; une seule entrée par paquet.
+    /// Sorted by name; one entry per package.
     pub packages: Vec<PackageInfo>,
 }
 
-/// Paquets disponibles pour les templates
+/// Packages available to templates
 ///
-/// Les paquets présents seulement comme dépendances d'autres paquets ne sont pas listés : ils
-/// ne sont pas importables.
+/// Packages present only as dependencies of other packages are not listed: they
+/// cannot be imported.
 #[utoipa::path(
     get,
     path = "/packages",
     tag = "packages",
     operation_id = "listPackages",
-    responses((status = 200, description = "Paquets importables par `#import \"@preview/<nom>\"`.", body = PackageList)),
+    responses((status = 200, description = "Packages importable with `#import \"@preview/<name>\"`.", body = PackageList)),
 )]
 pub async fn list_packages() -> Json<PackageList> {
     let packages = packages::all()

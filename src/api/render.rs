@@ -20,27 +20,27 @@ use crate::registry::TemplateStatus;
 use crate::render;
 use crate::template::TemplateId;
 
-/// Forme générique ; la forme exacte de `data` et `layout` est donnée par le schéma du template
+/// Generic shape; the exact shape of `data` and `layout` is given by the template's schema
 /// (`GET /templates/{templateId}/schema`).
 #[derive(Serialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 #[allow(dead_code)]
 pub struct RenderRequest {
-    /// Données métier.
+    /// Business data.
     data: Map<String, Value>,
-    /// Paramètres de mise en page ; les propriétés absentes prennent leur `default`.
+    /// Layout parameters; missing properties take their `default`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     layout: Option<Map<String, Value>>,
-    /// Métadonnées du PDF, toutes facultatives. Sans `author`, l'auteur par défaut du service
-    /// (`INKPDF_DEFAULT_AUTHOR`, `inkpdf` par défaut) ; sans `title`, celui du template, à
-    /// défaut son nom. `date` au format `AAAA-MM-JJ`.
+    /// PDF metadata, all optional. Without `author`, the service's default author
+    /// (`INKPDF_DEFAULT_AUTHOR`, `inkpdf` by default); without `title`, the template's title,
+    /// or failing that its name. `date` in `YYYY-MM-DD` format.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     metadata: Option<DocumentMetadataSchema>,
 }
 
-/// Schéma de `metadata` (fixe, défini par le service).
+/// Schema of `metadata` (fixed, defined by the service).
 pub struct DocumentMetadataSchema;
 
 impl Serialize for DocumentMetadataSchema {
@@ -61,7 +61,7 @@ impl ToSchema for DocumentMetadataSchema {
     }
 }
 
-/// Document PDF renvoyé tel quel.
+/// PDF document returned as is.
 pub struct PdfDocument;
 
 impl utoipa::PartialSchema for PdfDocument {
@@ -75,10 +75,10 @@ impl utoipa::PartialSchema for PdfDocument {
 
 impl ToSchema for PdfDocument {}
 
-/// Générer un PDF
+/// Generate a PDF
 ///
-/// Valide le corps contre le schéma du template (après application des valeurs `default` de
-/// `layout`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.
+/// Validates the body against the template's schema (after applying the `default` values of
+/// `layout`), then returns the PDF. No generation is attempted if validation fails.
 #[utoipa::path(
     post,
     path = "/templates/{templateId}/render",
@@ -87,15 +87,15 @@ impl ToSchema for PdfDocument {}
     params(TemplatePath, RenderQuery),
     request_body(content = RenderRequest, content_type = "application/json"),
     responses(
-        (status = 200, description = "Document généré.", content_type = "application/pdf",
+        (status = 200, description = "Generated document.", content_type = "application/pdf",
             body = inline(PdfDocument),
-            headers(("Content-Disposition" = String, description = "`inline` (affichage) ou `attachment` (téléchargement, `download=true`), avec `filename` et `filename*` (UTF-8)."))),
+            headers(("Content-Disposition" = String, description = "`inline` (display) or `attachment` (download, `download=true`), with `filename` and `filename*` (UTF-8)."))),
         (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
         (status = 409, response = crate::api::ProblemResponse),
         (status = 413, response = crate::api::ProblemResponse),
         (status = 415, response = crate::api::ProblemResponse),
-        (status = 422, description = "Corps non conforme au schéma du template.",
+        (status = 422, description = "Body does not match the template's schema.",
             content_type = "application/problem+json", body = Problem),
         (status = 500, response = crate::api::ProblemResponse),
         (status = 503, response = crate::api::ProblemResponse),
@@ -167,7 +167,7 @@ pub async fn render_template(
         }
     };
 
-    // Aucune donnée du corps n'est journalisée (FR-022).
+    // No body data is logged (FR-022).
     let started = Instant::now();
     let log = |outcome: &str| {
         tracing::info!(
@@ -178,8 +178,8 @@ pub async fn render_template(
         );
     };
 
-    // `metadata` est validée par le schéma fixe du service, `data` et `layout` par celui du
-    // template ; toutes les violations sont renvoyées ensemble.
+    // `metadata` is validated by the service's fixed schema, `data` and `layout` by the
+    // template's; all violations are returned together.
     let mut body = body;
     let metadata = match body.as_object_mut().map(render::metadata::extract) {
         Some(Ok(metadata)) => Ok(metadata),
@@ -224,7 +224,7 @@ pub async fn render_template(
     }
 }
 
-/// `Content-Type: application/json`, paramètres (`charset`) tolérés.
+/// `Content-Type: application/json`, parameters (`charset`) tolerated.
 fn is_json(headers: &HeaderMap) -> bool {
     headers
         .get(header::CONTENT_TYPE)
@@ -233,15 +233,15 @@ fn is_json(headers: &HeaderMap) -> bool {
         .is_some_and(|mime| mime.trim().eq_ignore_ascii_case("application/json"))
 }
 
-/// Paramètres de requête de la génération (R18).
+/// Query parameters of the render request (R18).
 #[derive(Debug, Default, PartialEq, Eq, utoipa::IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct RenderQuery {
-    /// `true` : réponse en téléchargement (`Content-Disposition: attachment`) au lieu d'un
-    /// affichage. Valeurs : `true`, `false`, `1`, `0`.
+    /// `true`: respond as a download (`Content-Disposition: attachment`) instead of
+    /// inline display. Values: `true`, `false`, `1`, `0`.
     #[param(required = false, default = false)]
     download: bool,
-    /// Nom du fichier (sans chemin ; `.pdf` ajouté). Défaut : `<templateId>.pdf`.
+    /// File name (no path; `.pdf` appended). Default: `<templateId>.pdf`.
     #[param(max_length = 200)]
     filename: Option<String>,
 }
@@ -280,7 +280,7 @@ impl RenderQuery {
     }
 }
 
-/// Décode `a=b&c=d` (`application/x-www-form-urlencoded`).
+/// Decodes `a=b&c=d` (`application/x-www-form-urlencoded`).
 fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
     fn decode(raw: &str) -> String {
         let bytes = raw.as_bytes();
@@ -313,7 +313,7 @@ fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
         .collect()
 }
 
-/// En-tête `Content-Disposition` (RFC 6266) : nom nettoyé, repli ASCII et `filename*` UTF-8.
+/// `Content-Disposition` header (RFC 6266): cleaned name, ASCII fallback and UTF-8 `filename*`.
 fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> String {
     let name = filename.map(clean_filename).filter(|n| !n.is_empty());
     let name = format!("{}.pdf", name.as_deref().unwrap_or(id));
@@ -324,8 +324,21 @@ fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> Stri
     let encoded: String = name
         .bytes()
         .map(|b| match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'!' | b'#' | b'$' | b'&' | b'+' | b'-'
-            | b'.' | b'^' | b'_' | b'`' | b'|' | b'~' => (b as char).to_string(),
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'!'
+            | b'#'
+            | b'$'
+            | b'&'
+            | b'+'
+            | b'-'
+            | b'.'
+            | b'^'
+            | b'_'
+            | b'`'
+            | b'|'
+            | b'~' => (b as char).to_string(),
             _ => format!("%{b:02X}"),
         })
         .collect();
@@ -333,11 +346,13 @@ fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> Stri
     format!("{kind}; filename=\"{ascii}\"; filename*=UTF-8''{encoded}")
 }
 
-/// Retire chemins, guillemets et caractères de contrôle ; sans l'extension `.pdf`.
+/// Strips paths, quotes and control characters; drops the `.pdf` extension.
 fn clean_filename(raw: &str) -> String {
     let kept: String = raw
         .chars()
-        .filter(|c| !c.is_control() && !matches!(c, '/' | '\\' | '"' | ':' | '*' | '?' | '<' | '>' | '|'))
+        .filter(|c| {
+            !c.is_control() && !matches!(c, '/' | '\\' | '"' | ':' | '*' | '?' | '<' | '>' | '|')
+        })
         .collect();
     let trimmed = kept.trim_matches(|c: char| c.is_whitespace() || c == '.');
     let stem = if trimmed.to_ascii_lowercase().ends_with(".pdf") {
@@ -345,7 +360,8 @@ fn clean_filename(raw: &str) -> String {
     } else {
         trimmed
     };
-    stem.trim_matches(|c: char| c.is_whitespace() || c == '.').to_owned()
+    stem.trim_matches(|c: char| c.is_whitespace() || c == '.')
+        .to_owned()
 }
 
 #[cfg(test)]
@@ -364,7 +380,7 @@ mod tests {
     #[test]
     fn filenames_are_cleaned() {
         assert_eq!(clean_filename("../../etc/\"pass\"\n.PDF"), "etcpass");
-        assert_eq!(clean_filename("  Facture 042.pdf "), "Facture 042");
+        assert_eq!(clean_filename("  Invoice 042.pdf "), "Invoice 042");
         assert_eq!(clean_filename("..."), "");
     }
 

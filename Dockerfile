@@ -4,8 +4,8 @@
 FROM rust:1.98-bookworm AS build
 WORKDIR /src
 
-# Dépendances compilées dans une couche à part (cache tant que Cargo.toml/Cargo.lock, build.rs
-# et les paquets Typst intégrés ne changent pas).
+# Dependencies are built in a separate layer (cached as long as Cargo.toml/Cargo.lock,
+# build.rs and the embedded Typst packages do not change).
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY packages ./packages
 RUN mkdir -p src benches \
@@ -29,7 +29,7 @@ VOLUME /templates
 EXPOSE 3000
 USER nonroot
 
-# L'image n'a ni shell ni curl : le binaire interroge lui-même /health.
+# The image has neither a shell nor curl: the binary queries /health itself.
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
     CMD ["/usr/local/bin/inkpdf", "healthcheck"]
 

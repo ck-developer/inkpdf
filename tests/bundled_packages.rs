@@ -1,5 +1,5 @@
-//! Vérifications des paquets Typst intégrés (FR-010, R11) : chaque paquet s'importe, chaque
-//! paquet mis à disposition s'utilise depuis un template, l'ensemble est fermé.
+//! Checks on the bundled Typst packages (FR-010, R11): every package imports, every offered
+//! package works from a template, and the set is closed.
 
 mod common;
 
@@ -11,7 +11,7 @@ use inkpdf::packages;
 use inkpdf::registry::{LoadOutcome, loader};
 use typst::syntax::{SyntaxNode, ast, package::PackageSpec};
 
-/// R11.1 — chacun des paquets intégrés (dépendances comprises) s'importe et compile.
+/// R11.1 — every bundled package (dependencies included) imports and compiles.
 #[test]
 fn every_bundled_package_imports() {
     let failures: Vec<String> = packages::all()
@@ -31,7 +31,7 @@ fn every_bundled_package_imports() {
     );
 }
 
-/// Charge `main` comme un template déposé dans le volume (donc avec la résolution des imports).
+/// Loads `main` as a template dropped in the volume (so with import resolution).
 fn load_template(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry::TemplateEntry> {
     let dir = tempfile::tempdir().unwrap();
     fs::write(dir.path().join("main.typ"), main).unwrap();
@@ -47,7 +47,7 @@ fn smoke_fixture(name: &str) -> String {
         .unwrap_or_else(|_| panic!("missing tests/fixtures/package-smoke/{name}.typ"))
 }
 
-/// R11.2 — chaque paquet mis à disposition s'utilise depuis un template (import par le nom).
+/// R11.2 — every offered package works from a template (imported by name).
 #[test]
 fn every_selected_package_is_usable_from_a_template() {
     let mut failures = Vec::new();
@@ -70,7 +70,7 @@ fn every_selected_package_is_usable_from_a_template() {
     );
 }
 
-/// FR-015 — un rendu utilisant un paquet reste déterministe.
+/// FR-015 — a render that uses a package stays deterministic.
 #[test]
 fn rendering_with_a_package_is_deterministic() {
     let entry = load_template("determinism", &smoke_fixture("cetz"));
@@ -79,7 +79,7 @@ fn rendering_with_a_package_is_deterministic() {
     assert!(first == second, "two renders of the same template differ");
 }
 
-/// Imports littéraux `@…` d'une source Typst.
+/// Literal `@…` imports of a Typst source.
 fn literal_package_imports(text: &str) -> Vec<String> {
     fn walk(node: &SyntaxNode, found: &mut Vec<String>) {
         let source = node
@@ -104,7 +104,7 @@ fn literal_package_imports(text: &str) -> Vec<String> {
     found
 }
 
-/// R11.3 — tout `@preview/…` importé par le code d'un paquet est lui-même intégré.
+/// R11.3 — every `@preview/…` imported by a package's code is itself bundled.
 #[test]
 fn bundled_set_is_closed_under_imports() {
     const SKIPPED_DIRS: [&str; 5] = ["tests/", "docs/", "examples/", "gallery/", "template/"];
@@ -150,8 +150,8 @@ fn version_key(version: &str) -> Vec<u32> {
     version.split('.').map(|p| p.parse().unwrap()).collect()
 }
 
-/// US4 — `packages/lock.toml` est la seule source de vérité et correspond aux archives et au
-/// binaire.
+/// US4 — `packages/lock.toml` is the single source of truth and matches the archives and the
+/// binary.
 #[test]
 fn lock_file_matches_archives_and_binary() {
     use sha2::{Digest, Sha256};
@@ -159,7 +159,7 @@ fn lock_file_matches_archives_and_binary() {
     let root = repo_root().join("packages");
     let lock: Lock = toml::from_str(&fs::read_to_string(root.join("lock.toml")).unwrap()).unwrap();
 
-    // Empreintes.
+    // Checksums.
     for entry in &lock.package {
         let archive =
             fs::read(root.join(format!("vendor/{}-{}.tar.gz", entry.name, entry.version)))
@@ -173,7 +173,7 @@ fn lock_file_matches_archives_and_binary() {
         assert!(["selected", "dependency"].contains(&entry.role.as_str()));
     }
 
-    // Chaque archive a une entrée.
+    // Every archive has an entry.
     let listed: BTreeSet<String> = lock
         .package
         .iter()
@@ -184,7 +184,7 @@ fn lock_file_matches_archives_and_binary() {
         assert!(listed.contains(&name), "{name} is not listed in lock.toml");
     }
 
-    // Au plus une version `selected` par nom, entrées triées.
+    // At most one `selected` version per name, entries sorted.
     let mut selected = BTreeSet::new();
     for entry in lock.package.iter().filter(|e| e.role == "selected") {
         assert!(
@@ -205,7 +205,7 @@ fn lock_file_matches_archives_and_binary() {
         "lock.toml entries must be sorted by name then version"
     );
 
-    // Le binaire contient exactement la même liste.
+    // The binary contains exactly the same list.
     let bundled: Vec<_> = packages::all()
         .iter()
         .map(|p| (p.name().to_owned(), p.version().to_owned(), p.is_selected()))
@@ -218,13 +218,13 @@ fn lock_file_matches_archives_and_binary() {
     assert_eq!(bundled, locked);
 }
 
-/// R11.4 — `docs/packages.md` présente exactement les paquets mis à disposition.
+/// R11.4 — `docs/packages.md` lists exactly the offered packages.
 #[test]
 fn documentation_lists_exactly_the_offered_packages() {
     let doc = fs::read_to_string(repo_root().join("docs/packages.md")).unwrap();
     let start = doc
-        .find("## Paquets disponibles")
-        .expect("section « Paquets disponibles »");
+        .find("## Available packages")
+        .expect("section \"Available packages\"");
     let section = &doc[start
         ..doc[start + 1..]
             .find("\n## ")

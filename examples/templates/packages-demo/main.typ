@@ -1,4 +1,4 @@
-// Paquets intégrés à inkpdf : importés par leur seul nom, sans version.
+// Packages bundled with inkpdf: imported by name only, without a version.
 #import "@preview/tiaoma"
 #import "@preview/zero": num
 #import "@preview/cetz"
@@ -8,7 +8,7 @@
 #let accent = rgb(sys.inputs.layout.accentColor)
 
 #set page(paper: "a4", margin: 2cm)
-#set text(lang: "fr", size: 11pt)
+#set text(lang: "en", size: 11pt)
 
 #text(size: 20pt, weight: "bold", fill: accent, data.title)
 
@@ -16,9 +16,9 @@
   columns: (1fr, auto),
   gutter: 1cm,
   [
-    Montant : *#num(data.amount, digits: 2, decimal-separator: ",", group: (size: 3, separator: sym.space, threshold: 4)) €*
+    Amount: *€#num(data.amount, digits: 2, decimal-separator: ".", group: (size: 3, separator: ",", threshold: 4))*
 
-    Référence : #raw(data.reference)
+    Reference: #raw(data.reference)
   ],
   box(width: 3cm, tiaoma.qrcode(data.reference)),
 )

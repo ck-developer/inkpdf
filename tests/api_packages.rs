@@ -1,4 +1,4 @@
-//! US3 (002) : `GET /packages` liste les paquets mis à disposition des templates.
+//! US3 (002): `GET /packages` lists the packages offered to templates.
 
 mod common;
 
@@ -38,7 +38,7 @@ async fn lists_packages_offered_to_templates() {
         );
     }
 
-    // Les dépendances internes ne sont pas importables, donc pas listées.
+    // Internal dependencies cannot be imported, so they are not listed.
     for internal in [
         "komet",
         "suiji",

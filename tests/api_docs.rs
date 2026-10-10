@@ -1,4 +1,4 @@
-//! Le service sert sa propre description OpenAPI et une UI de documentation.
+//! The service serves its own OpenAPI description and a documentation UI.
 
 mod common;
 

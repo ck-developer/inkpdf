@@ -1,6 +1,6 @@
 #import "@preview/tablem": tablem
 #tablem[
-  | *Article* | *Prix* |
-  | --------- | ------ |
-  | Crayon    | 1,50   |
+  | *Item*   | *Price* |
+  | -------- | ------- |
+  | Pencil   | 1.50    |
 ]

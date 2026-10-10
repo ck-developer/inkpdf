@@ -1,4 +1,4 @@
-//! Pipeline de rendu : créneau, délai, compilation Typst, export PDF.
+//! Rendering pipeline: slot, timeout, Typst compilation, PDF export.
 
 pub mod fonts;
 pub mod metadata;
@@ -22,15 +22,15 @@ use crate::registry::TemplateEntry;
 use metadata::DocumentMetadata;
 use world::SandboxWorld;
 
-/// Profondeur conservée par le cache de compilation entre deux rendus.
+/// Age kept by the compilation cache between two renders.
 const CACHE_MAX_AGE: usize = 10;
 
-/// Génère le PDF d'un template à partir d'un corps déjà validé.
+/// Generates a template's PDF from an already validated body.
 ///
-/// - attend un créneau au plus `queue_timeout` (sinon [`ApiError::Overloaded`]) ;
-/// - répond au plus tard après `render_timeout` (sinon [`ApiError::RenderTimeout`]) et demande
-///   alors l'annulation de la compilation, effective au prochain accès au monde ;
-/// - le créneau n'est rendu qu'à la fin réelle du thread de compilation.
+/// - waits at most `queue_timeout` for a slot (otherwise [`ApiError::Overloaded`]);
+/// - responds at the latest after `render_timeout` (otherwise [`ApiError::RenderTimeout`]) and
+///   then requests cancellation of the compilation, effective on the next world access;
+/// - the slot is released only when the compilation thread actually finishes.
 pub async fn render(
     entry: Arc<TemplateEntry>,
     body: serde_json::Value,
@@ -80,12 +80,12 @@ pub async fn render(
     }
 }
 
-/// Tient le créneau de rendu jusqu'à la fin réelle du thread de compilation, y compris quand
-/// celle-ci se termine par une panique.
+/// Holds the render slot until the compilation thread actually finishes, including when it
+/// ends with a panic.
 ///
-/// Après annulation, le monde renvoie des erreurs là où il servait des fichiers : en debug,
-/// l'assertion de pureté de `comemo` transforme cela en panique du thread abandonné ; en
-/// release, la compilation échoue normalement. Dans les deux cas, le créneau est rendu ici.
+/// After cancellation, the world returns errors where it used to serve files: in debug,
+/// `comemo`'s purity assertion turns this into a panic of the abandoned thread; in release,
+/// the compilation fails normally. In both cases, the slot is released here.
 struct RenderGuard {
     _permit: OwnedSemaphorePermit,
     template_id: String,
@@ -106,7 +106,7 @@ impl Drop for RenderGuard {
     }
 }
 
-/// Compilation et export, bloquants.
+/// Compilation and export, blocking.
 pub fn compile_pdf(
     entry: Arc<TemplateEntry>,
     body: &serde_json::Value,

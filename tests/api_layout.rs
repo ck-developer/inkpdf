@@ -1,4 +1,4 @@
-//! US2 : variation du rendu par les paramètres de mise en page (`layout`).
+//! US2: layout parameters (`layout`) change the rendered output.
 
 mod common;
 
@@ -121,7 +121,7 @@ async fn data_and_layout_violations_are_all_listed() {
     assert_eq!(paths, ["/data/items/0/value", "/layout/align"]);
 }
 
-/// 002/US7 : l'ancien nom `design` n'est plus accepté.
+/// 002/US7: the former name `design` is no longer accepted.
 #[tokio::test]
 async fn legacy_design_key_is_refused() {
     let volume = TestVolume::new();
@@ -138,5 +138,8 @@ async fn legacy_design_key_is_refused() {
         .iter()
         .filter_map(|v| v["path"].as_str())
         .collect();
-    assert!(paths.iter().any(|p| p.is_empty() || *p == "/design"), "{problem}");
+    assert!(
+        paths.iter().any(|p| p.is_empty() || *p == "/design"),
+        "{problem}"
+    );
 }

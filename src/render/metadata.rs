@@ -1,8 +1,8 @@
-//! Métadonnées du PDF (specs/002-typst-packages, R17).
+//! PDF metadata (specs/002-typst-packages, R17).
 //!
-//! La section facultative `metadata` du corps est validée par un schéma fixe, puis appliquée au
-//! document compilé (`PagedDocument::info_mut`) : jamais injectée comme code Typst.
-//! Priorité : requête, puis `set document(...)` du template, puis valeurs par défaut.
+//! The optional `metadata` section of the body is validated against a fixed schema, then applied
+//! to the compiled document (`PagedDocument::info_mut`): never injected as Typst code.
+//! Precedence: request, then the template's `set document(...)`, then defaults.
 
 use std::sync::LazyLock;
 
@@ -13,28 +13,28 @@ use typst::model::DocumentInfo;
 
 use crate::error::Violation;
 
-/// Clé de la section dans le corps de génération.
+/// Key of the section in the render body.
 pub const KEY: &str = "metadata";
 
-/// Métadonnées demandées par l'appelant ; tout est facultatif.
+/// Metadata requested by the caller; everything is optional.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DocumentMetadata {
     pub title: Option<String>,
     pub authors: Vec<String>,
     pub subject: Option<String>,
     pub keywords: Vec<String>,
-    /// Date du document (année, mois, jour).
+    /// Document date (year, month, day).
     pub date: Option<(i32, u8, u8)>,
 }
 
-/// Valeurs du service, utilisées quand ni la requête ni le template ne renseignent un champ.
+/// Service values, used when neither the request nor the template sets a field.
 pub struct Defaults<'a> {
-    /// Nom du template (`template.json`).
+    /// Template name (`template.json`).
     pub title: &'a str,
     pub author: &'a str,
 }
 
-/// Schéma de la section `metadata`, exposé tel quel dans l'OpenAPI.
+/// Schema of the `metadata` section, exposed as is in the OpenAPI document.
 pub fn schema() -> Value {
     json!({
         "type": "object",
@@ -67,7 +67,7 @@ static VALIDATOR: LazyLock<Validator> = LazyLock::new(|| {
         .expect("valid metadata schema")
 });
 
-/// Retire `metadata` du corps et la valide. Les chemins des violations commencent par
+/// Removes `metadata` from the body and validates it. Violation paths start with
 /// `/metadata`.
 pub fn extract(body: &mut Map<String, Value>) -> Result<DocumentMetadata, Vec<Violation>> {
     let Some(value) = body.remove(KEY) else {
@@ -130,7 +130,7 @@ pub fn extract(body: &mut Map<String, Value>) -> Result<DocumentMetadata, Vec<Vi
     })
 }
 
-/// Applique les métadonnées au document compilé.
+/// Applies the metadata to the compiled document.
 pub fn apply(info: &mut DocumentInfo, metadata: &DocumentMetadata, defaults: &Defaults) {
     if let Some(title) = &metadata.title {
         info.title = Some(title.as_str().into());
@@ -148,7 +148,11 @@ pub fn apply(info: &mut DocumentInfo, metadata: &DocumentMetadata, defaults: &De
         info.description = Some(subject.as_str().into());
     }
     if !metadata.keywords.is_empty() {
-        info.keywords = metadata.keywords.iter().map(|k| k.as_str().into()).collect();
+        info.keywords = metadata
+            .keywords
+            .iter()
+            .map(|k| k.as_str().into())
+            .collect();
     }
     if let Some((y, m, d)) = metadata.date {
         info.date = Smart::Custom(Datetime::from_ymd(y, m, d));
@@ -201,29 +205,32 @@ mod tests {
 
     #[test]
     fn precedence_is_request_then_template_then_defaults() {
-        let defaults = Defaults { title: "Nom", author: "inkpdf" };
+        let defaults = Defaults {
+            title: "Name",
+            author: "inkpdf",
+        };
 
         let mut info = DocumentInfo::default();
         apply(&mut info, &DocumentMetadata::default(), &defaults);
-        assert_eq!(info.title.as_deref(), Some("Nom"));
+        assert_eq!(info.title.as_deref(), Some("Name"));
         assert_eq!(info.author, ["inkpdf"]);
 
         let mut info = DocumentInfo {
-            title: Some("Du template".into()),
-            author: vec!["Auteur du template".into()],
+            title: Some("From the template".into()),
+            author: vec!["Template author".into()],
             ..DocumentInfo::default()
         };
         apply(&mut info, &DocumentMetadata::default(), &defaults);
-        assert_eq!(info.title.as_deref(), Some("Du template"));
-        assert_eq!(info.author, ["Auteur du template"]);
+        assert_eq!(info.title.as_deref(), Some("From the template"));
+        assert_eq!(info.author, ["Template author"]);
 
         let request = DocumentMetadata {
-            title: Some("Requête".into()),
+            title: Some("Request".into()),
             authors: vec!["ACME".into()],
             ..DocumentMetadata::default()
         };
         apply(&mut info, &request, &defaults);
-        assert_eq!(info.title.as_deref(), Some("Requête"));
+        assert_eq!(info.title.as_deref(), Some("Request"));
         assert_eq!(info.author, ["ACME"]);
     }
 }

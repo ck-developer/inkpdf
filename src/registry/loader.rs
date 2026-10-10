@@ -1,7 +1,7 @@
-//! Chargement d'un dossier de template en une entrée du registre.
+//! Loading a template directory into a registry entry.
 //!
-//! C'est le seul endroit où les fichiers d'un template sont lus : le rendu ne sert ensuite que
-//! l'instantané en mémoire.
+//! This is the only place where a template's files are read: rendering then only uses the
+//! in-memory snapshot.
 
 use std::collections::HashMap;
 use std::fs;
@@ -15,25 +15,25 @@ use super::fingerprint::{self, Fingerprint};
 use crate::render::fonts::{self, FontSet};
 use crate::template::{Manifest, TemplateId, TemplateSchema, imports};
 
-/// Statut d'un template après chargement.
+/// Status of a template after loading.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TemplateStatus {
     Valid,
     Invalid { reason: String },
 }
 
-/// Entrée du registre : un template chargé, valide ou non.
+/// Registry entry: a loaded template, valid or not.
 pub struct TemplateEntry {
     pub id: TemplateId,
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
     pub status: TemplateStatus,
-    /// Présent si le template est valide.
+    /// Present if the template is valid.
     pub schema: Option<TemplateSchema>,
-    /// Instantané de tous les fichiers ; clé = chemin relatif séparé par `/`.
+    /// Snapshot of all files; key = `/`-separated relative path.
     pub files: HashMap<String, Bytes>,
-    /// Polices embarquées + polices du template (présent si valide).
+    /// Embedded fonts + template fonts (present if valid).
     pub fonts: Option<Arc<FontSet>>,
     pub fingerprint: Fingerprint,
     pub loaded_at: OffsetDateTime,
@@ -62,15 +62,15 @@ impl TemplateEntry {
     }
 }
 
-/// Résultat d'un chargement.
+/// Result of a load.
 #[derive(Debug)]
 pub enum LoadOutcome {
     Loaded(Box<TemplateEntry>),
-    /// Le dossier a changé pendant la lecture : nouvel essai plus tard.
+    /// The directory changed during the read: try again later.
     Unstable,
 }
 
-/// Charge le dossier `dir` du template `id`.
+/// Loads the directory `dir` of template `id`.
 pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome {
     let before = match fingerprint::scan(dir) {
         Ok(scan) => scan,
@@ -126,7 +126,7 @@ pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome 
     LoadOutcome::Loaded(Box::new(validate(id, files, before.fingerprint)))
 }
 
-/// Applique les règles de validité du data-model à un instantané.
+/// Applies the data-model validity rules to a snapshot.
 fn validate(
     id: TemplateId,
     mut files: HashMap<String, Bytes>,
@@ -180,8 +180,8 @@ fn validate(
     }
 }
 
-/// Réécrit les imports `@preview/<nom>` de chaque fichier `.typ` avec la version installée ;
-/// en cas d'import incorrect, renvoie une ligne `fichier:ligne: message` par erreur.
+/// Rewrites the `@preview/<name>` imports of each `.typ` file with the installed version;
+/// on incorrect imports, returns one `file:line: message` line per error.
 fn resolve_package_imports(files: &mut HashMap<String, Bytes>) -> Result<(), String> {
     let mut paths: Vec<String> = files
         .keys()
@@ -191,7 +191,7 @@ fn resolve_package_imports(files: &mut HashMap<String, Bytes>) -> Result<(), Str
     paths.sort();
     let mut errors = Vec::new();
     for path in paths {
-        // Un `.typ` non UTF-8 sera signalé par Typst s'il est utilisé.
+        // A non-UTF-8 `.typ` will be reported by Typst if it is used.
         let Ok(text) = std::str::from_utf8(&files[&path]) else {
             continue;
         };
@@ -417,9 +417,9 @@ mod tests {
 
     #[test]
     fn modification_during_read_is_unstable() {
-        // Un fichier qui change entre les deux parcours rend le chargement instable : on simule
-        // le changement en modifiant le dossier depuis un second thread pendant la lecture d'un
-        // gros fichier.
+        // A file that changes between the two walks makes the load unstable: the change is
+        // simulated by modifying the directory from a second thread while a large file is being
+        // read.
         let f = Fixture::new();
         f.write("assets/big.bin", vec![0u8; 64 * 1024 * 1024]);
         let dir = f.dir.clone();

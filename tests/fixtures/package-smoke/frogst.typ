@@ -1,2 +1,2 @@
 #import "@preview/frogst": fr-nb
-Mille deux cent trente-quatre : #fr-nb(1234).
+One thousand two hundred thirty-four in French: #fr-nb(1234).

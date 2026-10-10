@@ -1,5 +1,5 @@
-//! Polices : celles embarquées dans le binaire + celles du dossier `fonts/` d'un template.
-//! Aucune police système n'est jamais chargée.
+//! Fonts: those embedded in the binary plus those in a template's `fonts/` folder.
+//! System fonts are never loaded.
 
 use std::sync::{Arc, OnceLock};
 
@@ -7,7 +7,7 @@ use typst::foundations::Bytes;
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
 
-/// Ensemble de polices visibles par une compilation.
+/// Set of fonts visible to a compilation.
 pub struct FontSet {
     book: LazyHash<FontBook>,
     fonts: Vec<Font>,
@@ -22,7 +22,7 @@ impl FontSet {
         }
     }
 
-    /// Polices embarquées, chargées une seule fois par processus.
+    /// Embedded fonts, loaded once per process.
     pub fn embedded() -> Arc<FontSet> {
         static EMBEDDED: OnceLock<Arc<FontSet>> = OnceLock::new();
         EMBEDDED
@@ -33,7 +33,7 @@ impl FontSet {
             .clone()
     }
 
-    /// Polices embarquées complétées par celles d'un template.
+    /// Embedded fonts plus those of a template.
     pub fn with_template_fonts(extra: Vec<Font>) -> Arc<FontSet> {
         let embedded = Self::embedded();
         if extra.is_empty() {
@@ -61,7 +61,7 @@ impl FontSet {
     }
 }
 
-/// Vrai pour un fichier de `fonts/` à charger comme police.
+/// True for a file under `fonts/` that should be loaded as a font.
 pub fn is_font_file(relative_path: &str) -> bool {
     relative_path.starts_with("fonts/") && {
         let lower = relative_path.to_ascii_lowercase();
@@ -69,7 +69,7 @@ pub fn is_font_file(relative_path: &str) -> bool {
     }
 }
 
-/// Lit toutes les polices d'un fichier ; erreur s'il n'en contient aucune lisible.
+/// Reads every font in a file; errors if it contains no readable font.
 pub fn parse_font_file(relative_path: &str, data: Bytes) -> Result<Vec<Font>, String> {
     let fonts: Vec<Font> = Font::iter(data).collect();
     if fonts.is_empty() {

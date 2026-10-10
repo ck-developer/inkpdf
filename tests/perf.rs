@@ -1,5 +1,5 @@
-//! SC-001 : garde-fou de régression de latence. Exécuté en release par la CI :
-//! `cargo test --release --test perf -- --ignored`. Document d'une page : un titre et un tableau de 20 lignes.
+//! SC-001: latency regression guard. Run in release mode by CI:
+//! `cargo test --release --test perf -- --ignored`. One-page document: a title and a 20-row table.
 
 mod common;
 
@@ -19,16 +19,16 @@ async fn sample_p95_is_below_200ms() {
     let app = test_app(test_config(&volume));
     let body = sample_request();
 
-    // Rendu de chauffe (polices, caches).
+    // Warm-up render (fonts, caches).
     let (status, _, _) = post_json(&app, "/templates/sample/render", &body).await;
     assert_eq!(status, StatusCode::OK);
 
     let mut durations = Vec::with_capacity(RENDERS);
     for i in 0..RENDERS {
-        // Données différentes à chaque rendu : le cache de compilation ne peut pas servir le
-        // document entier.
+        // Different data on each render: the compilation cache cannot serve the whole
+        // document.
         let mut body = body.clone();
-        body["data"]["title"] = format!("Exemple {i}").into();
+        body["data"]["title"] = format!("Sample {i}").into();
         let started = Instant::now();
         let (status, _, _) = post_json(&app, "/templates/sample/render", &body).await;
         durations.push(started.elapsed());
@@ -40,7 +40,7 @@ async fn sample_p95_is_below_200ms() {
     assert!(p95 < P95_BUDGET, "p95 = {p95:?} exceeds {P95_BUDGET:?}");
 }
 
-/// SC-006 (002) : template utilisant des paquets (QR code, montant, graphique) sous 1 s au p95.
+/// SC-006 (002): a template using packages (QR code, amount, chart) renders under 1 s at p95.
 #[tokio::test(flavor = "multi_thread")]
 #[ignore = "performance test, run with `cargo test --release --test perf -- --ignored`"]
 async fn packages_demo_p95_is_below_1s() {

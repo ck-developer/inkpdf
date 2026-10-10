@@ -1,7 +1,7 @@
-//! Empreinte d'un dossier de template : (chemin relatif, taille, mtime) de chaque fichier.
+//! Fingerprint of a template directory: (relative path, size, mtime) of each file.
 //!
-//! Le parcours ne lit aucun contenu : il sert à détecter les changements et à connaître la
-//! taille totale avant toute lecture.
+//! The walk reads no content: it detects changes and gives the total size before anything is
+//! read.
 
 use std::collections::HashSet;
 use std::fmt;
@@ -10,19 +10,19 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-/// Profondeur maximale de parcours (protection contre les arborescences pathologiques).
+/// Maximum walk depth (protects against pathological trees).
 const MAX_DEPTH: usize = 32;
 
-/// Empreinte d'un dossier.
+/// Fingerprint of a directory.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Fingerprint {
     hash: u64,
-    /// Somme des tailles des fichiers retenus.
+    /// Sum of the sizes of the kept files.
     pub total_bytes: u64,
 }
 
 impl Fingerprint {
-    /// Calcule l'empreinte d'un dossier.
+    /// Computes the fingerprint of a directory.
     pub fn of(dir: &Path) -> io::Result<Fingerprint> {
         scan(dir).map(|scan| scan.fingerprint)
     }
@@ -34,27 +34,27 @@ impl fmt::Display for Fingerprint {
     }
 }
 
-/// Fichier retenu par le parcours.
+/// File kept by the walk.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScannedFile {
-    /// Chemin relatif au dossier du template, séparé par `/`.
+    /// Path relative to the template directory, `/`-separated.
     pub relative: String,
-    /// Chemin réel (cible du lien éventuel), sous le dossier du template.
+    /// Real path (target of the link, if any), under the template directory.
     pub path: PathBuf,
     pub size: u64,
 }
 
-/// Résultat d'un parcours de dossier.
+/// Result of a directory walk.
 #[derive(Debug, Clone)]
 pub struct Scan {
     pub fingerprint: Fingerprint,
     pub files: Vec<ScannedFile>,
-    /// Liens symboliques exclus car leur cible sort du dossier du template.
+    /// Symbolic links excluded because their target is outside the template directory.
     pub escaping_links: Vec<String>,
 }
 
-/// Parcourt récursivement `dir` (fichiers cachés ignorés, liens suivis tant que leur cible
-/// reste sous `dir`) et calcule l'empreinte.
+/// Walks `dir` recursively (hidden files ignored, links followed as long as their target stays
+/// under `dir`) and computes the fingerprint.
 pub fn scan(dir: &Path) -> io::Result<Scan> {
     let root = fs::canonicalize(dir)?;
     let mut walker = Walker {
@@ -121,10 +121,10 @@ impl Walker<'_> {
             let relative = format!("{prefix}{name}");
             let path = entry.path();
 
-            // `canonicalize` résout les liens : la cible doit rester sous le dossier.
+            // `canonicalize` resolves links: the target must stay under the directory.
             let target = match fs::canonicalize(&path) {
                 Ok(target) => target,
-                // Lien cassé ou fichier disparu pendant le parcours : ignoré.
+                // Broken link or file removed during the walk: ignored.
                 Err(_) => continue,
             };
             if !target.starts_with(self.root) {
@@ -149,8 +149,7 @@ impl Walker<'_> {
     }
 }
 
-/// FNV-1a 64 bits : stable d'une version de Rust à l'autre, donc utilisable dans l'`ident`
-/// déterministe du PDF.
+/// 64-bit FNV-1a: stable across Rust versions, so usable in the PDF's deterministic `ident`.
 struct Fnv64(u64);
 
 impl Fnv64 {

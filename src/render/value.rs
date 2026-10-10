@@ -1,6 +1,6 @@
-//! Conversion `serde_json::Value` → valeur Typst (cf. contracts/template-format.md).
+//! Conversion from `serde_json::Value` to a Typst value (see contracts/template-format.md).
 //!
-//! Les chaînes restent des chaînes : elles ne sont jamais interprétées comme du code Typst.
+//! Strings stay strings: they are never interpreted as Typst code.
 
 use serde_json::Value as Json;
 use typst::foundations::{Str, Value};
@@ -11,7 +11,7 @@ pub fn json_to_value(json: &Json) -> Value {
         Json::Bool(b) => Value::Bool(*b),
         Json::Number(n) => match n.as_i64() {
             Some(i) => Value::Int(i),
-            // Décimaux et entiers hors plage `i64`.
+            // Decimals and integers outside the `i64` range.
             None => Value::Float(n.as_f64().unwrap_or(f64::NAN)),
         },
         Json::String(s) => Value::Str(s.as_str().into()),

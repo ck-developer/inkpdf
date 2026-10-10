@@ -1,2 +1,2 @@
-= Paquet inconnu
+= Unknown package
 #import "@preview/does-not-exist"

@@ -1,4 +1,4 @@
-//! Manifeste optionnel `template.json`.
+//! Optional `template.json` manifest.
 
 use serde::Deserialize;
 
@@ -11,7 +11,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
-    /// Parse et vérifie les bornes de longueur ; l'erreur est destinée à l'auteur du template.
+    /// Parses and checks the length bounds; the error is meant for the template author.
     pub fn parse(bytes: &[u8]) -> Result<Self, String> {
         let manifest: Self = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
         check_len("name", manifest.name.as_deref(), 1, 120)?;

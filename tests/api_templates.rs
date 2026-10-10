@@ -1,4 +1,4 @@
-//! US3 : liste, détail et schéma des templates.
+//! US3: template list, details and schema.
 
 mod common;
 
@@ -30,7 +30,7 @@ async fn list_is_sorted_with_status_and_reason() {
 
     let sample = &templates[1];
     assert_eq!(sample["id"], "sample");
-    assert_eq!(sample["name"], "Exemple");
+    assert_eq!(sample["name"], "Sample");
     assert_eq!(sample["version"], "1.0.0");
     assert!(sample["description"].is_string());
     assert_eq!(sample["status"], "valid");
@@ -110,7 +110,7 @@ async fn unknown_template_is_not_found_on_both_routes() {
     }
 }
 
-/// US2 (002) : un import de paquet incorrect rend le template invalide dès le chargement.
+/// US2 (002): an incorrect package import makes the template invalid at load time.
 #[tokio::test]
 async fn incorrect_package_imports_make_templates_invalid() {
     let volume = TestVolume::new();
@@ -154,7 +154,7 @@ async fn incorrect_package_imports_make_templates_invalid() {
         assert_eq!(problem(&body)["code"], "template-invalid", "{id}");
     }
 
-    // Import calculé : invisible au chargement, refusé au rendu (règle 4 du contrat).
+    // Computed import: not visible at load time, refused at render time (contract rule 4).
     let (_, body) = get_json(&app, "/templates/dynamic-import").await;
     assert_eq!(body["status"], "valid");
     let (status, _, body) = post_json(

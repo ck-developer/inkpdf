@@ -1,6 +1,6 @@
-//! Le document OpenAPI généré depuis le code doit être identique au fichier versionné
+//! The OpenAPI document generated from the code must match the committed file
 //! `openapi/openapi.json`. `INKPDF_UPDATE_OPENAPI=1 cargo test --test contract_openapi`
-//! régénère le fichier.
+//! regenerates the file.
 
 mod common;
 

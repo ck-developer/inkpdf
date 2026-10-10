@@ -8,8 +8,8 @@
       "required": ["title", "amount", "reference", "series"],
       "properties": {
         "title": { "type": "string", "minLength": 1 },
-        "amount": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$", "description": "Montant décimal, sous forme de chaîne pour rester exact." },
-        "reference": { "type": "string", "minLength": 1, "description": "Texte encodé dans le QR code." },
+        "amount": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$", "description": "Decimal amount, as a string to stay exact." },
+        "reference": { "type": "string", "minLength": 1, "description": "Text encoded in the QR code." },
         "series": {
           "type": "array",
           "minItems": 1,

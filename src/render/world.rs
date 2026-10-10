@@ -1,8 +1,7 @@
-//! `World` Typst en bac à sable : ne sert que l'instantané en mémoire du template.
+//! Sandboxed Typst `World`: serves only the template's in-memory snapshot.
 //!
-//! Aucun accès disque, réseau, ni variable d'environnement pendant le rendu. Les paquets ne
-//! viennent que de l'ensemble intégré au binaire (`crate::packages`), chacun confiné à sa
-//! propre racine.
+//! No disk, network or environment variable access during rendering. Packages come only from
+//! the set bundled into the binary (`crate::packages`), each confined to its own root.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -20,11 +19,11 @@ use super::fonts::FontSet;
 use super::value::json_to_value;
 use crate::registry::TemplateEntry;
 
-/// Point d'entrée d'un template.
+/// Entry point of a template.
 pub const MAIN_FILE: &str = "main.typ";
 
-/// Sources des fichiers de paquets, partagées entre rendus : leurs `FileId` sont stables, et
-/// réutiliser la même `Source` permet à comemo de réutiliser l'évaluation des paquets (R6).
+/// Package file sources, shared between renders: their `FileId`s are stable, and reusing the
+/// same `Source` lets comemo reuse the packages' evaluation (R6).
 static PACKAGE_SOURCES: LazyLock<Mutex<HashMap<FileId, Source>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
@@ -34,13 +33,13 @@ pub struct SandboxWorld {
     library: LazyHash<Library>,
     main: FileId,
     cancel: Arc<AtomicBool>,
-    /// Sources parsées pendant cette compilation.
+    /// Sources parsed during this compilation.
     sources: Mutex<HashMap<FileId, Source>>,
 }
 
 impl SandboxWorld {
-    /// `body` est le corps validé `{ data, layout }` ; `cancel` interrompt la compilation au
-    /// prochain accès au monde.
+    /// `body` is the validated `{ data, layout }` body; `cancel` interrupts the compilation on
+    /// the next world access.
     pub fn new(
         entry: Arc<TemplateEntry>,
         body: &serde_json::Value,
@@ -48,7 +47,7 @@ impl SandboxWorld {
     ) -> Self {
         let mut inputs = Dict::new();
         for key in ["data", "layout"] {
-            // Un `layout` absent (schéma sans `layout`) est vu comme un dictionnaire vide.
+            // A missing `layout` (schema without `layout`) is seen as an empty dictionary.
             let value = body
                 .get(key)
                 .map_or_else(|| Value::Dict(Dict::new()), json_to_value);
@@ -78,8 +77,8 @@ impl SandboxWorld {
         Ok(())
     }
 
-    /// Chemin affiché dans les diagnostics : relatif au dossier du template, ou préfixé par
-    /// le paquet (`@preview/zero:0.7.1/src/num.typ`).
+    /// Path shown in diagnostics: relative to the template folder, or prefixed with the
+    /// package (`@preview/zero:0.7.1/src/num.typ`).
     pub fn relative_path(id: FileId) -> Option<String> {
         let path = id.vpath().get_without_slash();
         match id.root() {
@@ -90,18 +89,18 @@ impl SandboxWorld {
 
     fn lookup(&self, id: FileId) -> FileResult<&Bytes> {
         self.check_cancelled()?;
-        // Le chemin virtuel est déjà normalisé par Typst (aucun `..` ne sort de la racine).
+        // The virtual path is already normalized by Typst (no `..` escapes the root).
         let vpath = id.vpath();
         let not_found = || FileError::NotFound(PathBuf::from(vpath.get_with_slash()));
         match id.root() {
-            // Seul l'instantané du template est consulté.
+            // Only the template snapshot is consulted.
             VirtualRoot::Project => self
                 .entry
                 .files
                 .get(vpath.get_without_slash())
                 .ok_or_else(not_found),
-            // Correspondance exacte dans les paquets intégrés ; un paquet ne voit que ses
-            // propres fichiers.
+            // Exact match among the bundled packages; a package only sees its own
+            // files.
             VirtualRoot::Package(spec) => crate::packages::get(spec)
                 .ok_or_else(|| FileError::Package(PackageError::NotFound(spec.clone())))?
                 .file(vpath.get_without_slash())

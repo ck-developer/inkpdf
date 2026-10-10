@@ -1,5 +1,5 @@
-# Paquets Typst intégrés à inkpdf. Modifier via scripts/add-package.sh.
-# Contrat : specs/002-typst-packages/contracts/lock-file.md
+# Typst packages embedded in inkpdf. Edit via scripts/add-package.sh.
+# Contract: specs/002-typst-packages/contracts/lock-file.md
 
 [[package]]
 namespace = "preview"
