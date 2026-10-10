@@ -241,15 +241,15 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ## Phase 8: Polish
 
-- [ ] T042 [P] Update the `.claude/skills/typst-dev` references to the new layout (`crates/inkpdf/src/render/…`, `cargo xtask packages`), and the memory notes in the user's project memory (workspace layout, docs site, live OpenAPI).
-- [ ] T043 Run quickstart §1–§4 end to end:
+- [X] T042 [P] Update the `.claude/skills/typst-dev` references to the new layout (`crates/inkpdf/src/render/…`, `cargo xtask packages`), and the memory notes in the user's project memory (workspace layout, docs site, live OpenAPI).
+- [X] T043 Run quickstart §1–§4 end to end:
   - `cargo fmt --all --check`, clippy, `cargo test --workspace`, perf ;
   - `docker compose up --build`: live document scenario, `/docs` in a browser (check that Scalar loads and shows the per-template operations) ;
   - the Bruno collection still passes (`npx @usebruno/cli@2 run --env local` in `examples/bruno`) ;
   - `cargo xtask docs check` and the book build.
 
   Fix anything stale.
-- [ ] T044 Mark `specs/003-open-source-project/spec.md` as implemented once merged. Write the PR description in English, and explain that publication (`dev`, docs, release PR) is verified after the merge.
+- [X] T044 Mark `specs/003-open-source-project/spec.md` as implemented once merged. Write the PR description in English, and explain that publication (`dev`, docs, release PR) is verified after the merge.
 
 ---
 

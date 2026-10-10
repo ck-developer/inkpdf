@@ -1,6 +1,6 @@
 ---
 name: "typst-dev"
-description: "Typst 0.15.1 expert for inkpdf: writing or reviewing Typst templates (main.typ, schema-driven data/layout), Typst packages (typst.toml, @ns/name:version, embedded packages), typst-pdf output (PDF/A, PDF/UA, attachments, determinism) and the Rust embedding (World, FileId/VirtualRoot, SandboxWorld). Use whenever a task touches .typ files, template folders, Typst packages, PDF options or src/render/."
+description: "Typst 0.15.1 expert for inkpdf: writing or reviewing Typst templates (main.typ, schema-driven data/layout), Typst packages (typst.toml, @ns/name:version, embedded packages), typst-pdf output (PDF/A, PDF/UA, attachments, determinism) and the Rust embedding (World, FileId/VirtualRoot, SandboxWorld). Use whenever a task touches .typ files, template folders, Typst packages, PDF options or crates/inkpdf/src/render/."
 metadata:
   author: "inkpdf"
   typst-version: "0.15.1"
