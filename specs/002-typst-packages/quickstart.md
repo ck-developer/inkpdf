@@ -96,3 +96,36 @@ transmette, et qu'un template ne peut pas lire `packages/…` d'un autre paquet.
 
 - `docs/packages.md` : liste, usage, licence et présence de WASM pour chaque paquet.
 - `docs/templates.md`, section « Utiliser un paquet » : règles de [template-imports.md](./contracts/template-imports.md).
+
+## 6. Extension : téléchargement, métadonnées, `layout`, exemples
+
+### P6 — Téléchargement (US5)
+
+```bash
+curl -s -D - -o /dev/null -H 'content-type: application/json' \
+  -d @examples/requests/sample.json \
+  'localhost:3000/templates/sample/render?download=true&filename=Rapport%20T3'
+```
+
+Attendu : `Content-Disposition: attachment; filename="Rapport T3.pdf"; filename*=UTF-8''Rapport%20T3.pdf`.
+`?download=oui` répond **400** `invalid-parameter`.
+
+### P7 — Métadonnées (US6)
+
+Ajouter `"metadata": {"title": "…", "author": "…"}` au corps : le PDF les porte dans ses
+propriétés. Sans `metadata`, l'auteur vaut `inkpdf`, ou `INKPDF_DEFAULT_AUTHOR` s'il est défini.
+
+### P8 — `layout` (US7)
+
+Le corps utilise `layout`. Un corps contenant encore `design` répond **422**.
+
+### P9 — Facture de situation et Bruno (US8)
+
+- Ouvrir `examples/bruno` dans Bruno, choisir l'environnement `local` et exécuter la collection.
+  Attendu : toutes les requêtes passent leurs assertions (statut).
+- En ligne de commande : `npx @usebruno/cli run --env local` depuis `examples/bruno`.
+- Les 4 requêtes `examples/requests/progress-invoice/*.json` produisent :
+  - 01 : net à payer **8 550,00 €** ;
+  - 02 : au moins 3 pages, toutes les conditions ;
+  - 03 : autoliquidation et caution bancaire, mise en page « line » et compacte ;
+  - 04 : TVA 20 %, 10 % et 5,5 %, situation de solde.

@@ -197,7 +197,7 @@ La feature 002 inclut aussi les quatre ajouts suivants.
   `src/template/schema.rs` et `src/render/world.rs` (`layout`), `src/config.rs`
   (`default_author`), `src/error.rs` (`invalid-parameter`) ;
 - **constitution** : `.specify/memory/constitution.md` ;
-- **exemples et tests** : `examples/templates/facture-situation/`,
-  `examples/requests/facture-situation/`, `examples/bruno/`, `tests/api_metadata.rs`,
+- **exemples et tests** : `examples/templates/progress-invoice/`,
+  `examples/requests/progress-invoice/`, `examples/bruno/`, `tests/api_metadata.rs`,
   `tests/examples.rs` ;
 - **documentation** : `docs/templates.md`, README.

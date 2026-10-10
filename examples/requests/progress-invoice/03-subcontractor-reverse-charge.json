@@ -1,0 +1,124 @@
+{
+  "data": {
+    "company": {
+      "name": "Électricité Exemple",
+      "legalForm": "SARL",
+      "capital": "15000",
+      "address": {
+        "line1": "8 rue des Artisans",
+        "postalCode": "69003",
+        "city": "Lyon"
+      },
+      "siret": "987 654 321 00034",
+      "rcs": "Lyon B 987 654 321",
+      "vatNumber": "FR45 987654321",
+      "phone": "04 00 00 00 00",
+      "email": "contact@elec-exemple.test",
+      "iban": "FR76 3000 6000 0112 3456 7890 189",
+      "bic": "AGRIFRPP",
+      "insurance": {
+        "insurer": "Assurances Exemple",
+        "policy": "DEC-2026-0042",
+        "coverage": "France métropolitaine"
+      }
+    },
+    "client": {
+      "name": "Bâti Exemple SAS",
+      "contact": "Conducteur de travaux",
+      "address": {
+        "line1": "8 rue des Artisans",
+        "postalCode": "69003",
+        "city": "Lyon"
+      },
+      "vatNumber": "FR12 123456789"
+    },
+    "worksite": {
+      "name": "Résidence Les Platanes — lot électricité",
+      "address": {
+        "line1": "Rue des Platanes",
+        "postalCode": "69200",
+        "city": "Vénissieux"
+      }
+    },
+    "contract": {
+      "reference": "ST-2026-019",
+      "date": "2026-04-01",
+      "kind": "forfait",
+      "vatRate": 20,
+      "subcontracting": true
+    },
+    "invoice": {
+      "number": "EE-2026-0311",
+      "date": "2026-10-08",
+      "situation": 2,
+      "periodStart": "2026-09-01",
+      "periodEnd": "2026-09-30",
+      "dueDate": "2026-11-07"
+    },
+    "lots": [
+      {
+        "code": "07",
+        "name": "Électricité courants forts et faibles",
+        "lines": [
+          {
+            "code": "07.01",
+            "label": "Tableaux électriques",
+            "unit": "u",
+            "quantity": "4",
+            "unitPrice": "1650.00",
+            "progress": 100,
+            "previousProgress": 50
+          },
+          {
+            "code": "07.02",
+            "label": "Points lumineux",
+            "unit": "u",
+            "quantity": "96",
+            "unitPrice": "62.00",
+            "progress": 60,
+            "previousProgress": 20
+          },
+          {
+            "code": "07.03",
+            "label": "Prises de courant",
+            "unit": "u",
+            "quantity": "180",
+            "unitPrice": "48.00",
+            "progress": 45,
+            "previousProgress": 10
+          },
+          {
+            "code": "07.04",
+            "label": "Courants faibles (RJ45, TV)",
+            "unit": "ens",
+            "quantity": "4",
+            "unitPrice": "1280.00",
+            "progress": 30,
+            "previousProgress": 0
+          }
+        ]
+      }
+    ],
+    "conditions": {
+      "guarantee": {
+        "mode": "bank-guarantee",
+        "guarantor": "Banque Exemple, agence Lyon Part-Dieu"
+      }
+    }
+  },
+  "layout": {
+    "primaryColor": "#2a9d8f",
+    "accentColor": "#264653",
+    "density": "compact",
+    "headerStyle": "line",
+    "logo": {
+      "position": "right",
+      "width": 22
+    },
+    "columns": {
+      "previous": false
+    },
+    "zebraRows": false,
+    "showPaymentQr": false
+  }
+}

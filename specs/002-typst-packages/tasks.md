@@ -341,22 +341,22 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 
 ## Phase 11: US8 - Exemples riches et Bruno (Priority: P2)
 
-- [ ] T044 [US8] Créer `examples/templates/facture-situation/` (R19) :
+- [X] T044 [US8] Créer `examples/templates/progress-invoice/` (R19) :
   - `template.json` ;
   - `schema.json` complet : `data` (entreprise, client, chantier, marché, situation, lots et postes, avenants, conditions) et `layout` avec ses valeurs par défaut ;
   - `assets/logo.svg` de démonstration ;
   - `main.typ` et des sous-fichiers `parts/` (en-tête, tableau, récapitulatif, conditions).
-- [ ] T045 [US8] Créer `examples/requests/facture-situation/` avec ces requêtes :
+- [X] T045 [US8] Créer `examples/requests/progress-invoice/` avec ces requêtes :
   - `01-premiere-situation.json` : retenue de garantie 5 %, TVA 20 %, une page ;
   - `02-situation-longue.json` : au moins 3 pages, plusieurs lots, avenants, révision de prix, remboursement d'avance, compte prorata, QR SEPA ;
   - `03-sous-traitance-autoliquidation.json` : autoliquidation, caution bancaire au lieu de la retenue, `layout` différent (logo à droite, autres couleurs, densité compacte) ;
   - `04-multi-taux-tva.json` : rénovation à 10 % et 5,5 %, métadonnées et sans montant en lettres.
-- [ ] T046 [P] [US8] Écrire `tests/examples.rs` :
+- [X] T046 [P] [US8] Écrire `tests/examples.rs` :
   - chaque requête d'exemple, y compris `sample` et `packages-demo`, produit un PDF ;
   - `01` est vérifiée au centime par un calcul indépendant fait dans le test ;
   - `02` fait au moins 3 pages ;
   - `03` mentionne l'autoliquidation et aucune TVA.
-- [ ] T047 [US8] Créer la collection Bruno `examples/bruno/` :
+- [X] T047 [US8] Créer la collection Bruno `examples/bruno/` :
   - `bruno.json` et `environments/local.bru` ;
   - une requête par route : santé, disponibilité, liste, détail, schéma, paquets, OpenAPI ;
   - les rendus : `sample`, `packages-demo`, chaque variante de facture, un téléchargement, des métadonnées, un import incorrect.
@@ -365,5 +365,5 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 
 ## Phase 12: Polish (extension)
 
-- [ ] T048 Mettre à jour `quickstart.md` (paramètres `download` et `filename`, `metadata`, `layout`, Bruno), `docs/templates.md` (métadonnées et `layout`), `synthese.md` et la mémoire du projet.
+- [X] T048 Mettre à jour `quickstart.md` (paramètres `download` et `filename`, `metadata`, `layout`, Bruno), `docs/templates.md` (métadonnées et `layout`), `synthese.md` et la mémoire du projet.
 - [ ] T049 Lancer `cargo fmt`, `clippy -D warnings` et `cargo test`. Rejouer la collection Bruno contre `docker compose up --build`, avec `bru run` si la CLI est disponible, sinon avec `curl` sur les mêmes requêtes.

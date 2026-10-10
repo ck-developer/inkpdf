@@ -397,7 +397,7 @@ téléchargement réutilise le PDF déjà reçu.
 ## R19 — Exemples et Bruno
 
 **Décision.**
-- **Facture de situation de travaux** : `examples/templates/facture-situation/`.
+- **Facture de situation de travaux** : `examples/templates/progress-invoice/`.
   - Montants en chaînes décimales, calculés en Typst avec `decimal` et arrondis au centime.
   - En-tête répété : logo SVG de démonstration et coordonnées de l'entreprise. Pied de page :
     mentions légales et « page X / Y ».
@@ -406,7 +406,7 @@ téléchargement réutilise le PDF déjà reçu.
   - Montant en lettres (`frogst`), dates en français (`datify`), montants avec `zero`.
   - Les variantes sont pilotées par `data` (conditions du marché) et par `layout` (couleurs,
     logo, densité, blocs).
-- **Requêtes d'exemple** dans `examples/requests/facture-situation/*.json`, une par famille de
+- **Requêtes d'exemple** dans `examples/requests/progress-invoice/*.json`, une par famille de
   conditions, dont une longue (au moins 3 pages).
 - **Exemple de `layout` soigné** : couleurs, police, position et affichage du logo, densité,
   affichage des colonnes d'avancement, du QR et du montant en lettres, tous avec des valeurs par

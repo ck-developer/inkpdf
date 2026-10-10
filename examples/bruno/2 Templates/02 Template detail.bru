@@ -1,0 +1,15 @@
+meta {
+  name: Template detail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/templates/progress-invoice
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

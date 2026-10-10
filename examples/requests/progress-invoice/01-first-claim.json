@@ -1,0 +1,111 @@
+{
+  "data": {
+    "company": {
+      "name": "Bâti Exemple",
+      "legalForm": "SAS",
+      "capital": "50000",
+      "address": {
+        "line1": "8 rue des Artisans",
+        "postalCode": "69003",
+        "city": "Lyon"
+      },
+      "siret": "123 456 789 00012",
+      "rcs": "Lyon B 123 456 789",
+      "vatNumber": "FR12 123456789",
+      "phone": "04 00 00 00 00",
+      "email": "compta@bati-exemple.test",
+      "iban": "FR76 3000 6000 0112 3456 7890 189",
+      "bic": "AGRIFRPP",
+      "insurance": {
+        "insurer": "Assurances Exemple",
+        "policy": "DEC-2026-0042",
+        "coverage": "France métropolitaine"
+      }
+    },
+    "client": {
+      "name": "SCI Les Tilleuls",
+      "contact": "M. Martin",
+      "address": {
+        "line1": "3 place du Marché",
+        "postalCode": "69100",
+        "city": "Villeurbanne"
+      }
+    },
+    "worksite": {
+      "name": "Maison individuelle — lot unique",
+      "address": {
+        "line1": "12 allée des Tilleuls",
+        "postalCode": "69100",
+        "city": "Villeurbanne"
+      },
+      "reference": "CH-2026-031"
+    },
+    "contract": {
+      "reference": "M-2026-014",
+      "date": "2026-03-02",
+      "kind": "forfait",
+      "vatRate": 20
+    },
+    "invoice": {
+      "number": "FA-2026-0142",
+      "date": "2026-10-10",
+      "situation": 1,
+      "periodStart": "2026-09-01",
+      "periodEnd": "2026-09-30",
+      "dueDate": "2026-11-09",
+      "paymentTerms": "virement à 30 jours"
+    },
+    "lots": [
+      {
+        "code": "01",
+        "name": "Gros œuvre",
+        "lines": [
+          {
+            "code": "01.01",
+            "label": "Terrassement en pleine masse",
+            "unit": "m³",
+            "quantity": "120",
+            "unitPrice": "18.50",
+            "progress": 100
+          },
+          {
+            "code": "01.02",
+            "label": "Fondations en béton armé",
+            "unit": "m³",
+            "quantity": "24",
+            "unitPrice": "245.00",
+            "progress": 50
+          },
+          {
+            "code": "01.03",
+            "label": "Dallage sur terre-plein",
+            "unit": "m²",
+            "quantity": "96",
+            "unitPrice": "62.50",
+            "progress": 25
+          }
+        ]
+      },
+      {
+        "code": "02",
+        "name": "Charpente",
+        "lines": [
+          {
+            "code": "02.01",
+            "label": "Charpente traditionnelle en sapin",
+            "unit": "forfait",
+            "quantity": "1",
+            "unitPrice": "8400.00",
+            "progress": 10
+          }
+        ]
+      }
+    ],
+    "conditions": {
+      "guarantee": {
+        "mode": "retention",
+        "rate": 5
+      }
+    }
+  }
+}

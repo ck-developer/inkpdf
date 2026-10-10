@@ -76,7 +76,18 @@ Framework de design ou de composants, génération par lots, stockage des PDF, t
 2. **P3 non intégrés.**
 3. **Pas de dossier partagé ni de helpers maison** pour le moment.
 
-La spécification 002 a été réécrite en conséquence (`spec.md`). Suite : `/speckit-plan`.
+La spécification 002 a été réécrite en conséquence (`spec.md`).
+
+**Ajouts du même jour, intégrés à la 002 :**
+- téléchargement du PDF (`?download=true&filename=…`) ;
+- métadonnées du document (`metadata`, auteur par défaut configurable) ;
+- renommage de `design` en `layout` ;
+- collection Bruno ;
+- exemple riche : facture de situation BTP multipage avec 4 requêtes.
+
+**Écartés pour l'instant :** cache des PDF, client typé et aperçu en image.
+
+**Convention :** tout le dépôt est en anglais (code, commentaires, documentation, noms de fichiers, commits).
 
 ## Petit lexique
 
