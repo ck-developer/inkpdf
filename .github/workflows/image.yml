@@ -1,0 +1,108 @@
+# Reusable: builds the image natively on amd64 and arm64 runners (no emulation), pushes each
+# architecture by digest, then publishes one multi-architecture manifest under the given tags.
+name: Image
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        description: Image tags to publish, one per line (e.g. `dev`, or `0.1.0`, `0.1`, `latest`).
+        required: true
+        type: string
+      ref:
+        description: Git ref to build (defaults to the triggering commit).
+        required: false
+        type: string
+        default: ""
+      version:
+        description: Version label of the image (empty for dev builds).
+        required: false
+        type: string
+        default: ""
+
+env:
+  IMAGE: ghcr.io/ck-developer/inkpdf
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/ck-developer/inkpdf
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ inputs.version }}
+            org.opencontainers.image.licenses=MIT OR Apache-2.0
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=image-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=image-${{ matrix.arch }}
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/digests
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the multi-architecture manifest
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          TAGS: ${{ inputs.tags }}
+        run: |
+          args=()
+          while read -r tag; do
+            [ -n "$tag" ] && args+=(-t "$IMAGE:$tag")
+          done <<< "$TAGS"
+          digests=()
+          for digest in *; do digests+=("$IMAGE@sha256:$digest"); done
+          docker buildx imagetools create "${args[@]}" "${digests[@]}"
+          for tag in $TAGS; do docker buildx imagetools inspect "$IMAGE:$tag"; done

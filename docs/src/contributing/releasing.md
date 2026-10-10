@@ -52,6 +52,12 @@ release-please keeps one open pull request, titled after the next version. It:
 
 It is updated on every push to `main`. To release, review it and merge it.
 
+### First release
+
+The first release is forced to **0.1.0** with `"release-as": "0.1.0"` in
+`release-please-config.json`. Once 0.1.0 is released, remove that line: otherwise every later
+release proposal would be forced to 0.1.0 again.
+
 ### Tags and images
 
 - Tags are `vX.Y.Z`, without a component prefix.
