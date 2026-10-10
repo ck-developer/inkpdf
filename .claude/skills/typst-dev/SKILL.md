@@ -51,8 +51,9 @@ Typst changed a lot between 0.12 and 0.15 and older blog posts/answers are often
   installed version once, at template load. Only `@preview` packages listed by
   `GET /packages` / `docs/packages.md` exist; imports must be literal strings.
 - The bundled set is fixed in `packages/lock.toml` + `packages/vendor/*.tar.gz`, embedded by
-  `build.rs` (sha256-checked). Add or change one with `scripts/add-package.sh <name> <version>
-  [--dependency]`; `cargo test --test bundled_packages` checks import, usage, closure, docs.
+  `crates/inkpdf/build.rs` (sha256-checked). Manage them with `cargo xtask packages
+  add|update|remove|verify|list` (dependencies are added automatically, `--dry-run` previews);
+  `cargo test -p inkpdf --test bundled_packages` checks import, usage, closure, docs.
   A package that fails on the engine version is removed, never patched.
 - Plain Typst (outside inkpdf) needs a full exact version: `@preview/cetz:0.5.2` (partial
   versions fail at eval time). No lockfile; transitive deps are just imports.

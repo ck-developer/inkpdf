@@ -109,17 +109,17 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T016 [P] [US1] In `xtask/src/docs.rs`, add unit tests for the generators:
+- [X] T016 [P] [US1] In `xtask/src/docs.rs`, add unit tests for the generators:
   - `api.md` lists every path and method of a small OpenAPI fixture ;
   - `errors.md` lists every `ErrorCode` with its HTTP status ;
   - `packages.md` lists every `selected` package with its import line, and every package in the licenses table.
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Build the `xtask` CLI skeleton:
+- [X] T017 [US1] Build the `xtask` CLI skeleton:
   - `xtask/Cargo.toml` with dependencies `clap` (derive), `anyhow`, `serde`, `serde_json` and `toml` ;
   - `xtask/src/main.rs` with subcommands `docs generate|check` (this phase) and `packages …` (US4).
-- [ ] T018 [US1] Implement `xtask/src/docs.rs`. Generate:
+- [X] T018 [US1] Implement `xtask/src/docs.rs`. Generate:
   - `docs/src/reference/api.md` from `openapi/openapi.json`: one section per operation, with method and path, summary and description, parameters table, request body (component name and link), responses table, plus an intro explaining that each template's typed operation is published live at `/openapi.json` and `/docs` of a running instance ;
   - `docs/src/reference/errors.md`, from the `ErrorCode` schema enum and `crates/inkpdf/src/error.rs` statuses. Statuses are not in the OpenAPI enum: embed a small static table in xtask, checked by a test that compares it with the source (parse the `status()` match in `error.rs`) ;
   - `docs/src/reference/packages.md` from `packages/lock.toml` and the archives' `typst.toml` (description, license, WASM detection).
@@ -216,7 +216,7 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T037 [P] [US4] Write unit tests in `xtask/src/packages.rs` and `xtask/src/universe.rs`, all offline, with fixture index JSON and small in-memory tarballs:
+- [X] T037 [P] [US4] Write unit tests in `xtask/src/packages.rs` and `xtask/src/universe.rs`, all offline, with fixture index JSON and small in-memory tarballs:
   - pick the latest compatible version, skipping versions whose `compiler` is above 0.15.1 ;
   - discover literal imports in the `.typ` files, ignoring the `tests/` and `docs/` folders ;
   - compute the transitive dependency closure ;
@@ -226,14 +226,14 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Implement `xtask/src/universe.rs`:
+- [X] T038 [US4] Implement `xtask/src/universe.rs`:
   - index download with `ureq` (rustls) and a 30 s timeout ;
   - archive download ;
   - engine version read from the root `Cargo.toml` (`typst = "=X.Y.Z"` in `crates/inkpdf/Cargo.toml`) ;
   - SemVer comparison.
-- [ ] T039 [US4] Implement `xtask/src/packages.rs` with `add`, `update`, `remove`, `verify` and `list` (`--dry-run` for `add` and `update`). Work in a temporary directory, then move the files into place atomically, then regenerate `docs/src/reference/packages.md` (via `docs.rs`). Lock entries are written sorted, with the existing header. Dependency discovery uses `typst-syntax =0.15.1`.
-- [ ] T040 [US4] Delete `scripts/add-package.sh`. Update the references in `crates/inkpdf/src/packages/mod.rs` (doc comment), `specs/002-typst-packages/contracts/lock-file.md` (note "replaced by cargo xtask packages in 003"), `.claude/skills/typst-dev/SKILL.md`, `docs/src/contributing/packages.md` and `CONTRIBUTING.md`.
-- [ ] T041 [US4] Add `cargo xtask packages verify` to the CI `test` job in `.github/workflows/ci.yml`. Run `cargo xtask packages list`, `verify` and `add rowmantic --dry-run` (with network) locally. Corrupt an archive and check that `verify` fails, then restore it. Commit.
+- [X] T039 [US4] Implement `xtask/src/packages.rs` with `add`, `update`, `remove`, `verify` and `list` (`--dry-run` for `add` and `update`). Work in a temporary directory, then move the files into place atomically, then regenerate `docs/src/reference/packages.md` (via `docs.rs`). Lock entries are written sorted, with the existing header. Dependency discovery uses `typst-syntax =0.15.1`.
+- [X] T040 [US4] Delete `scripts/add-package.sh`. Update the references in `crates/inkpdf/src/packages/mod.rs` (doc comment), `specs/002-typst-packages/contracts/lock-file.md` (note "replaced by cargo xtask packages in 003"), `.claude/skills/typst-dev/SKILL.md`, `docs/src/contributing/packages.md` and `CONTRIBUTING.md`.
+- [X] T041 [US4] Add `cargo xtask packages verify` to the CI `test` job in `.github/workflows/ci.yml`. Run `cargo xtask packages list`, `verify` and `add rowmantic --dry-run` (with network) locally. Corrupt an archive and check that `verify` fails, then restore it. Commit.
 
 **Checkpoint**: the package command replaces the script; verify runs in CI.
 

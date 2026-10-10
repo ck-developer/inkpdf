@@ -1,5 +1,9 @@
 # Contrat — `packages/lock.toml` et `packages/vendor/`
 
+> **Note (feature 003)** : `scripts/add-package.sh` est remplacé par `cargo xtask packages`
+> (voir `specs/003-open-source-project/contracts/xtask-cli.md`), qui ajoute aussi les
+> dépendances automatiquement.
+
 Ce contrat s'adresse aux **mainteneurs** d'inkpdf. Le fichier `packages/lock.toml` est la
 seule source de vérité de l'ensemble des paquets intégrés.
 

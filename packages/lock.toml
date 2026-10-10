@@ -1,4 +1,4 @@
-# Typst packages embedded in inkpdf. Edit via scripts/add-package.sh.
+# Typst packages embedded in inkpdf. Edit via `cargo xtask packages`.
 # Contract: specs/002-typst-packages/contracts/lock-file.md
 
 [[package]]

@@ -221,7 +221,7 @@ fn lock_file_matches_archives_and_binary() {
 /// R11.4 — `docs/packages.md` lists exactly the offered packages.
 #[test]
 fn documentation_lists_exactly_the_offered_packages() {
-    let doc = fs::read_to_string(repo_root().join("docs/packages.md")).unwrap();
+    let doc = fs::read_to_string(repo_root().join("docs/src/reference/packages.md")).unwrap();
     let start = doc
         .find("## Available packages")
         .expect("section \"Available packages\"");
