@@ -52,11 +52,11 @@ release-please keeps one open pull request, titled after the next version. It:
 
 It is updated on every push to `main`. To release, review it and merge it.
 
-### First release
+### Republishing the images of a release
 
-The first release is forced to **0.1.0** with `"release-as": "0.1.0"` in
-`release-please-config.json`. Once 0.1.0 is released, remove that line: otherwise every later
-release proposal would be forced to 0.1.0 again.
+If the image publication of a release failed, run the **Release** workflow manually
+(*Actions → Release → Run workflow*) with the existing tag, e.g. `v0.1.0`: it rebuilds and
+pushes `X.Y.Z`, `X.Y` and `latest` from that tag.
 
 ### Tags and images
 
