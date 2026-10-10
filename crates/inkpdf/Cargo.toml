@@ -34,7 +34,6 @@ tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "signal", "
 tower-http = { version = "0.7", features = ["trace"] }
 utoipa = { version = "=6.0.0", features = ["axum_extras"] }
 utoipa-axum = "=0.3.0"
-utoipa-scalar = { version = "=0.4.0", features = ["axum"] }
 jsonschema = { version = "=0.58.6", default-features = false }
 notify = "8.2"
 arc-swap = "1"

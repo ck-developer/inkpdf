@@ -75,7 +75,7 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 ### Tests for User Story 1b ⚠️
 
-- [ ] T009 [P] [US1b] Create `crates/inkpdf/tests/api_live_openapi.rs` with these tests:
+- [X] T009 [P] [US1b] Create `crates/inkpdf/tests/api_live_openapi.rs` with these tests:
   - (a) with `sample`, `packages-demo` and `progress-invoice` loaded, `paths` contains `/templates/<id>/render` for each, with `operationId` `render_sample`, `render_packages_demo` and `render_progress_invoice`, and summary = template name ;
   - (b) `components.schemas.ProgressInvoiceRenderRequest.properties` has `data`, `layout` and `metadata`, and `required == ["data"]` ;
   - (c) `$defs` are hoisted: `ProgressInvoice_amount` exists, and no `#/$defs/` remains anywhere in the document ;
@@ -84,18 +84,18 @@ US3 (P2), US4 (P2). The workspace move is foundational.
   - (f) hot reload: write a new template into the volume, call `registry.refresh()` twice (confirmation), and its path appears; change a `layout` default and it is reflected; remove the folder and the path is gone ;
   - (g) with an empty volume, the document equals the static document returned by `inkpdf::openapi()` ;
   - (h) two ids colliding after PascalCase (`a-b`, `a_b`) get distinct prefixes.
-- [ ] T010 [P] [US1b] Update `crates/inkpdf/tests/api_docs.rs`: `/docs` returns HTML containing `data-url="/openapi.json"` and a Scalar script pinned to an exact version (regex `@scalar/api-reference@\d+\.\d+\.\d+`).
-- [ ] T011 [P] [US1b] Update `crates/inkpdf/tests/contract_openapi.rs`: compare the document of an empty registry with `openapi/openapi.json`, ignoring `info.version` (normalise it before comparing and when regenerating), so that release bumps do not break the contract (R7).
+- [X] T010 [P] [US1b] Update `crates/inkpdf/tests/api_docs.rs`: `/docs` returns HTML containing `data-url="/openapi.json"` and a Scalar script pinned to an exact version (regex `@scalar/api-reference@\d+\.\d+\.\d+`).
+- [X] T011 [P] [US1b] Update `crates/inkpdf/tests/contract_openapi.rs`: compare the document of an empty registry with `openapi/openapi.json`, ignoring `info.version` (normalise it before comparing and when regenerating), so that release bumps do not break the contract (R7).
 
 ### Implementation for User Story 1b
 
-- [ ] T012 [US1b] Create `crates/inkpdf/src/api/live.rs` (R2) :
+- [X] T012 [US1b] Create `crates/inkpdf/src/api/live.rs` (R2) :
   - `fn build(base: &Value, templates: &[Arc<TemplateEntry>]) -> Value` adds the operations and components following the contract ;
   - helpers `prefix(id, taken)` and `rewrite_refs(value, prefix)`, which hoist `$defs`, rewrite `#/$defs/...` and `#/properties/...` pointers, and drop `$schema` and `$id` ;
   - unit tests for `rewrite_refs` and `prefix`.
-- [ ] T013 [US1b] Add the live document cache in `crates/inkpdf/src/api/live.rs`: a `LiveDoc` stored in `AppState` (or a static), holding `Mutex<Option<(Weak<TemplateMap>, Arc<Value>)>>`, rebuilt when the `registry.snapshot()` pointer changes. In `crates/inkpdf/src/api/mod.rs`, make `openapi_json` return `Json<Value>` from the cache. Keep `inkpdf::openapi()` (the static `utoipa` document) for the contract test and for the base of the live document.
-- [ ] T014 [US1b] Create `crates/inkpdf/src/api/docs.rs`, serving `GET /docs` as `text/html`: the Scalar `api-reference` script from jsDelivr pinned to an exact version (look up the current version, at least two weeks old), with `data-url="/openapi.json"`, title "inkpdf API". Remove `utoipa-scalar` from `crates/inkpdf/Cargo.toml` and `build_app`. Document the `/docs` route in the OpenAPI if it was listed before; otherwise leave it out of the contract.
-- [ ] T015 [US1b] Run T009–T011 and fix until they pass. Run `cargo test --workspace` and `INKPDF_UPDATE_OPENAPI=1 cargo test -p inkpdf --test contract_openapi`; the diff must be limited to the `info.version` normalisation. Commit.
+- [X] T013 [US1b] Add the live document cache in `crates/inkpdf/src/api/live.rs`: a `LiveDoc` stored in `AppState` (or a static), holding `Mutex<Option<(Weak<TemplateMap>, Arc<Value>)>>`, rebuilt when the `registry.snapshot()` pointer changes. In `crates/inkpdf/src/api/mod.rs`, make `openapi_json` return `Json<Value>` from the cache. Keep `inkpdf::openapi()` (the static `utoipa` document) for the contract test and for the base of the live document.
+- [X] T014 [US1b] Create `crates/inkpdf/src/api/docs.rs`, serving `GET /docs` as `text/html`: the Scalar `api-reference` script from jsDelivr pinned to an exact version (look up the current version, at least two weeks old), with `data-url="/openapi.json"`, title "inkpdf API". Remove `utoipa-scalar` from `crates/inkpdf/Cargo.toml` and `build_app`. Document the `/docs` route in the OpenAPI if it was listed before; otherwise leave it out of the contract.
+- [X] T015 [US1b] Run T009–T011 and fix until they pass. Run `cargo test --workspace` and `INKPDF_UPDATE_OPENAPI=1 cargo test -p inkpdf --test contract_openapi`; the diff must be limited to the `info.version` normalisation. Commit.
 
 **Checkpoint**: quickstart §2 passes locally with `cargo run` and the example volume.
 

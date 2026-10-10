@@ -26,6 +26,8 @@ pub struct AppState {
     pub registry: Arc<Registry>,
     /// Concurrent render slots.
     pub render_slots: Arc<Semaphore>,
+    /// Cached live OpenAPI document.
+    pub live_doc: Arc<api::live::LiveDoc>,
 }
 
 impl AppState {
@@ -34,6 +36,7 @@ impl AppState {
         let registry = Registry::new(config.templates_dir.clone(), config.max_template_bytes);
         Self {
             render_slots: Arc::new(Semaphore::new(config.max_concurrent_renders)),
+            live_doc: Arc::default(),
             registry: Arc::new(registry),
             config: Arc::new(config),
         }

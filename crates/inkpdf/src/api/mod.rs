@@ -1,20 +1,23 @@
 //! HTTP router and OpenAPI document.
 
+pub mod docs;
 pub mod health;
+pub mod live;
 pub mod packages;
 pub mod render;
 pub mod templates;
 
 use std::sync::OnceLock;
 
-use axum::extract::DefaultBodyLimit;
-use axum::{Json, Router};
+use axum::Router;
+use axum::extract::{DefaultBodyLimit, State};
+use axum::http::header;
+use axum::response::IntoResponse;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa::openapi::{self, ContentBuilder, Ref, RefOr, ResponseBuilder};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use utoipa_scalar::{Scalar, Servable};
 
 use crate::AppState;
 use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
@@ -72,11 +75,16 @@ fn router() -> OpenApiRouter<AppState> {
     operation_id = "openapi",
     responses((status = 200, description = "OpenAPI 3.1 document.", body = Object)),
 )]
-async fn openapi_json() -> Json<utoipa::openapi::OpenApi> {
-    Json(openapi())
+async fn openapi_json(State(state): State<AppState>) -> impl IntoResponse {
+    // Generic routes from the code, plus one typed operation per loaded template.
+    (
+        [(header::CONTENT_TYPE, "application/json")],
+        state.live_doc.get(&state.registry),
+    )
 }
 
-/// OpenAPI document generated from the code.
+/// Static OpenAPI document generated from the code: the generic routes only. The served
+/// document (`GET /openapi.json`) extends it with the loaded templates (see [`live`]).
 pub fn openapi() -> utoipa::openapi::OpenApi {
     static DOC: OnceLock<utoipa::openapi::OpenApi> = OnceLock::new();
     DOC.get_or_init(|| router().into_openapi()).clone()
@@ -84,9 +92,9 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
 
 /// Builds the complete HTTP application.
 pub fn build_app(state: AppState) -> Router {
-    let (router, api) = router().split_for_parts();
+    let (router, _api) = router().split_for_parts();
     router
-        .merge(Scalar::with_url("/docs", api))
+        .route("/docs", axum::routing::get(docs::docs_page))
         // Limit enforced by the body extractor; the handler turns an overflow into a
         // problem+json `413 payload-too-large`.
         .layer(DefaultBodyLimit::max(state.config.max_body_bytes))

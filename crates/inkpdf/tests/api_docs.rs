@@ -27,5 +27,11 @@ async fn docs_ui_is_served() {
             .unwrap()
             .starts_with("text/html")
     );
-    assert!(String::from_utf8_lossy(&body).contains("<html"));
+    let html = String::from_utf8_lossy(&body);
+    assert!(html.contains("<html"), "{html}");
+    // The page loads the live document on each visit (003/US1b)…
+    assert!(html.contains(r#"data-url="/openapi.json""#), "{html}");
+    // …with a Scalar script pinned to an exact version.
+    let pinned = regex::Regex::new(r"@scalar/api-reference@\d+\.\d+\.\d+").unwrap();
+    assert!(pinned.is_match(&html), "{html}");
 }
