@@ -37,9 +37,8 @@ cp /tmp/zero.bak packages/vendor/zero-0.7.1.tar.gz
 
 ```bash
 docker compose up --build -d
-docker compose exec inkpdf true 2>/dev/null || true   # image distroless : pas de shell
-# Facultatif : couper le réseau du conteneur
-docker network disconnect "$(docker compose ps -q inkpdf | xargs docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')" "$(docker compose ps -q inkpdf)" || true
+# Pour prouver l'absence de réseau : ajouter `network_mode: none` au service dans
+# compose.yaml (et publier le port via un autre moyen) ou lancer les tests, qui tournent hors ligne.
 ```
 
 En local sans Docker : `INKPDF_TEMPLATES_DIR=examples/templates cargo run`.
