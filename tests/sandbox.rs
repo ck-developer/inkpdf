@@ -45,23 +45,33 @@ async fn bundled_package_import_is_accepted() {
 
 #[test]
 fn package_cannot_read_template_files() {
+    use inkpdf::render::world::SandboxWorld;
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
-    use inkpdf::render::world::SandboxWorld;
     use typst::World;
     use typst::syntax::{RootedPath, VirtualPath, VirtualRoot};
 
     let entry = entry_with_main("confined", "secret");
-    let world = SandboxWorld::new(entry, &json!({"data": {}}), Arc::new(AtomicBool::new(false)));
+    let world = SandboxWorld::new(
+        entry,
+        &json!({"data": {}}),
+        Arc::new(AtomicBool::new(false)),
+    );
     let zero = inkpdf::packages::selected("zero").unwrap().spec().clone();
     // Dans la racine du paquet, `/main.typ` ne désigne jamais le fichier du template.
-    let id = RootedPath::new(VirtualRoot::Package(zero), VirtualPath::new("main.typ").unwrap())
-        .intern();
+    let id = RootedPath::new(
+        VirtualRoot::Package(zero),
+        VirtualPath::new("main.typ").unwrap(),
+    )
+    .intern();
     assert!(world.file(id).is_err());
     // Et un paquet inconnu n'expose rien.
     let unknown = "@preview/unknown:1.0.0".parse().unwrap();
-    let id = RootedPath::new(VirtualRoot::Package(unknown), VirtualPath::new("lib.typ").unwrap())
-        .intern();
+    let id = RootedPath::new(
+        VirtualRoot::Package(unknown),
+        VirtualPath::new("lib.typ").unwrap(),
+    )
+    .intern();
     assert!(world.file(id).is_err());
 }
 

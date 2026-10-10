@@ -114,7 +114,12 @@ async fn unknown_template_is_not_found_on_both_routes() {
 #[tokio::test]
 async fn incorrect_package_imports_make_templates_invalid() {
     let volume = TestVolume::new();
-    for name in ["version-written", "unknown-package", "other-namespace", "dynamic-import"] {
+    for name in [
+        "version-written",
+        "unknown-package",
+        "other-namespace",
+        "dynamic-import",
+    ] {
         volume.copy_template(&fixture(name), name);
     }
     let app = test_app(test_config(&volume));

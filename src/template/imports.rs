@@ -115,7 +115,12 @@ fn resolve(value: &str) -> Result<String, String> {
         return Err(format!("invalid package import \"{value}\""));
     }
     match packages::selected(rest) {
-        Some(package) => Ok(format!("@{}/{}:{}", packages::NAMESPACE, rest, package.version())),
+        Some(package) => Ok(format!(
+            "@{}/{}:{}",
+            packages::NAMESPACE,
+            rest,
+            package.version()
+        )),
         None => Err(format!(
             "package @preview/{rest} is not available in inkpdf (see GET /packages)"
         )),
@@ -157,7 +162,10 @@ mod tests {
         let rewritten = resolve_imports("main.typ", text).unwrap().unwrap();
         assert!(rewritten.contains(&format!("\"@preview/zero:{}\"", version("zero"))));
         assert!(rewritten.contains(&format!("\"@preview/cetz:{}\" as c", version("cetz"))));
-        assert!(rewritten.contains(&format!("#include \"@preview/oxifmt:{}\"", version("oxifmt"))));
+        assert!(rewritten.contains(&format!(
+            "#include \"@preview/oxifmt:{}\"",
+            version("oxifmt")
+        )));
     }
 
     #[test]
@@ -170,7 +178,9 @@ mod tests {
     fn written_version_is_refused() {
         assert_eq!(
             errors("\n#import \"@preview/zero:0.7.1\": num\n"),
-            ["main.typ:2: remove the version: write @preview/zero (inkpdf uses its installed version)"]
+            [
+                "main.typ:2: remove the version: write @preview/zero (inkpdf uses its installed version)"
+            ]
         );
     }
 
@@ -178,7 +188,9 @@ mod tests {
     fn unavailable_package_is_refused() {
         assert_eq!(
             errors("#import \"@preview/does-not-exist\"\n"),
-            ["main.typ:1: package @preview/does-not-exist is not available in inkpdf (see GET /packages)"]
+            [
+                "main.typ:1: package @preview/does-not-exist is not available in inkpdf (see GET /packages)"
+            ]
         );
         // Une dépendance interne n'est pas mise à disposition des templates.
         assert_eq!(errors("#import \"@preview/komet\"").len(), 1);

@@ -19,10 +19,16 @@ fn every_bundled_package_imports() {
         .filter_map(|package| {
             let main = format!("#import \"{}\"\n#[ok]\n", package.spec());
             let entry = entry_with_main("import-check", &main);
-            compile(entry).err().map(|e| format!("{}: {e:?}", package.spec()))
+            compile(entry)
+                .err()
+                .map(|e| format!("{}: {e:?}", package.spec()))
         })
         .collect();
-    assert!(failures.is_empty(), "packages failing to import:\n{}", failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "packages failing to import:\n{}",
+        failures.join("\n")
+    );
 }
 
 /// Charge `main` comme un template déposé dans le volume (donc avec la résolution des imports).
@@ -57,7 +63,11 @@ fn every_selected_package_is_usable_from_a_template() {
             Err(e) => failures.push(format!("{}: {e:?}", package.name())),
         }
     }
-    assert!(failures.is_empty(), "selected packages failing:\n{}", failures.join("\n"));
+    assert!(
+        failures.is_empty(),
+        "selected packages failing:\n{}",
+        failures.join("\n")
+    );
 }
 
 /// FR-015 — un rendu utilisant un paquet reste déterministe.
@@ -75,7 +85,10 @@ fn literal_package_imports(text: &str) -> Vec<String> {
         let source = node
             .cast::<ast::ModuleImport>()
             .map(|import| import.source())
-            .or_else(|| node.cast::<ast::ModuleInclude>().map(|include| include.source()));
+            .or_else(|| {
+                node.cast::<ast::ModuleInclude>()
+                    .map(|include| include.source())
+            });
         if let Some(ast::Expr::Str(string)) = source {
             let value = string.get();
             if value.starts_with('@') {
@@ -112,7 +125,11 @@ fn bundled_set_is_closed_under_imports() {
             }
         }
     }
-    assert!(missing.is_empty(), "imports not bundled:\n{}", missing.into_iter().collect::<Vec<_>>().join("\n"));
+    assert!(
+        missing.is_empty(),
+        "imports not bundled:\n{}",
+        missing.into_iter().collect::<Vec<_>>().join("\n")
+    );
 }
 
 #[derive(serde::Deserialize)]
@@ -144,9 +161,13 @@ fn lock_file_matches_archives_and_binary() {
 
     // Empreintes.
     for entry in &lock.package {
-        let archive = fs::read(root.join(format!("vendor/{}-{}.tar.gz", entry.name, entry.version)))
-            .unwrap_or_else(|_| panic!("archive missing for {} {}", entry.name, entry.version));
-        let digest: String = Sha256::digest(&archive).iter().map(|b| format!("{b:02x}")).collect();
+        let archive =
+            fs::read(root.join(format!("vendor/{}-{}.tar.gz", entry.name, entry.version)))
+                .unwrap_or_else(|_| panic!("archive missing for {} {}", entry.name, entry.version));
+        let digest: String = Sha256::digest(&archive)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
         assert_eq!(digest, entry.sha256, "{} {}", entry.name, entry.version);
         assert_eq!(entry.namespace, "preview");
         assert!(["selected", "dependency"].contains(&entry.role.as_str()));
@@ -166,7 +187,11 @@ fn lock_file_matches_archives_and_binary() {
     // Au plus une version `selected` par nom, entrées triées.
     let mut selected = BTreeSet::new();
     for entry in lock.package.iter().filter(|e| e.role == "selected") {
-        assert!(selected.insert(&entry.name), "{}: several selected versions", entry.name);
+        assert!(
+            selected.insert(&entry.name),
+            "{}: several selected versions",
+            entry.name
+        );
     }
     let keys: Vec<_> = lock
         .package
@@ -175,7 +200,10 @@ fn lock_file_matches_archives_and_binary() {
         .collect();
     let mut sorted = keys.clone();
     sorted.sort();
-    assert_eq!(keys, sorted, "lock.toml entries must be sorted by name then version");
+    assert_eq!(
+        keys, sorted,
+        "lock.toml entries must be sorted by name then version"
+    );
 
     // Le binaire contient exactement la même liste.
     let bundled: Vec<_> = packages::all()
@@ -194,8 +222,13 @@ fn lock_file_matches_archives_and_binary() {
 #[test]
 fn documentation_lists_exactly_the_offered_packages() {
     let doc = fs::read_to_string(repo_root().join("docs/packages.md")).unwrap();
-    let start = doc.find("## Paquets disponibles").expect("section « Paquets disponibles »");
-    let section = &doc[start..doc[start + 1..].find("\n## ").map_or(doc.len(), |i| start + 1 + i)];
+    let start = doc
+        .find("## Paquets disponibles")
+        .expect("section « Paquets disponibles »");
+    let section = &doc[start
+        ..doc[start + 1..]
+            .find("\n## ")
+            .map_or(doc.len(), |i| start + 1 + i)];
 
     let documented: BTreeSet<String> = section
         .split('`')

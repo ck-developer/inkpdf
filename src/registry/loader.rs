@@ -287,14 +287,20 @@ mod tests {
         assert!(entry.is_valid(), "{:?}", entry.status);
         let main = std::str::from_utf8(&entry.files["main.typ"]).unwrap();
         let version = crate::packages::selected("zero").unwrap().version();
-        assert!(main.contains(&format!("\"@preview/zero:{version}\"")), "{main}");
+        assert!(
+            main.contains(&format!("\"@preview/zero:{version}\"")),
+            "{main}"
+        );
     }
 
     #[test]
     fn incorrect_package_imports_make_the_template_invalid() {
         let f = Fixture::new();
         f.write("main.typ", "#import \"parts/a.typ\"\n");
-        f.write("parts/a.typ", "\n#import \"@preview/zero:0.7.1\"\n#import \"@preview/nope\"\n");
+        f.write(
+            "parts/a.typ",
+            "\n#import \"@preview/zero:0.7.1\"\n#import \"@preview/nope\"\n",
+        );
         let entry = f.load();
         assert_eq!(
             reason(&entry),

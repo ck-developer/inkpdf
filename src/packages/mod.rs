@@ -142,7 +142,11 @@ mod tests {
     #[test]
     fn entrypoint_and_manifest_are_served() {
         for package in all() {
-            assert!(package.file(package.entrypoint()).is_some(), "{}", package.name());
+            assert!(
+                package.file(package.entrypoint()).is_some(),
+                "{}",
+                package.name()
+            );
             assert!(package.file("typst.toml").is_some(), "{}", package.name());
         }
     }

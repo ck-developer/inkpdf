@@ -27,7 +27,7 @@ comme dépendances ne sont pas listés.
 
 | Champ | Type | Contraintes |
 |---|---|---|
-| `packages` | tableau | trié par `name` ; 21 éléments pour la liste validée ; un seul élément par nom |
+| `packages` | tableau | trié par `name` ; 20 éléments pour la liste validée ; un seul élément par nom |
 | `name` | chaîne | motif `^[a-z0-9][a-z0-9-]*$` |
 | `import` | chaîne | `@preview/{name}`, la ligne à écrire dans un template |
 | `version` | chaîne | version installée, motif `^\d+\.\d+\.\d+$` (information seulement) |

@@ -93,19 +93,28 @@ fn check_lock(lock: &Lock, vendor: &Path) {
     let mut selected: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for entry in &lock.package {
         if entry.namespace != "preview" {
-            fail(format!("{} {}: only the `preview` namespace is supported", entry.name, entry.version));
+            fail(format!(
+                "{} {}: only the `preview` namespace is supported",
+                entry.name, entry.version
+            ));
         }
         parse_version(&entry.version);
         if !seen.insert((entry.name.as_str(), entry.version.as_str())) {
             fail(format!("{} {}: duplicate entry", entry.name, entry.version));
         }
         if entry.role == Role::Selected {
-            selected.entry(&entry.name).or_default().push(&entry.version);
+            selected
+                .entry(&entry.name)
+                .or_default()
+                .push(&entry.version);
         }
     }
     for (name, versions) in &selected {
         if versions.len() > 1 {
-            fail(format!("{name}: several selected versions ({})", versions.join(", ")));
+            fail(format!(
+                "{name}: several selected versions ({})",
+                versions.join(", ")
+            ));
         }
     }
     let listed: BTreeSet<String> = lock
@@ -125,12 +134,21 @@ fn extract(entry: Entry, vendor: &Path, out: &Path) -> Package {
     let label = format!("{} {}", entry.name, entry.version);
     let archive_path = vendor.join(format!("{}-{}.tar.gz", entry.name, entry.version));
     let archive = fs::read(&archive_path).unwrap_or_else(|_| {
-        fail(format!("packages/vendor/{}-{}.tar.gz missing", entry.name, entry.version))
+        fail(format!(
+            "packages/vendor/{}-{}.tar.gz missing",
+            entry.name, entry.version
+        ))
     });
 
-    let digest: String = Sha256::digest(&archive).iter().map(|b| format!("{b:02x}")).collect();
+    let digest: String = Sha256::digest(&archive)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
     if digest != entry.sha256 {
-        fail(format!("{label}: sha256 mismatch (expected {}, got {digest})", entry.sha256));
+        fail(format!(
+            "{label}: sha256 mismatch (expected {}, got {digest})",
+            entry.sha256
+        ));
     }
 
     let dir = out.join(format!("{}-{}", entry.name, entry.version));
@@ -139,7 +157,9 @@ fn extract(entry: Entry, vendor: &Path, out: &Path) -> Package {
 
     let mut files = BTreeMap::new();
     let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(&archive[..]));
-    let entries = tar.entries().unwrap_or_else(|_| fail(format!("{label}: unreadable archive")));
+    let entries = tar
+        .entries()
+        .unwrap_or_else(|_| fail(format!("{label}: unreadable archive")));
     for item in entries {
         let mut item = item.unwrap_or_else(|_| fail(format!("{label}: unreadable archive")));
         if !item.header().entry_type().is_file() {
@@ -163,7 +183,11 @@ fn extract(entry: Entry, vendor: &Path, out: &Path) -> Package {
     let manifest: toml::Table = fs::read_to_string(manifest_path)
         .ok()
         .and_then(|text| text.parse().ok())
-        .unwrap_or_else(|| fail(format!("{label}: manifest mismatch (unreadable typst.toml)")));
+        .unwrap_or_else(|| {
+            fail(format!(
+                "{label}: manifest mismatch (unreadable typst.toml)"
+            ))
+        });
     let package = manifest
         .get("package")
         .and_then(|p| p.as_table())
@@ -219,7 +243,11 @@ fn generate(packages: &[Package]) -> String {
         writeln!(code, "        files: &[").unwrap();
         for (relative, absolute) in &package.files {
             let absolute = absolute.to_str().expect("UTF-8 OUT_DIR");
-            writeln!(code, "            ({relative:?}, include_bytes!({absolute:?})),").unwrap();
+            writeln!(
+                code,
+                "            ({relative:?}, include_bytes!({absolute:?})),"
+            )
+            .unwrap();
         }
         writeln!(code, "        ],\n    }},").unwrap();
     }

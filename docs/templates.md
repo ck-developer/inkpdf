@@ -140,11 +140,56 @@ Si le schéma ne déclare pas `design`, `sys.inputs.design` est un dictionnaire 
 Les chaînes ne sont **jamais** interprétées comme du code Typst : un titre
 `#import "/etc/passwd"` est affiché tel quel.
 
+## Utiliser un paquet
+
+inkpdf intègre une sélection de paquets Typst Universe (QR codes, codes-barres, graphiques,
+formatage des nombres et des dates…) : liste dans [packages.md](./packages.md) ou via
+`GET /packages`.
+
+```typst
+#import "@preview/zero": num
+#import "@preview/tiaoma"
+
+Montant : #num(sys.inputs.data.amount, digits: 2, decimal-separator: ",")
+#tiaoma.qrcode(sys.inputs.data.reference)
+```
+
+Règles :
+
+1. **Un paquet s'importe par son seul nom** : `#import "@preview/<nom>"` (avec `: a, b` ou
+   `as x` si besoin) ; `#include "@preview/<nom>"` suit la même règle.
+2. **Pas de version** : le service utilise celle qu'il a installée (visible dans
+   `GET /packages`). `@preview/zero:0.7.1` est refusé.
+3. **Seuls les paquets mis à disposition** sont importables ; seul le namespace `@preview`
+   existe.
+4. **Écrit tel quel** : `"@preview/" + nom` (import calculé) n'est pas pris en charge.
+5. **Fichiers** : un paquet ne lit que ses propres fichiers. Pour lui passer une image ou des
+   données du template, transmettez-les : `image("assets/logo.png")`, `read("data.csv")` ou
+   `path("assets/logo.png")`.
+6. **Polices** : celles d'un paquet ne sont pas chargées ; utilisez celles du service ou de
+   `fonts/`.
+7. Un dossier `packages/` dans un template n'est pas utilisé.
+8. Un template inkpdf ne se compile pas tel quel avec l'outil `typst` standard, qui exige une
+   version.
+
+Les imports sont vérifiés **une fois, au dépôt** du template. Un import incorrect le rend
+`invalid`, avec une ligne par erreur dans `reason` :
+
+```
+main.typ:3: remove the version: write @preview/zero (inkpdf uses its installed version)
+main.typ:4: package @preview/foo is not available in inkpdf (see GET /packages)
+```
+
+Une erreur à l'intérieur d'un paquet est signalée avec un fichier préfixé par le paquet, par
+exemple `@preview/zero:0.7.1/src/num.typ`.
+
+Exemple complet : [`examples/templates/packages-demo`](../examples/templates/packages-demo).
+
 ## Restrictions du bac à sable
 
 | Interdit | Comportement |
 |----------|--------------|
-| `#import "@preview/..."` ou tout paquet | échec de génération (`500 render-failed`) |
+| paquet non mis à disposition, version écrite, autre namespace | template `invalid` (`409 template-invalid`) |
 | lecture hors du dossier (`../`, chemin absolu, lien sortant) | échec (`500 render-failed`) |
 | accès réseau, variables d'environnement, polices système | indisponibles |
 

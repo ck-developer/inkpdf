@@ -46,10 +46,17 @@ Typst changed a lot between 0.12 and 0.15 and older blog posts/answers are often
 
 ## Packages — rules of thumb
 
-- Import with a full exact version: `#import "@preview/cetz:0.5.2": canvas` (partial versions
-  fail at parse time). No lockfile; transitive deps are just imports.
-- Layout: `<root>/<namespace>/<name>/<version>/typst.toml` + entrypoint. In inkpdf, embedded
-  packages live under the template's `packages/` folder (spec 002).
+- **In inkpdf templates, import by name only**: `#import "@preview/zero": num`. Never write a
+  version (`@preview/zero:0.7.1` makes the template invalid); the service substitutes its
+  installed version once, at template load. Only `@preview` packages listed by
+  `GET /packages` / `docs/packages.md` exist; imports must be literal strings.
+- The bundled set is fixed in `packages/lock.toml` + `packages/vendor/*.tar.gz`, embedded by
+  `build.rs` (sha256-checked). Add or change one with `scripts/add-package.sh <name> <version>
+  [--dependency]`; `cargo test --test bundled_packages` checks import, usage, closure, docs.
+  A package that fails on the engine version is removed, never patched.
+- Plain Typst (outside inkpdf) needs a full exact version: `@preview/cetz:0.5.2` (partial
+  versions fail at eval time). No lockfile; transitive deps are just imports.
+- Layout of a package store: `<root>/<namespace>/<name>/<version>/typst.toml` + entrypoint.
 - Inside a package, `/x` means the package root; `..` cannot escape it. To let a package use
   a template file, the template passes `image(..)`, `read(..)` bytes or a `path("..")` value.
 - Validate manifests with `typst::syntax::package::PackageManifest` + `validate(&spec)`

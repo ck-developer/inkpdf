@@ -23,7 +23,7 @@ La **V1 d'inkpdf est livrée** (PR #1, fusionnée). Le service :
 | Versions | Mettre à jour un paquet = **ajouter** la nouvelle version à côté de l'ancienne ; un template existant ne casse jamais. |
 | Helpers maison | **Non retenu** pour le moment. |
 | Dossier `packages/` partagé | **Non retenu** pour le moment. |
-| P3 et Markdown (`cmarker`) | **Non intégrés.** Liste P1 validée telle quelle, sans `cmarker` : 21 paquets (29 avec dépendances, ~6 Mo). |
+| P3 et Markdown (`cmarker`) | **Non intégrés.** Liste P1 validée telle quelle, sans `cmarker` : 21 paquets ; `codetastic` s'est révélé incompatible avec Typst 0.15 et a été retiré à l'implémentation → **20 paquets** (28 avec dépendances, ~6 Mo). |
 | Aperçu / document final | `render` devient l'aperçu ; une nouvelle route produira le document final. Sujet séparé (étape 4). |
 
 ## 3. Comment ça marchera (image simple)
@@ -43,7 +43,7 @@ Fonctionnement (sans Internet)
 Fichier : `research/carte-paquets.md`. Les 827 bibliothèques sont classées par **besoin** et par **priorité** :
 
 - **P1 — 22 paquets, à faire en premier** :
-  - *Codes-barres / QR* : `tiaoma` (tous formats), `zebra`, `qrypst`, `codetastic`, `sepay` (QR de virement SEPA)
+  - *Codes-barres / QR* : `tiaoma` (tous formats), `zebra`, `qrypst`, ~~`codetastic`~~ (retiré : incompatible), `sepay` (QR de virement SEPA)
   - *Montants et nombres* : `zero`, `oxifmt` (formatage), `frogst` (montant en toutes lettres en français), `ibanator` (IBAN)
   - *Dates et langues* : `datify` (dates en français), `linguify` (textes multilingues)
   - *Tableaux* : `tabut` (tableau depuis des données), `tablem`

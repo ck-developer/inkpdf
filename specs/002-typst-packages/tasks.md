@@ -214,12 +214,12 @@ US2 (P2), US4 (P2), US3 (P3).
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] Dans `docs/templates.md`, remplacer la ligne « `#import "@preview/..."` → échec » par une section « Utiliser un paquet » qui reprend les 8 règles de contracts/template-imports.md, avec un exemple et un lien vers `docs/packages.md` et `GET /packages`.
-- [ ] T032 [P] Dans `specs/001-pdf-generation-service/contracts/template-format.md`, ajouter une note sur la ligne du tableau concernant `@preview` : « remplacé par la feature 002, voir specs/002-typst-packages/contracts/template-imports.md ».
-- [ ] T033 [P] Dans `README.md`, mentionner les paquets intégrés (fonctionnalités, `GET /packages`, lien vers docs/packages.md), décrire la limite WASM (R12) dans la section limites, et ajouter `GET /packages` à la liste des routes.
-- [ ] T034 [P] Mettre à jour le skill `.claude/skills/typst-dev/SKILL.md` et `reference/packages.md` : dans inkpdf, import par le nom seul, aucune version, liste dans `packages/lock.toml`, ajout via `scripts/add-package.sh`.
-- [ ] T035 Dans `tests/perf.rs` (R14, SC-005, SC-006), ajouter un test ignoré qui mesure le p95 de `packages-demo` (moins de 1 s) et vérifier que le p95 de `sample` reste dans la limite existante. Lancer `cargo test --release --test perf -- --ignored` et noter les chiffres.
-- [ ] T036 Lancer `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` et `cargo test`, puis corriger.
+- [X] T031 [P] Dans `docs/templates.md`, remplacer la ligne « `#import "@preview/..."` → échec » par une section « Utiliser un paquet » qui reprend les 8 règles de contracts/template-imports.md, avec un exemple et un lien vers `docs/packages.md` et `GET /packages`.
+- [X] T032 [P] Dans `specs/001-pdf-generation-service/contracts/template-format.md`, ajouter une note sur la ligne du tableau concernant `@preview` : « remplacé par la feature 002, voir specs/002-typst-packages/contracts/template-imports.md ».
+- [X] T033 [P] Dans `README.md`, mentionner les paquets intégrés (fonctionnalités, `GET /packages`, lien vers docs/packages.md), décrire la limite WASM (R12) dans la section limites, et ajouter `GET /packages` à la liste des routes.
+- [X] T034 [P] Mettre à jour le skill `.claude/skills/typst-dev/SKILL.md` et `reference/packages.md` : dans inkpdf, import par le nom seul, aucune version, liste dans `packages/lock.toml`, ajout via `scripts/add-package.sh`.
+- [X] T035 Dans `tests/perf.rs` (R14, SC-005, SC-006), ajouter un test ignoré qui mesure le p95 de `packages-demo` (moins de 1 s) et vérifier que le p95 de `sample` reste dans la limite existante. Lancer `cargo test --release --test perf -- --ignored` et noter les chiffres.
+- [X] T036 Lancer `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings` et `cargo test`, puis corriger.
 - [ ] T037 Dérouler quickstart.md de bout en bout avec `docker compose up --build`, scénarios P1 à P5. Vérifier la taille de l'image et que l'image démarre et génère `packages-demo`.
 
 ---

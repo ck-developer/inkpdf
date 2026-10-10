@@ -49,7 +49,7 @@ Ce fichier consolide les décisions techniques du plan.
 | `version` | version exacte |
 | `sha256` | empreinte de l'archive |
 | `license` | identifiant SPDX, recopié de `typst.toml` pour la revue |
-| `role` | `"selected"` (choisi, l'un des 21) ou `"dependency"` (ajouté pour fermer l'ensemble) |
+| `role` | `"selected"` (mis à disposition, l'un des 20) ou `"dependency"` (ajouté pour fermer l'ensemble) |
 
 L'ordre des entrées est alphabétique, puis par version. Le format complet est dans
 [contracts/lock-file.md](./contracts/lock-file.md).
@@ -224,9 +224,9 @@ donc inutile de les exposer.
 
 **Décision.** `tests/bundled_packages.rs` contient quatre tests :
 
-1. **Import** : pour **chacun** des 29 paquets, un document minimal
+1. **Import** : pour **chacun** des 28 paquets, un document minimal
    `#import "@preview/<n>:<v>"` compile en PDF dans le `SandboxWorld`.
-2. **Usage** : pour chacun des **21 paquets sélectionnés**, `tests/fixtures/package-smoke/<n>.typ`
+2. **Usage** : pour chacun des **20 paquets mis à disposition**, `tests/fixtures/package-smoke/<n>.typ`
    appelle une fonction représentative (un QR code, un `zero.num`, un graphique…) et le PDF est
    produit.
 3. **Fermeture** : tous les imports littéraux `@preview/…` des `.typ` de chaque paquet (via R8)
@@ -251,7 +251,7 @@ Ces tests s'exécutent avec `cargo test`, donc dans le job `test` de la CI, sans
 - Pas de nouveau mécanisme. La dérogation V1 (principe IV) couvre le cas : réponse 504 au-delà
   de `render_timeout`, créneau de rendu conservé par `RenderGuard` jusqu'à la fin réelle,
   événement `render.overrun`.
-- Les paquets avec plugin WASM (10 sur 29) sont identifiés dans `docs/packages.md`.
+- Les paquets avec plugin WASM (6 des 20 paquets mis à disposition, 10 sur 28 au total) sont identifiés dans `docs/packages.md`.
 
 **Rationale.** `wasmi` n'expose pas de limite d'exécution dans Typst 0.15.1. Ajouter un
 mécanisme demanderait de forker Typst, ce qui est hors périmètre (research/architecture.md B6).

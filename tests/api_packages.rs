@@ -16,7 +16,10 @@ async fn lists_packages_offered_to_templates() {
 
     let packages = body["packages"].as_array().unwrap();
     assert_eq!(packages.len(), 20);
-    let names: Vec<&str> = packages.iter().map(|p| p["name"].as_str().unwrap()).collect();
+    let names: Vec<&str> = packages
+        .iter()
+        .map(|p| p["name"].as_str().unwrap())
+        .collect();
     let mut sorted = names.clone();
     sorted.sort();
     assert_eq!(names, sorted, "sorted by name");
@@ -25,7 +28,10 @@ async fn lists_packages_offered_to_templates() {
         let object = package.as_object().unwrap();
         let mut keys: Vec<&str> = object.keys().map(String::as_str).collect();
         keys.sort();
-        assert_eq!(keys, ["description", "import", "license", "name", "version"]);
+        assert_eq!(
+            keys,
+            ["description", "import", "license", "name", "version"]
+        );
         assert_eq!(
             package["import"],
             format!("@preview/{}", package["name"].as_str().unwrap())
@@ -33,7 +39,14 @@ async fn lists_packages_offered_to_templates() {
     }
 
     // Les dépendances internes ne sont pas importables, donc pas listées.
-    for internal in ["komet", "suiji", "elembic", "tiptoe", "datify-core", "rustycure"] {
+    for internal in [
+        "komet",
+        "suiji",
+        "elembic",
+        "tiptoe",
+        "datify-core",
+        "rustycure",
+    ] {
         assert!(!names.contains(&internal), "{internal}");
     }
     let zero = packages.iter().find(|p| p["name"] == "zero").unwrap();

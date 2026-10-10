@@ -19,7 +19,7 @@ cargo test --release --test perf -- --ignored
 ```
 
 Résultats attendus :
-- `bundled_packages` : les 29 paquets s'importent, les 21 paquets mis à disposition s'utilisent,
+- `bundled_packages` : les 28 paquets s'importent, les 20 paquets mis à disposition s'utilisent,
   l'ensemble est fermé, et `docs/packages.md` est synchrone avec le lock.
 - `perf` : le p95 de `sample` reste à moins de 5 % de la V1, et celui de `packages-demo` sous
   1 s.
@@ -51,7 +51,7 @@ En local sans Docker : `INKPDF_TEMPLATES_DIR=examples/templates cargo run`.
 curl -s localhost:3000/packages | jq '.packages | length, .[0]'
 ```
 
-Attendu : `21` (les paquets mis à disposition), puis un objet complet
+Attendu : `20` (les paquets mis à disposition), puis un objet complet
 (`import: "@preview/…"`, `version`, `license`…).
 
 ### P2 — Génération avec paquets (US1)

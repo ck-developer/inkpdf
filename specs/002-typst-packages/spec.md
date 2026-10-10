@@ -143,7 +143,7 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
 
 - **FR-001**: Le service DOIT intégrer, lors de sa construction, un ensemble fixe de paquets
   Typst.
-- **FR-002**: Cet ensemble DOIT comprendre les 21 paquets validés (voir Assumptions), **mis à
+- **FR-002**: Cet ensemble DOIT comprendre les 20 paquets validés (voir Assumptions), **mis à
   disposition des templates dans une seule version chacun**, et toutes leurs dépendances.
 - **FR-003**: Dans un template, un paquet DOIT s'importer **par son seul nom**
   (`@preview/nom`) ; le service utilise la version installée.
@@ -214,11 +214,12 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
 ## Assumptions
 
 - **Liste validée (2026-10-10)** — 21 paquets, tous dans leur dernière version publiée à cette
-  date (`research/carte-paquets.md`) : `tiaoma`, `zebra`, `qrypst`, `codetastic`, `sepay`,
+  date (`research/carte-paquets.md`) : `tiaoma`, `zebra`, `qrypst`, `sepay`,
   `zero`, `oxifmt`, `frogst`, `ibanator`, `datify`, `linguify`, `tabut`, `tablem`, `cetz`,
   `cetz-plot`, `lilaq`, `primaviz`, `showybox`, `framefit`, `modern-mailmerge`, `payqr-swiss`.
   Avec leurs 8 dépendances (`datify-core`, `elembic`, `komet` ×2, `rustycure`, `suiji`, `tiptoe`,
-  `zero` 0.6.1) : 29 paquets, environ 6 Mo. Si un paquet échoue aux vérifications avec le moteur
+  `zero` 0.6.1) : 28 paquets, environ 6 Mo. `codetastic`, validé à l'origine, a été retiré à
+  l'implémentation : incompatible avec Typst 0.15 (tiaoma couvre les mêmes codes-barres). Si un paquet échoue aux vérifications avec le moteur
   actuel, il est retiré de la liste et signalé (pas de correctif local du paquet).
 - `cmarker` est exclu (il peut exécuter du code contenu dans le Markdown). Les paquets P2 pourront
   être ajoutés plus tard par simple évolution de la liste ; les P3 ne sont pas intégrés.

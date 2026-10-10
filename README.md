@@ -10,7 +10,9 @@ embarqué dans le binaire.
 
 - Un binaire Rust unique, aucun sous-processus ni navigateur.
 - Templates découverts **à chaud** (ajout, modification, suppression sans redémarrage).
-- Bac à sable : ni réseau, ni paquets Typst, ni lecture hors du dossier du template.
+- Bac à sable : ni réseau, ni lecture hors du dossier du template.
+- Paquets Typst intégrés (QR codes, codes-barres, graphiques, nombres, dates…) : importés par
+  leur seul nom (`#import "@preview/zero"`), jamais téléchargés ([docs/packages.md](docs/packages.md)).
 - API REST auto-descriptive : OpenAPI 3.1 servi sur `/openapi.json`, documentation sur `/docs`.
 - PDF déterministes : mêmes template et corps ⇒ mêmes octets.
 
@@ -70,6 +72,7 @@ Une valeur mal formée empêche le démarrage avec un message explicite.
 | `GET` | `/templates/{templateId}` | détail d'un template, schéma compris |
 | `GET` | `/templates/{templateId}/schema` | `schema.json` brut (`application/schema+json`) |
 | `POST` | `/templates/{templateId}/render` | génération : corps `{ data, design }` → `application/pdf` |
+| `GET` | `/packages` | paquets Typst disponibles pour les templates |
 | `GET` | `/health` | vivacité |
 | `GET` | `/ready` | disponibilité (scan initial terminé) |
 | `GET` | `/openapi.json` | description OpenAPI 3.1 |
@@ -86,7 +89,8 @@ Le service ne gère ni authentification ni utilisateurs : il est destiné à un 
 ## Écrire un template
 
 Voir [docs/templates.md](docs/templates.md) et l'exemple neutre
-[`examples/templates/sample`](examples/templates/sample).
+[`examples/templates/sample`](examples/templates/sample) ; utilisation des paquets intégrés :
+[`examples/templates/packages-demo`](examples/templates/packages-demo).
 
 ## Développement
 
@@ -97,6 +101,7 @@ cargo test
 cargo test --release --test perf -- --ignored   # garde-fou de latence (p95 < 200 ms)
 cargo bench --bench render
 INKPDF_UPDATE_OPENAPI=1 cargo test --test contract_openapi   # régénère openapi/openapi.json
+scripts/add-package.sh <nom> <version>   # ajoute ou change un paquet Typst intégré
 ```
 
 Le document OpenAPI est généré depuis le code ; `tests/contract_openapi.rs` vérifie qu'il est
@@ -108,7 +113,9 @@ Typst n'offre pas d'annulation : une compilation qui dépasse son délai est int
 prochain accès du template à un fichier ou à une police. Une boucle purement calculatoire
 continue d'occuper un créneau de rendu jusqu'à sa fin (signalée par le log `render.overrun`) ;
 l'appelant reçoit néanmoins `504` dans le délai et les autres rendus restent bornés par
-`INKPDF_MAX_CONCURRENT_RENDERS`.
+`INKPDF_MAX_CONCURRENT_RENDERS`. Il en va de même pour les plugins WASM de certains paquets
+intégrés (signalés dans [docs/packages.md](docs/packages.md)) : un appel de plugin ne peut pas
+être interrompu avant sa fin.
 
 En build debug (`cargo test`), l'abandon d'une compilation annulée se manifeste par un message
 `comemo: found differing return values` sur le thread de rendu : l'assertion de pureté de

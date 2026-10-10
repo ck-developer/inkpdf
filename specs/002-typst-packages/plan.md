@@ -6,9 +6,9 @@
 
 ## Summary
 
-Intégrer au binaire `inkpdf` un ensemble **fixe** de paquets Typst Universe : 21 paquets
+Intégrer au binaire `inkpdf` un ensemble **fixe** de paquets Typst Universe : 20 paquets
 **mis à disposition des templates**, chacun dans une seule version, plus leurs dépendances,
-soit 29 au total. Un template importe un paquet **par son seul nom**
+soit 28 au total (`codetastic`, incompatible avec Typst 0.15, a été retiré). Un template importe un paquet **par son seul nom**
 (`#import "@preview/zero"`) ; la version installée est utilisée et écrire une version est refusé.
 
 **Fichiers du dépôt**
@@ -78,7 +78,7 @@ désormais `build.rs` et `packages/`)
 - PDF déterministe ; bornes de rendu inchangées ; aucune nouvelle dépendance d'exécution.
 
 **Scale/Scope**:
-- 29 paquets, environ 6 Mo décompressés, environ 1 000 fichiers.
+- 28 paquets, environ 6 Mo décompressés, environ 1 000 fichiers.
 - 1 nouvelle route.
 - Nouveaux modules : un `build.rs`, `src/packages/`, `src/template/imports.rs` et
   `src/api/packages.rs`.
@@ -131,7 +131,7 @@ specs/002-typst-packages/
 ```text
 build.rs                       # NOUVEAU : vérifie sha256, extrait, génère la table statique
 packages/
-├── lock.toml                  # NOUVEAU : liste fixée (29 entrées)
+├── lock.toml                  # NOUVEAU : liste fixée (28 entrées)
 └── vendor/                    # NOUVEAU : archives officielles <nom>-<version>.tar.gz
 scripts/
 └── add-package.sh             # NOUVEAU : télécharge une archive + écrit l'entrée du lock
@@ -146,7 +146,7 @@ src/
 ├── api/packages.rs            # NOUVEAU : GET /packages
 └── api/mod.rs                 # MODIFIÉ : route + schémas OpenAPI
 tests/
-├── bundled_packages.rs        # NOUVEAU : import de chaque paquet, usage des 21, fermeture, doc
+├── bundled_packages.rs        # NOUVEAU : import de chaque paquet, usage des 20, fermeture, doc
 ├── api_packages.rs            # NOUVEAU : contrat de GET /packages
 ├── sandbox.rs                 # MODIFIÉ : import non intégré refusé, confinement des paquets
 ├── fixtures/package-smoke/    # NOUVEAU : un .typ minimal par paquet sélectionné
