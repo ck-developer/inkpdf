@@ -163,22 +163,22 @@ US3 (P2), US4 (P2). The workspace move is foundational.
 
 **Independent Test**: verified on GitHub after the merge (quickstart §5). Locally, the workflows are validated with `actionlint`.
 
-- [ ] T026 [US2] In `.github/workflows/ci.yml`, add a `publish-dev` job:
+- [X] T026 [US2] In `.github/workflows/ci.yml`, add a `publish-dev` job:
   - `needs: [lint, test, perf]`, `if: github.event_name == 'push' && github.ref == 'refs/heads/main'` ;
   - `permissions: packages: write` and `concurrency: { group: publish-dev, cancel-in-progress: true }` ;
   - QEMU, Buildx and a GHCR login, then build and push `linux/amd64,linux/arm64` with only the tag `ghcr.io/ck-developer/inkpdf:dev`, using the GHA cache.
-- [ ] T027 [US2] Create `release-please-config.json` and `.release-please-manifest.json` (R7):
+- [X] T027 [US2] Create `release-please-config.json` and `.release-please-manifest.json` (R7):
   - package `crates/inkpdf`, `release-type: rust`, `bump-minor-pre-major: true`, `include-component-in-tag: false` ;
   - `bootstrap-sha: 90ee8fb…` (full SHA of the 002 merge) ;
   - changelog sections for feat, fix, perf, docs, refactor ;
   - manifest version `0.1.0`.
-- [ ] T028 [US2] Create `.github/workflows/release.yml`:
+- [X] T028 [US2] Create `.github/workflows/release.yml`:
   - on push to `main`, run `googleapis/release-please-action@v4` (config and manifest files) ;
   - if `release_created`, check out the tag, then build and push `ghcr.io/ck-developer/inkpdf` with tags `X.Y.Z`, `X.Y` and `latest` (from the outputs `major`, `minor` and `patch`) for both architectures.
 
   Delete `.github/workflows/docker.yml`.
-- [ ] T029 [P] [US2] Write the initial `CHANGELOG.md`: release-please header, plus a "0.1.0 — history before automated releases" section summarising features 001 (V1 service) and 002 (bundled packages, downloads, metadata, `layout`, examples) in English.
-- [ ] T030 [US2] Validate the workflows with `actionlint` (run via `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:latest`). Check that `/health` and `info.version` come from `CARGO_PKG_VERSION` (FR-013). Commit.
+- [X] T029 [P] [US2] Write the initial `CHANGELOG.md`: release-please header, plus a "0.1.0 — history before automated releases" section summarising features 001 (V1 service) and 002 (bundled packages, downloads, metadata, `layout`, examples) in English.
+- [X] T030 [US2] Validate the workflows with `actionlint` (run via `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:latest`). Check that `/health` and `info.version` come from `CARGO_PKG_VERSION` (FR-013). Commit.
 
 **Checkpoint**: workflows lint-clean; behaviour verified after merge.
 
