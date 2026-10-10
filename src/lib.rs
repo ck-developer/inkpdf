@@ -1,6 +1,6 @@
 //! inkpdf : service générique de génération de PDF à partir de templates Typst.
 //!
-//! Le service est agnostique du contenu : il valide le corps `{ data, design }` contre le
+//! Le service est agnostique du contenu : il valide le corps `{ data, layout }` contre le
 //! schéma du template puis le transmet à Typst, sans rien connaître de sa signification.
 
 pub mod api;

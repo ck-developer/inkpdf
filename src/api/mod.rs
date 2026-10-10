@@ -24,7 +24,7 @@ use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
     info(
         title = "inkpdf",
         version = env!("CARGO_PKG_VERSION"),
-        description = "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `design`), validé contre le JSON Schema du template avant génération.",
+        description = "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `layout`), validé contre le JSON Schema du template avant génération.",
         license(name = "TODO(LICENSE) — MIT OR Apache-2.0 proposé"),
     ),
     servers((url = "http://localhost:3000")),

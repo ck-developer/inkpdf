@@ -5,7 +5,7 @@
 #import "@preview/cetz-plot": chart
 
 #let data = sys.inputs.data
-#let accent = rgb(sys.inputs.design.accentColor)
+#let accent = rgb(sys.inputs.layout.accentColor)
 
 #set page(paper: "a4", margin: 2cm)
 #set text(lang: "fr", size: 11pt)

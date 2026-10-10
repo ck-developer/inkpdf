@@ -186,7 +186,7 @@
       },
       "RenderRequest": {
         "additionalProperties": false,
-        "description": "Forme générique ; la forme exacte de `data` et `design` est donnée par le schéma du template\n(`GET /templates/{templateId}/schema`).",
+        "description": "Forme générique ; la forme exacte de `data` et `layout` est donnée par le schéma du template\n(`GET /templates/{templateId}/schema`).",
         "properties": {
           "data": {
             "additionalProperties": {},
@@ -196,9 +196,9 @@
             },
             "type": "object"
           },
-          "design": {
+          "layout": {
             "additionalProperties": {},
-            "description": "Paramètres de design ; les propriétés absentes prennent leur `default`.",
+            "description": "Paramètres de mise en page ; les propriétés absentes prennent leur `default`.",
             "propertyNames": {
               "type": "string"
             },
@@ -329,7 +329,7 @@
     }
   },
   "info": {
-    "description": "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `design`), validé contre le JSON Schema du template avant génération.",
+    "description": "Service interne (VPC privé, sans authentification). Les templates sont lus à chaud depuis un volume monté ; l'appelant n'envoie que du JSON (`data` + `layout`), validé contre le JSON Schema du template avant génération.",
     "license": {
       "name": "TODO(LICENSE) — MIT OR Apache-2.0 proposé"
     },
@@ -493,7 +493,7 @@
     },
     "/templates/{templateId}/render": {
       "post": {
-        "description": "Valide le corps contre le schéma du template (après application des valeurs `default` de\n`design`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.",
+        "description": "Valide le corps contre le schéma du template (après application des valeurs `default` de\n`layout`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.",
         "operationId": "renderTemplate",
         "parameters": [
           {

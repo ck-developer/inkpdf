@@ -303,14 +303,14 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 
 ## Phase 8: US7 - `design` → `layout` (Priority: P2)
 
-- [ ] T038 [US7] Renommer `design` en `layout` dans les fichiers suivants (R16) :
+- [X] T038 [US7] Renommer `design` en `layout` dans les fichiers suivants (R16) :
   - `src/template/schema.rs`, `src/render/world.rs`, `src/api/render.rs`, `src/api/mod.rs` ;
   - tests unitaires et `tests/*.rs` ;
   - `examples/templates/sample/` (`schema.json`, `main.typ`), `examples/templates/packages-demo/`, `examples/requests/*.json` ;
   - fixtures concernées.
 
   Ajouter un test vérifiant qu'un corps contenant `design` est refusé (422, `/design`).
-- [ ] T039 [US7] Amender `.specify/memory/constitution.md` en version 1.0.2 : principe III, « paramètres de design » devient « paramètres de mise en page (`layout`) », avec un Sync Impact Report. Mettre à jour `docs/templates.md` et le README. Ajouter une note dans `specs/001-pdf-generation-service/contracts/template-format.md`. Régénérer `openapi/openapi.json`.
+- [X] T039 [US7] Amender `.specify/memory/constitution.md` en version 1.0.2 : principe III, « paramètres de design » devient « paramètres de mise en page (`layout`) », avec un Sync Impact Report. Mettre à jour `docs/templates.md` et le README. Ajouter une note dans `specs/001-pdf-generation-service/contracts/template-format.md`. Régénérer `openapi/openapi.json`.
 
 ## Phase 9: US6 - Métadonnées (Priority: P2)
 

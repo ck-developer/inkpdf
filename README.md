@@ -4,7 +4,7 @@ Service de génération de PDF à partir de templates [Typst](https://typst.app)
 
 inkpdf est **générique et agnostique du contenu** : il ne connaît aucun type de document. Un
 template est un dossier (`main.typ` + `schema.json` + ressources) déposé dans un volume ;
-l'appelant envoie un JSON `{ "data": …, "design": … }`, validé contre le schéma du template,
+l'appelant envoie un JSON `{ "data": …, "layout": … }`, validé contre le schéma du template,
 puis injecté dans Typst comme données (`sys.inputs`) et compilé en PDF par le moteur Typst
 embarqué dans le binaire.
 
@@ -71,7 +71,7 @@ Une valeur mal formée empêche le démarrage avec un message explicite.
 | `GET` | `/templates` | liste des templates (`valid` / `invalid` avec `reason`) |
 | `GET` | `/templates/{templateId}` | détail d'un template, schéma compris |
 | `GET` | `/templates/{templateId}/schema` | `schema.json` brut (`application/schema+json`) |
-| `POST` | `/templates/{templateId}/render` | génération : corps `{ data, design }` → `application/pdf` |
+| `POST` | `/templates/{templateId}/render` | génération : corps `{ data, layout }` → `application/pdf` |
 | `GET` | `/packages` | paquets Typst disponibles pour les templates |
 | `GET` | `/health` | vivacité |
 | `GET` | `/ready` | disponibilité (scan initial terminé) |

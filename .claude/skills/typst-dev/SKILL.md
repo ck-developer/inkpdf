@@ -1,6 +1,6 @@
 ---
 name: "typst-dev"
-description: "Typst 0.15.1 expert for inkpdf: writing or reviewing Typst templates (main.typ, schema-driven data/design), Typst packages (typst.toml, @ns/name:version, embedded packages), typst-pdf output (PDF/A, PDF/UA, attachments, determinism) and the Rust embedding (World, FileId/VirtualRoot, SandboxWorld). Use whenever a task touches .typ files, template folders, Typst packages, PDF options or src/render/."
+description: "Typst 0.15.1 expert for inkpdf: writing or reviewing Typst templates (main.typ, schema-driven data/layout), Typst packages (typst.toml, @ns/name:version, embedded packages), typst-pdf output (PDF/A, PDF/UA, attachments, determinism) and the Rust embedding (World, FileId/VirtualRoot, SandboxWorld). Use whenever a task touches .typ files, template folders, Typst packages, PDF options or src/render/."
 metadata:
   author: "inkpdf"
   typst-version: "0.15.1"
@@ -15,7 +15,7 @@ Typst changed a lot between 0.12 and 0.15 and older blog posts/answers are often
 
 ## Non-negotiable inkpdf constraints
 
-1. Caller data reaches Typst only through `sys.inputs` (`data`, `design`) — never build Typst
+1. Caller data reaches Typst only through `sys.inputs` (`data`, `layout`) — never build Typst
    source by string concatenation, never `eval` caller strings.
 2. Sandbox: no network, no system fonts, no files outside the template folder (and, per
    package, outside the package root). Everything a template needs lives in its folder.
@@ -24,8 +24,8 @@ Typst changed a lot between 0.12 and 0.15 and older blog posts/answers are often
    and a stable `ident`.
 4. Every render is bounded (timeout + concurrency). Avoid layouts that fail to converge and be
    wary of WASM plugins (no fuel limit in wasmi: a long plugin call cannot be cancelled).
-5. `design` parameters drive appearance; their defaults live in `schema.json`, so templates
-   can rely on every declared `design` key being present.
+5. `layout` parameters drive appearance; their defaults live in `schema.json`, so templates
+   can rely on every declared `layout` key being present.
 
 ## Writing templates — rules of thumb
 

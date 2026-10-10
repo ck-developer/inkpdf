@@ -36,7 +36,7 @@ async fn sample_request_renders_a_pdf() {
 }
 
 #[tokio::test]
-async fn body_without_design_uses_defaults() {
+async fn body_without_layout_uses_defaults() {
     let volume = volume();
     let app = test_app(test_config(&volume));
     let body = json!({"data": {"title": "T", "items": [{"label": "a", "value": 1}]}});

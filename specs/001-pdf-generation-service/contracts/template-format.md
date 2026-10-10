@@ -1,3 +1,6 @@
+> **Note (feature 002)** : la dimension `design` a été renommée `layout` (corps, schémas,
+> `sys.inputs`). Ce document est conservé tel qu'à la V1.
+
 # Contrat : format d'un template inkpdf (V1)
 
 Ce document est le contrat entre les **auteurs de templates** et le service. Il est versionné

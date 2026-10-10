@@ -39,7 +39,7 @@ pub struct SandboxWorld {
 }
 
 impl SandboxWorld {
-    /// `body` est le corps validé `{ data, design }` ; `cancel` interrompt la compilation au
+    /// `body` est le corps validé `{ data, layout }` ; `cancel` interrompt la compilation au
     /// prochain accès au monde.
     pub fn new(
         entry: Arc<TemplateEntry>,
@@ -47,8 +47,8 @@ impl SandboxWorld {
         cancel: Arc<AtomicBool>,
     ) -> Self {
         let mut inputs = Dict::new();
-        for key in ["data", "design"] {
-            // Un `design` absent (schéma sans `design`) est vu comme un dictionnaire vide.
+        for key in ["data", "layout"] {
+            // Un `layout` absent (schéma sans `layout`) est vu comme un dictionnaire vide.
             let value = body
                 .get(key)
                 .map_or_else(|| Value::Dict(Dict::new()), json_to_value);

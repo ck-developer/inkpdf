@@ -352,7 +352,7 @@ mod tests {
         let f = Fixture::new();
         f.write(
             "schema.json",
-            r#"{"type":"object","properties":{"design":{}}}"#,
+            r#"{"type":"object","properties":{"layout":{}}}"#,
         );
         assert!(reason(&f.load()).contains("properties.data"));
     }

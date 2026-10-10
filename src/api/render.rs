@@ -20,7 +20,7 @@ use crate::registry::TemplateStatus;
 use crate::render;
 use crate::template::TemplateId;
 
-/// Forme générique ; la forme exacte de `data` et `design` est donnée par le schéma du template
+/// Forme générique ; la forme exacte de `data` et `layout` est donnée par le schéma du template
 /// (`GET /templates/{templateId}/schema`).
 #[derive(Serialize, ToSchema)]
 #[serde(deny_unknown_fields)]
@@ -28,10 +28,10 @@ use crate::template::TemplateId;
 pub struct RenderRequest {
     /// Données métier.
     data: Map<String, Value>,
-    /// Paramètres de design ; les propriétés absentes prennent leur `default`.
+    /// Paramètres de mise en page ; les propriétés absentes prennent leur `default`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    design: Option<Map<String, Value>>,
+    layout: Option<Map<String, Value>>,
 }
 
 /// Document PDF renvoyé tel quel.
@@ -51,7 +51,7 @@ impl ToSchema for PdfDocument {}
 /// Générer un PDF
 ///
 /// Valide le corps contre le schéma du template (après application des valeurs `default` de
-/// `design`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.
+/// `layout`), puis renvoie le PDF. Aucune génération n'est tentée si la validation échoue.
 #[utoipa::path(
     post,
     path = "/templates/{templateId}/render",

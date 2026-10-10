@@ -52,7 +52,7 @@ Toute autre clé rend le template invalide (détection des fautes de frappe).
 Le corps d'une génération a deux sections :
 
 - `data` (requise) : le contenu du document, entièrement défini par vous ;
-- `design` (optionnelle) : les réglages d'apparence (couleur, alignement, blocs affichés…).
+- `layout` (optionnelle) : les réglages d'apparence (couleur, alignement, blocs affichés…).
 
 ```json
 {
@@ -80,7 +80,7 @@ Le corps d'une génération a deux sections :
         }
       }
     },
-    "design": {
+    "layout": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -96,12 +96,12 @@ Le corps d'une génération a deux sections :
 Règles :
 
 1. La racine DOIT être `type: object` et déclarer `properties.data`.
-2. Seules `data` et `design` sont admises à la racine. Si `additionalProperties` est absent à
+2. Seules `data` et `layout` sont admises à la racine. Si `additionalProperties` est absent à
    la racine, le service le considère comme `false` (sans modifier le schéma exposé par
    `GET /templates/{id}/schema`, qui renvoie votre fichier octet pour octet).
-3. Les propriétés de `design` DEVRAIENT avoir un `default`. Avant la validation, le service
-   initialise `design` à `{}` s'il est absent et insère les défauts manquants, récursivement
-   dans les sous-objets de `design`. Les défauts ne sont **pas** appliqués à `data`.
+3. Les propriétés de `layout` DEVRAIENT avoir un `default`. Avant la validation, le service
+   initialise `layout` à `{}` s'il est absent et insère les défauts manquants, récursivement
+   dans les sous-objets de `layout`. Les défauts ne sont **pas** appliqués à `data`.
 4. Seules les références `$ref` internes (`#/...`, `$defs`) sont résolues ; une référence
    externe rend le template invalide.
 5. Pour des valeurs décimales exactes, préférez des entiers (centimes) ou des chaînes : les
@@ -116,16 +116,16 @@ L'entrée validée (défauts appliqués) est disponible dans `sys.inputs` :
 
 ```typst
 #let data = sys.inputs.data
-#let design = sys.inputs.design
+#let layout = sys.inputs.layout
 
-#set text(fill: rgb(design.primaryColor))
+#set text(fill: rgb(layout.primaryColor))
 #let aligns = (left: left, center: center, right: right)
-#align(aligns.at(design.align))[= #data.title]
+#align(aligns.at(layout.align))[= #data.title]
 #table(columns: 2, ..data.items.map(i => (i.label, str(i.value))).flatten())
-#if design.showFooter [ #include "parts/footer.typ" ]
+#if layout.showFooter [ #include "parts/footer.typ" ]
 ```
 
-Si le schéma ne déclare pas `design`, `sys.inputs.design` est un dictionnaire vide.
+Si le schéma ne déclare pas `layout`, `sys.inputs.layout` est un dictionnaire vide.
 
 | JSON | Typst |
 |------|-------|

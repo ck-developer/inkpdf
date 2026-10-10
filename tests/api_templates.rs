@@ -47,7 +47,7 @@ async fn detail_exposes_schema_and_links() {
     let properties = &body["schema"]["properties"];
     assert!(properties.get("data").is_some());
     assert_eq!(
-        properties["design"]["properties"]["primaryColor"]["default"],
+        properties["layout"]["properties"]["primaryColor"]["default"],
         "#1f4e79"
     );
     assert_eq!(body["links"]["schema"], "/templates/sample/schema");

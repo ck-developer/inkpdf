@@ -1,15 +1,15 @@
 // Template de démonstration neutre : un titre et un tableau de libellés/valeurs.
 // L'entrée validée est fournie par le service dans `sys.inputs`.
 #let data = sys.inputs.data
-#let design = sys.inputs.design
+#let layout = sys.inputs.layout
 
-#let primary = rgb(design.primaryColor)
+#let primary = rgb(layout.primaryColor)
 #let aligns = (left: left, center: center, right: right)
 
 #set page(paper: "a4", margin: 2cm)
 #set text(font: "Libertinus Serif", size: 11pt)
 
-#align(aligns.at(design.align))[
+#align(aligns.at(layout.align))[
   #text(fill: primary, size: 20pt, weight: "bold")[#data.title]
 ]
 
@@ -23,4 +23,4 @@
   ..data.items.map(i => (i.label, str(i.value))).flatten(),
 )
 
-#if design.showFooter [ #include "parts/footer.typ" ]
+#if layout.showFooter [ #include "parts/footer.typ" ]

@@ -21,7 +21,7 @@
         }
       }
     },
-    "design": {
+    "layout": {
       "type": "object",
       "properties": {
         "accentColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$", "default": "#1f6feb" }
