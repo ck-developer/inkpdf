@@ -61,6 +61,8 @@ curl -s -H 'content-type: application/json' \
   -o demo.pdf localhost:3000/templates/packages-demo/render
 ```
 
+Le template `packages-demo` importe ses paquets **sans version** (`#import "@preview/zero"`).
+
 Attendu : un PDF contenant un QR code, un montant formaté (« 1 234,56 ») et un graphique.
 Deux appels identiques donnent des fichiers identiques (`cmp`).
 

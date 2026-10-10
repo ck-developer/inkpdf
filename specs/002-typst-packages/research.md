@@ -178,7 +178,8 @@ Les erreurs possibles sont les suivantes :
 - namespace différent de `preview` ;
 - spec absente de la table.
 
-Elles sont rassemblées, et le template passe à l'état
+Les imports sans version sont d'abord résolus vers la version par défaut (R15). Les erreurs
+sont rassemblées, et le template passe à l'état
 `TemplateStatus::Invalid { reason }`, avec une raison qui liste chaque import fautif sous la
 forme `fichier:ligne`. Les imports calculés dynamiquement restent couverts par le contrôle au
 rendu (R5).
@@ -268,6 +269,44 @@ nécessaire qu'à ce moment, sur le poste du mainteneur.
 
 - une mise à jour **ajoute** une version ;
 - le retrait d'une version est une rupture, à signaler dans le changelog.
+
+## R15 — Import sans version (`@preview/nom`)
+
+**Décision.**
+- inkpdf complète la version d'un import qui n'en a pas **avant** que Typst n'évalue le
+  fichier.
+- La réécriture se fait dans `SandboxWorld::source`, pour les fichiers de la racine `Project`
+  uniquement (jamais pour ceux des paquets) :
+  1. le texte est analysé avec `typst::syntax::parse` ;
+  2. chaque littéral de `ModuleImport` ou `ModuleInclude` de la forme `@preview/<nom>`, sans
+     `:`, est réécrit en `@preview/<nom>:<version par défaut>` ;
+  3. la `Source` est construite sur ce texte réécrit.
+- La version par défaut est **la plus récente version intégrée** de ce nom (ordre SemVer),
+  calculée une seule fois à partir de la table statique.
+- Un nom dont aucune version n'est intégrée n'est pas réécrit. Le chargement (R8) le signale
+  avec un message clair, avant que Typst ne lève son erreur « missing version » au rendu.
+
+**Rationale.**
+- C'est la demande de l'utilisateur : les auteurs ne veulent pas écrire de version.
+- Typst exige la version **à l'évaluation** (`typst-eval-0.15.1/src/import.rs` l. 213,
+  `PackageSpec::from_str`), pas à l'analyse syntaxique. Comme le `World` fournit le texte des
+  sources, c'est le seul endroit où l'on peut intervenir, et cela suffit.
+- Seul le contenu d'une chaîne change, sur sa propre ligne. Les numéros de ligne des
+  diagnostics restent exacts ; seule la colonne peut se décaler sur cette ligne.
+- Le chargement (R8) applique la même résolution : un import sans version d'un paquet intégré
+  est donc valide.
+
+**Conséquences, documentées pour les auteurs.**
+- Un template sans version suit la version par défaut, qui peut changer quand une nouvelle
+  version est intégrée (R13). Pour figer un rendu, l'auteur écrit la version.
+- Un tel template ne se compile pas avec l'outil Typst standard, qui exige une version.
+
+**Alternatives écartées.**
+- *Exiger la version* : c'est contraire à la demande.
+- *Réécrire aussi les fichiers des paquets* : ils sont déjà versionnés, et les modifier
+  casserait leur cohérence.
+- *Un namespace maison sans version* (`@inkpdf/zero`) : Typst exige la version pour tous les
+  namespaces.
 
 ## R14 — Performance
 

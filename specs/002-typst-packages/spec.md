@@ -24,8 +24,9 @@ paquet de helpers maison, pas de paquets P3 pour le moment.
 ### User Story 1 - Utiliser un paquet intégré dans un template (Priority: P1)
 
 Un auteur veut un QR code, un graphique ou un montant bien formaté dans son document. Il
-écrit dans son template l'import standard du paquet (`@preview/nom:version`), exactement comme
-dans la documentation du paquet. Sans rien déposer d'autre dans le dossier du template, les
+écrit dans son template l'import du paquet **sans préciser de version**
+(`#import "@preview/zero"`) ; il peut aussi préciser une version (`@preview/zero:0.7.1`) s'il
+veut la figer. Sans rien déposer d'autre dans le dossier du template, les
 générations produisent le document attendu, sans aucun accès réseau.
 
 **Why this priority**: c'est la raison d'être de la fonctionnalité.
@@ -35,14 +36,16 @@ génération réseau coupé, vérifier que le PDF contient le rendu du paquet.
 
 **Acceptance Scenarios**:
 
-1. **Given** un paquet présent dans la liste intégrée, **When** un template l'importe avec son
-   nom et sa version exacte et qu'une génération valide est demandée, **Then** le PDF est
-   produit et contient le rendu du paquet.
-2. **Given** un paquet intégré qui dépend d'autres paquets, **When** il est importé, **Then** ses
+1. **Given** un paquet présent dans la liste intégrée, **When** un template l'importe par son
+   seul nom (`@preview/zero`) et qu'une génération valide est demandée, **Then** le PDF est
+   produit avec la version par défaut de ce paquet.
+2. **Given** le même paquet, **When** un template l'importe avec une version exacte intégrée
+   (`@preview/zero:0.7.1`), **Then** c'est cette version qui est utilisée.
+3. **Given** un paquet intégré qui dépend d'autres paquets, **When** il est importé, **Then** ses
    dépendances sont résolues sans action de l'auteur.
-3. **Given** un template utilisant des paquets intégrés, **When** deux générations identiques
+4. **Given** un template utilisant des paquets intégrés, **When** deux générations identiques
    sont demandées, **Then** les deux PDF sont identiques octet pour octet.
-4. **Given** le service démarré sans aucun accès réseau, **When** des générations utilisant des
+5. **Given** le service démarré sans aucun accès réseau, **When** des générations utilisant des
    paquets sont demandées, **Then** elles aboutissent toutes.
 
 ---
@@ -118,8 +121,11 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 
 ### Edge Cases
 
-- Un import sans version (`@preview/zero`) ou avec une version partielle (`0.7`) : refusé avec un
-  diagnostic, aucune version n'est choisie à la place de l'auteur.
+- Un import sans version (`@preview/zero`) utilise la **version par défaut** du paquet (la plus
+  récente intégrée). Une version partielle (`0.7`) est refusée avec un diagnostic.
+- Quand une nouvelle version d'un paquet est intégrée, les templates qui l'importent sans
+  version suivent automatiquement la nouvelle version par défaut ; ceux qui précisent une
+  version restent sur la leur.
 - Un import avec un autre namespace que `@preview` (ex. `@local/...`) : refusé comme un paquet
   absent.
 - Un paquet intégré tente de lire un fichier hors de son propre dossier (template, autre paquet,
@@ -144,6 +150,9 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
   toutes leurs dépendances, chacun dans une version exacte.
 - **FR-003**: Un import `@preview/nom:version` DOIT être résolu uniquement parmi les paquets
   intégrés, avec une correspondance exacte du nom et de la version.
+- **FR-003b**: Un import **sans version** `@preview/nom` DOIT être accepté dans les fichiers du
+  template et résolu vers la **version par défaut** du paquet, c'est-à-dire la plus récente
+  version intégrée. La version utilisée DOIT être visible (liste des paquets, diagnostics).
 - **FR-004**: Le service NE DOIT jamais télécharger de paquet ni accéder au réseau pendant son
   fonctionnement ; aucun paquet ne doit être lu ailleurs que dans l'ensemble intégré.
 - **FR-005**: La liste des paquets intégrés DOIT être définie dans un fichier versionné du dépôt
@@ -166,7 +175,8 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 - **FR-012**: Un paquet NE DOIT pouvoir lire que ses propres fichiers ; un template peut lui
   transmettre explicitement une image, des données ou un chemin vers ses propres fichiers.
 - **FR-013**: Le service DOIT exposer une route listant les paquets intégrés (namespace, nom,
-  version, description, licence), décrite dans le document OpenAPI.
+  version, description, licence, indication de la version par défaut), décrite dans le document
+  OpenAPI.
 - **FR-014**: Les PDF produits avec des paquets DOIVENT rester déterministes.
 - **FR-015**: Les générations utilisant des paquets DOIVENT rester soumises aux bornes existantes
   (taille de requête, durée, concurrence).
@@ -184,8 +194,8 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
   version ; porte une description, une licence et une empreinte d'intégrité.
 - **Liste des paquets** : fichier versionné du dépôt qui définit exactement les paquets intégrés ;
   seule source de vérité.
-- **Référence de paquet** : `@namespace/nom:version` écrit dans un template ou un paquet ; résolue
-  à l'identique ou refusée.
+- **Référence de paquet** : `@namespace/nom:version`, ou `@namespace/nom` dans un template ;
+  résolue à l'identique, ou vers la version par défaut si la version est omise, sinon refusée.
 
 ## Success Criteria *(mandatory)*
 
@@ -217,6 +227,9 @@ et que l'ancienne l'est toujours ; altérer une empreinte, vérifier que la cons
 - `cmarker` est exclu (il peut exécuter du code contenu dans le Markdown). Les paquets P2 pourront
   être ajoutés plus tard par simple évolution de la liste ; les P3 ne sont pas intégrés.
 - Seul le namespace `@preview` (Typst Universe) est servi.
+- L'import sans version est une facilité propre à inkpdf : un tel template ne se compile pas
+  tel quel avec l'outil Typst standard (qui exige une version). Les paquets intégrés gardent
+  leurs imports versionnés d'origine.
 - Les paquets sont téléchargés uniquement au moment de la construction de l'application ;
   l'accès réseau pendant la construction est acceptable.
 - La taille de l'application n'est pas un critère ; la rapidité de génération l'est.

@@ -17,7 +17,8 @@ Liste les paquets Typst intégrés au service.
       "namespace": "preview",
       "name": "zero",
       "version": "0.7.1",
-      "import": "@preview/zero:0.7.1",
+      "default": true,
+      "import": "@preview/zero",
       "description": "Precise scientific number and unit formatting.",
       "license": "MIT",
       "role": "selected"
@@ -32,7 +33,8 @@ Liste les paquets Typst intégrés au service.
 | `namespace` | chaîne | `"preview"` |
 | `name` | chaîne | motif `^[a-z0-9][a-z0-9-]*$` |
 | `version` | chaîne | motif `^\d+\.\d+\.\d+$` |
-| `import` | chaîne | `@{namespace}/{name}:{version}` |
+| `default` | booléen | `true` pour la version utilisée par un import sans version, c'est-à-dire la plus récente version intégrée de ce nom |
+| `import` | chaîne | chaîne à copier dans un template : `@{namespace}/{name}` si `default`, sinon `@{namespace}/{name}:{version}` |
 | `description` | chaîne | peut être vide |
 | `license` | chaîne | identifiant ou expression SPDX |
 | `role` | énumération | `selected` \| `dependency` |

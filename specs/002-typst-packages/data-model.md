@@ -36,11 +36,14 @@ autorisées.
 **Opérations** :
 - `get(&PackageSpec) -> Option<&BundledPackage>` ;
 - `versions_of(name) -> Vec<PackageVersion>` ;
+- `default_version(name) -> Option<PackageVersion>` : la plus récente version intégrée de ce
+  nom ;
 - `all() -> &[BundledPackage]`.
 
 ## PackageInfo (représentation API, `GET /packages`)
 
-Projection publique de `BundledPackage` : `namespace`, `name`, `version`, `import` (valeur
+Projection publique de `BundledPackage` : `namespace`, `name`, `version`, `default` (s'agit-il
+de la version par défaut ?), `import` (`@preview/name` si c'est la version par défaut, sinon
 `@preview/name:version`), `description`, `license`, `role`. Voir
 [contracts/api.md](./contracts/api.md).
 
@@ -50,7 +53,8 @@ Projection publique de `BundledPackage` : `namespace`, `name`, `version`, `impor
 |---|---|---|
 | `file` | chemin relatif au template | fichier `.typ` contenant l'import |
 | `line` | entier, à partir de 1 | ligne de l'import |
-| `raw` | chaîne | littéral tel qu'écrit, par exemple `@preview/zero:0.7.1` |
+| `raw` | chaîne | littéral tel qu'écrit, par exemple `@preview/zero` ou `@preview/zero:0.7.1` |
+| `resolved` | `PackageSpec` ou rien | version effectivement utilisée (la version par défaut si elle est omise) |
 | `outcome` | `Bundled` \| `Invalid(spec_error)` \| `NotBundled { available: Vec<version> }` | résultat de la résolution |
 
 **Effet sur le template.** Si au moins un import n'est pas `Bundled`, le template passe à

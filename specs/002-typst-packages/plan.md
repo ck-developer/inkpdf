@@ -8,7 +8,8 @@
 
 Intégrer au binaire `inkpdf` un ensemble **fixe** de paquets Typst Universe, soit 21 paquets
 validés et leurs dépendances (29 au total), pour que tout template puisse écrire
-`#import "@preview/nom:version"` sans réseau.
+`#import "@preview/nom"`, **sans version** (la plus récente version intégrée est alors
+utilisée), ou `#import "@preview/nom:version"` pour figer une version, sans réseau.
 
 **Fichiers du dépôt**
 - Les archives officielles sont **versionnées dans le dépôt** sous `packages/vendor/`
@@ -79,7 +80,7 @@ désormais `build.rs` et `packages/`)
 - Nouveaux modules : un `build.rs`, `src/packages/`, `src/template/imports.rs` et
   `src/api/packages.rs`.
 
-Aucune inconnue restante : décisions R1–R14 dans [research.md](./research.md).
+Aucune inconnue restante : décisions R1–R15 dans [research.md](./research.md).
 
 ## Constitution Check
 
@@ -110,7 +111,7 @@ specs/002-typst-packages/
 ├── spec.md
 ├── synthese.md            # résumé non technique des décisions
 ├── plan.md                # ce fichier
-├── research.md            # R1–R14
+├── research.md            # R1–R15
 ├── data-model.md
 ├── quickstart.md
 ├── contracts/
@@ -137,7 +138,8 @@ src/
 ├── template/
 │   └── imports.rs             # NOUVEAU : imports littéraux `@ns/nom:version` d'un .typ
 ├── registry/loader.rs         # MODIFIÉ : template invalide si import non intégré
-├── render/world.rs            # MODIFIÉ : résolution VirtualRoot::Package, diagnostics, cache
+├── render/world.rs            # MODIFIÉ : résolution VirtualRoot::Package, version complétée
+│                              #   pour les imports sans version (R15), diagnostics, cache
 ├── render/mod.rs              # MODIFIÉ : chemin de diagnostic « @preview/nom:ver/… »
 ├── api/packages.rs            # NOUVEAU : GET /packages
 └── api/mod.rs                 # MODIFIÉ : route + schémas OpenAPI
