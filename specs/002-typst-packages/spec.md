@@ -13,6 +13,10 @@ l'application dès sa construction**, selon une **liste fixée et validée** (pr
 `research/carte-paquets.md`, sans `cmarker`) ; pas de dossier de paquets partagé, pas de
 paquet de helpers maison, pas de paquets P3 pour le moment. Dans les templates, un paquet
 s'importe par son seul nom, **sans version** (décision du 2026-10-10).
+**Extension du périmètre (2026-10-10, même feature)** : téléchargement du PDF, métadonnées du
+document, renommage de la dimension `design` en `layout`, collection Bruno et exemples riches
+(facture de situation BTP multipage avec plusieurs requêtes). Le client typé, le cache et
+l'aperçu en image restent hors périmètre.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -116,6 +120,106 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
 
 ---
 
+### User Story 5 - Télécharger le document au lieu de l'afficher (Priority: P2)
+
+Une application appelante propose un bouton « Télécharger ». Elle demande la même génération en
+précisant qu'elle veut un téléchargement, avec éventuellement un nom de fichier ; le navigateur
+enregistre alors le PDF au lieu de l'afficher.
+
+**Why this priority**: besoin direct des interfaces ; sans lui, chaque client doit le gérer seul.
+
+**Independent Test**: demander une génération en mode téléchargement avec un nom de fichier et
+vérifier l'en-tête de la réponse ; sans l'option, le PDF reste affichable.
+
+**Acceptance Scenarios**:
+
+1. **Given** un template valide, **When** l'appelant demande une génération en mode
+   téléchargement avec le nom `facture-042`, **Then** la réponse indique un téléchargement nommé
+   `facture-042.pdf`.
+2. **Given** le même appel sans nom de fichier, **Then** le nom est `<identifiant du template>.pdf`.
+3. **Given** un nom contenant des caractères dangereux (`../`, guillemets, retours à la ligne)
+   ou accentués, **Then** le nom est nettoyé et les accents sont conservés de façon standard.
+4. **Given** un appel sans l'option, **Then** le comportement V1 est inchangé (affichage).
+
+---
+
+### User Story 6 - Renseigner les métadonnées du PDF (Priority: P2)
+
+L'appelant fournit, en plus des données et de la mise en page, des métadonnées facultatives du
+document (titre, auteur, sujet, mots-clés, date). Elles apparaissent dans les propriétés du PDF.
+Sans auteur fourni, l'auteur par défaut du service est utilisé ; l'opérateur peut le changer par
+configuration.
+
+**Why this priority**: identification et classement des documents produits.
+
+**Independent Test**: générer avec un titre et un auteur et lire les propriétés du PDF ; générer
+sans métadonnées et vérifier l'auteur par défaut.
+
+**Acceptance Scenarios**:
+
+1. **Given** des métadonnées complètes, **When** une génération est demandée, **Then** le PDF
+   porte ce titre, cet auteur, ce sujet, ces mots-clés et cette date.
+2. **Given** aucune métadonnée, **Then** l'auteur est l'auteur par défaut du service (`inkpdf`
+   sauf configuration) et le titre est celui défini par le template, à défaut son nom.
+3. **Given** un template qui définit lui-même un titre, **When** l'appelant fournit un titre,
+   **Then** celui de l'appelant l'emporte.
+4. **Given** une métadonnée de type incorrect ou inconnue, **Then** la génération est refusée
+   avant compilation, avec le chemin fautif.
+5. **Given** les mêmes données et métadonnées, **Then** les PDF restent identiques octet pour
+   octet.
+
+---
+
+### User Story 7 - Nommer `layout` la dimension de mise en page (Priority: P2)
+
+La seconde dimension du corps de génération, aujourd'hui `design`, s'appelle désormais `layout`,
+partout : corps de requête, schémas des templates, données vues par Typst, documentation.
+
+**Why this priority**: le terme décrit mieux son rôle ; c'est le moment de le faire, avant tout
+utilisateur externe.
+
+**Independent Test**: générer le template de démonstration avec `layout` et vérifier l'effet des
+paramètres ; un corps contenant encore `design` est refusé.
+
+**Acceptance Scenarios**:
+
+1. **Given** un template dont le schéma déclare `layout` avec des valeurs par défaut, **When**
+   l'appelant envoie `{ data, layout }`, **Then** les paramètres sont appliqués.
+2. **Given** un corps contenant `design`, **Then** il est refusé (propriété inconnue) avec le
+   chemin fautif.
+
+---
+
+### User Story 8 - Exemples riches et collection Bruno (Priority: P2)
+
+Un développeur ouvre le dossier d'exemples dans Bruno et teste toutes les routes. Il dispose
+d'un template réaliste et exigeant — une facture de situation de travaux (BTP) sur plusieurs
+pages, avec en-tête (logo, coordonnées de l'entreprise), pied de page, tableau des postes,
+récapitulatif et conditions — et de plusieurs requêtes qui en couvrent les variantes.
+
+**Why this priority**: permet d'itérer sur des cas réels et d'éprouver les paquets et le
+`layout`.
+
+**Independent Test**: ouvrir la collection dans Bruno, lancer chaque requête contre un service
+local ; générer chaque requête d'exemple de la facture et vérifier les montants attendus.
+
+**Acceptance Scenarios**:
+
+1. **Given** le service lancé localement, **When** la collection Bruno est ouverte, **Then**
+   chaque route de l'API dispose d'au moins une requête prête à l'emploi, y compris le
+   téléchargement et les métadonnées.
+2. **Given** les requêtes d'exemple de la facture de situation, **When** elles sont générées,
+   **Then** chacune produit un PDF dont les totaux sont exacts, et la plus longue tient sur au
+   moins trois pages avec en-têtes de tableau répétés et numérotation « page X / Y ».
+3. **Given** les variantes de conditions (retenue de garantie ou caution, autoliquidation de la
+   TVA, révision de prix, remboursement d'avance, compte prorata, avenants, plusieurs taux de
+   TVA, QR de virement), **Then** chacune est couverte par au moins une requête d'exemple.
+4. **Given** les paramètres de `layout` (couleurs, position et affichage du logo, densité,
+   blocs facultatifs), **Then** au moins deux requêtes produisent des rendus visiblement
+   différents du même template.
+
+---
+
 ### Edge Cases
 
 - Un import avec une version (`@preview/zero:0.7.1`), une version partielle ou un autre namespace
@@ -183,6 +287,25 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
 - **FR-019**: Le dépôt DOIT fournir au moins un template d'exemple utilisant des paquets du
   service (au minimum un QR code et un montant formaté), servant de référence et de test.
 
+- **FR-020**: La génération DOIT accepter une option de téléchargement et un nom de fichier
+  facultatif ; la réponse indique alors un téléchargement nommé (nettoyé, extension `.pdf`
+  forcée, `<identifiant>.pdf` par défaut). Sans l'option, la réponse reste affichable.
+- **FR-021**: Le corps de génération DOIT accepter une section facultative `metadata` (titre,
+  auteur(s), sujet, mots-clés, date), validée avant compilation (propriétés inconnues et types
+  incorrects refusés).
+- **FR-022**: Les métadonnées DOIVENT être appliquées au PDF selon l'ordre de priorité :
+  requête, puis template, puis valeurs par défaut du service (auteur configurable, `inkpdf` par
+  défaut ; titre = nom du template). Elles ne sont jamais interprétées comme du code.
+- **FR-023**: La dimension de mise en page DOIT s'appeler `layout` dans le corps de génération,
+  les schémas de templates et les données transmises aux templates ; `design` n'est plus
+  accepté.
+- **FR-024**: Le dépôt DOIT fournir une collection Bruno couvrant toutes les routes de l'API,
+  avec un environnement local, et un test DOIT vérifier qu'elle ne référence que des routes
+  existantes.
+- **FR-025**: Le dépôt DOIT fournir un template de facture de situation de travaux multipage et
+  plusieurs requêtes d'exemple couvrant ses variantes (voir US8), avec des tests vérifiant les
+  totaux d'au moins un cas calculé indépendamment.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Paquet intégré** : paquet Typst figé dans l'application ; identifié par son nom et sa
@@ -210,6 +333,10 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
 - **SC-006**: Le template d'exemple utilisant des paquets se génère en moins d'une seconde dans
   95 % des cas.
 - **SC-007**: Une archive de paquet altérée est détectée à 100 % lors de la construction.
+- **SC-008**: 100 % des routes de l'API sont couvertes par la collection Bruno et chaque requête
+  aboutit contre un service local.
+- **SC-009**: Les totaux de la facture de situation d'exemple sont exacts au centime pour le cas
+  vérifié par calcul indépendant ; la variante longue tient sur au moins trois pages.
 
 ## Assumptions
 
@@ -234,5 +361,11 @@ les templates utilisent la nouvelle ; altérer une empreinte, vérifier que la c
   (principe II), rien n'est téléchargé au fonctionnement (principes II et IV), et la liste ne
   change qu'avec une nouvelle version de l'application, les templates restant modifiables à
   chaud (principe V). Aucun amendement n'est nécessaire.
+- `design` est renommé `layout` sans période de compatibilité : la V1 n'a pas encore
+  d'utilisateur externe. La constitution (principe III) est amendée en conséquence (PATCH).
+- Les exemples (dont la facture de situation BTP) sont des démonstrations : les mentions
+  légales et règles de calcul qu'ils contiennent sont indicatives et ne constituent pas un
+  modèle validé.
 - Hors périmètre : dossier de paquets partagé dans le volume, paquets embarqués dans un template,
-  paquet de helpers maison, paquets P3, séparation aperçu / document final, PDF/A, Factur-X.
+  paquet de helpers maison, paquets P3, séparation aperçu / document final, PDF/A, Factur-X,
+  client typé / OpenAPI par template, cache des PDF, aperçu en image.

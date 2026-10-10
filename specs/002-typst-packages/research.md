@@ -321,3 +321,103 @@ nécessaire qu'à ce moment, sur le poste du mainteneur.
 
 **Rationale.** Les mesures se font dans les conditions de la V1. Le cache global des sources
 (R6) est la principale protection.
+
+---
+
+# Extension du périmètre (2026-10-10) : téléchargement, métadonnées, `layout`, exemples
+
+## R16 — Renommage `design` → `layout`
+
+**Décision.** Renommage complet, sans alias ni période de compatibilité :
+- corps de requête `{ data, layout, metadata? }` ;
+- clé racine autorisée dans `schema.json` (`data` et `layout` seulement) ;
+- entrée Typst `sys.inputs.layout` (dictionnaire vide si le schéma ne déclare pas `layout`) ;
+- schéma OpenAPI `RenderRequest` ;
+- documentation et exemples.
+
+Un corps contenant `design` est refusé par `additionalProperties: false` (422, chemin
+`/design`). La constitution (principe III) est amendée en version 1.0.2 (PATCH) : le concept
+reste le même, seul le nom change. Les documents de la feature 001 restent historiques.
+
+**Rationale.** La V1 n'a aucun appelant externe. Garder un alias créerait deux façons d'écrire,
+exactement ce que l'utilisateur a refusé pour les imports.
+
+## R17 — Métadonnées du document
+
+**Décision.**
+- `metadata` est une section **facultative** du corps, retirée avant la validation par le
+  schéma du template et validée par un schéma **fixe** propre au service :
+
+  | Champ | Type et contraintes |
+  |---|---|
+  | `title` | 1 à 500 caractères |
+  | `author` | chaîne, ou tableau de 1 à 20 chaînes de 1 à 200 caractères |
+  | `subject` | ≤ 2 000 caractères |
+  | `keywords` | tableau de ≤ 50 chaînes de 1 à 100 caractères |
+  | `date` | chaîne `AAAA-MM-JJ` |
+
+  Les propriétés inconnues sont refusées. Les violations ont des chemins `/metadata/...` et
+  s'ajoutent à celles de `data` et `layout` (une seule réponse 422).
+- Les métadonnées sont appliquées **après compilation**, sur `PagedDocument::info_mut()`
+  (`typst-layout-0.15.1/src/document.rs` l. 38), avant l'export PDF. Elles ne sont donc jamais
+  injectées comme code Typst. Ordre de priorité :
+  - **titre** : requête, puis `set document(title:)` du template, puis `name` du template ;
+  - **auteurs** : requête, puis template, puis `INKPDF_DEFAULT_AUTHOR` (défaut `inkpdf`) ;
+  - **sujet** (`description` dans Typst), **mots-clés** et **date** : requête, sinon ceux du
+    template, sinon rien (pas de date : déterminisme).
+- Une date fournie par l'appelant reste déterministe, puisque c'est une donnée d'entrée.
+  L'`ident` du PDF reste `{id}@{fingerprint}`.
+
+**Alternatives écartées.**
+- *Une source Typst enveloppe avec `set document(...)`* : les règles `document` sont limitées
+  au premier niveau, et ce serait de la génération de code.
+- *Laisser chaque template lire `sys.inputs.metadata`* : chaque auteur devrait le faire.
+
+## R18 — Téléchargement
+
+**Décision.**
+- Deux paramètres de requête facultatifs sur `POST /templates/{templateId}/render` :
+  - `download` (`true` ou `false`, `false` par défaut) ;
+  - `filename` (chaîne, 200 caractères au maximum).
+- Réponse :
+  - `Content-Disposition: attachment` si `download=true`, `inline` sinon ;
+  - `filename="<ascii>"` (non-ASCII remplacé par `_`) suivi de `filename*=UTF-8''<encodé>`
+    (RFC 6266 / 5987).
+- Nettoyage du nom :
+  1. retrait des caractères de contrôle et de `/ \ " : * ? < > |` ;
+  2. espaces et points superflus retirés en bordure ;
+  3. un `.pdf` final est retiré puis rajouté ;
+  4. si le résultat est vide, `<templateId>`.
+- Une valeur de `download` invalide donne **400**, avec le nouveau code `invalid-parameter`.
+
+**Rationale.** C'est la même route et le même rendu, donc pas de seconde génération à prévoir
+côté serveur. Le cache est explicitement hors périmètre : un client qui veut un aperçu puis un
+téléchargement réutilise le PDF déjà reçu.
+
+## R19 — Exemples et Bruno
+
+**Décision.**
+- **Facture de situation de travaux** : `examples/templates/facture-situation/`.
+  - Montants en chaînes décimales, calculés en Typst avec `decimal` et arrondis au centime.
+  - En-tête répété : logo SVG de démonstration et coordonnées de l'entreprise. Pied de page :
+    mentions légales et « page X / Y ».
+  - Tableau des postes par lot, avec en-tête répété.
+  - Avenants, récapitulatif, conditions de paiement et QR SEPA (`sepay`) facultatif.
+  - Montant en lettres (`frogst`), dates en français (`datify`), montants avec `zero`.
+  - Les variantes sont pilotées par `data` (conditions du marché) et par `layout` (couleurs,
+    logo, densité, blocs).
+- **Requêtes d'exemple** dans `examples/requests/facture-situation/*.json`, une par famille de
+  conditions, dont une longue (au moins 3 pages).
+- **Exemple de `layout` soigné** : couleurs, police, position et affichage du logo, densité,
+  affichage des colonnes d'avancement, du QR et du montant en lettres, tous avec des valeurs par
+  défaut. `sample` passe aussi à `layout`.
+- **Collection Bruno** `examples/bruno/` :
+  - `bruno.json` et `environments/local.bru` (`baseUrl`) ;
+  - une requête `.bru` par route et par cas utile (rendu affiché, téléchargement, métadonnées,
+    chaque variante de facture) ;
+  - assertions simples sur le statut.
+- **Tests** :
+  - chaque requête d'exemple de la facture produit un PDF ;
+  - un cas est vérifié au centime par un calcul indépendant fait dans le test ;
+  - la variante longue fait au moins 3 pages ;
+  - un test vérifie que chaque `.bru` cible une route de l'OpenAPI.

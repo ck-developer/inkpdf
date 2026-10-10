@@ -171,3 +171,33 @@ Aucune nouvelle violation. La dérogation V1 sur la durée (principe IV) reste v
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | `build.rs` avec génération de code | Les paquets doivent être dans le binaire, vérifiés par empreinte, et lisibles sans décompression à l'exécution | Décompresser au démarrage ajouterait deux dépendances d'exécution (`flate2`, `tar`) et un coût au démarrage. Copier les fichiers dans l'image Docker casserait `cargo test` sans Docker et le principe « binaire unique » (R1). |
+
+## Extension du périmètre (2026-10-10)
+
+La feature 002 inclut aussi les quatre ajouts suivants.
+
+| Ajout | Décision |
+|---|---|
+| Téléchargement | `?download=true&filename=…` sur la route de rendu (R18) |
+| Métadonnées | `metadata` facultatif, appliqué au document compilé, auteur par défaut configurable (`INKPDF_DEFAULT_AUTHOR`) (R17) |
+| Renommage | `design` devient `layout`, avec amendement PATCH de la constitution (R16) |
+| Exemples | collection Bruno et facture de situation BTP multipage avec plusieurs requêtes (R19) |
+
+**Constitution Check (extension)** : ✅
+- **III** : renommage seulement, le principe est inchangé. Amendement 1.0.2.
+- **IV** : les métadonnées sont des données, appliquées hors du code Typst ; le nom de fichier
+  est nettoyé.
+- **VI** : nouveaux paramètres et nouveau code d'erreur décrits dans l'OpenAPI.
+- **VII** : ni état ni cache, et `src/` reste agnostique, car tout le contenu métier de la
+  facture vit dans `examples/`.
+
+**Fichiers touchés en plus** :
+- **code** : `src/render/metadata.rs` (nouveau), `src/render/mod.rs` (`compile_pdf`
+  applique les métadonnées), `src/api/render.rs` (paramètres, `metadata`, en-tête),
+  `src/template/schema.rs` et `src/render/world.rs` (`layout`), `src/config.rs`
+  (`default_author`), `src/error.rs` (`invalid-parameter`) ;
+- **constitution** : `.specify/memory/constitution.md` ;
+- **exemples et tests** : `examples/templates/facture-situation/`,
+  `examples/requests/facture-situation/`, `examples/bruno/`, `tests/api_metadata.rs`,
+  `tests/examples.rs` ;
+- **documentation** : `docs/templates.md`, README.

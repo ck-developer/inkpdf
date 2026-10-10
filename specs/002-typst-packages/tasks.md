@@ -296,3 +296,74 @@ Ajuster en conséquence les compteurs (21, 29) dans les tests et la doc.
 - [P] = fichiers différents, sans dépendance.
 - Commit à la fin de chaque phase. Les messages de commit ne mentionnent pas Claude.
 - `build.rs` est la seule génération de code ; ne pas committer `OUT_DIR`.
+
+---
+
+# Extension du périmètre (2026-10-10)
+
+## Phase 8: US7 - `design` → `layout` (Priority: P2)
+
+- [ ] T038 [US7] Renommer `design` en `layout` dans les fichiers suivants (R16) :
+  - `src/template/schema.rs`, `src/render/world.rs`, `src/api/render.rs`, `src/api/mod.rs` ;
+  - tests unitaires et `tests/*.rs` ;
+  - `examples/templates/sample/` (`schema.json`, `main.typ`), `examples/templates/packages-demo/`, `examples/requests/*.json` ;
+  - fixtures concernées.
+
+  Ajouter un test vérifiant qu'un corps contenant `design` est refusé (422, `/design`).
+- [ ] T039 [US7] Amender `.specify/memory/constitution.md` en version 1.0.2 : principe III, « paramètres de design » devient « paramètres de mise en page (`layout`) », avec un Sync Impact Report. Mettre à jour `docs/templates.md` et le README. Ajouter une note dans `specs/001-pdf-generation-service/contracts/template-format.md`. Régénérer `openapi/openapi.json`.
+
+## Phase 9: US6 - Métadonnées (Priority: P2)
+
+- [ ] T040 [P] [US6] Écrire `tests/api_metadata.rs` :
+  - métadonnées complètes, avec lecture des propriétés du PDF (`/Title`, `/Author`, `/Subject`, `/Keywords`, `/CreationDate`) via une recherche dans le flux XMP ou le dictionnaire `Info`, sans nouvelle dépendance ;
+  - corps sans `metadata` : auteur `inkpdf`, titre égal au nom du template ;
+  - `default_author` configuré ;
+  - propriété inconnue ou type incorrect : 422, chemin `/metadata/...` ;
+  - déterminisme.
+- [ ] T041 [US6] Créer `src/render/metadata.rs` :
+  - une struct `DocumentMetadata` ;
+  - le schéma fixe de R17, validé par `jsonschema` ;
+  - `extract(body) -> Result<(Value, Option<DocumentMetadata>), Vec<Violation>>` ;
+  - `apply(&mut DocumentInfo, &DocumentMetadata?, template_name, default_author)`.
+
+  Ajouter `default_author` à `src/config.rs` (`INKPDF_DEFAULT_AUTHOR`, défaut `inkpdf`) et à ses tests. Brancher le tout dans `src/api/render.rs` (fusion des violations) et dans `src/render/mod.rs::compile_pdf` (application via `info_mut()` avant `typst_pdf::pdf`). Mettre à jour `RenderRequest` (champ `metadata` documenté) et `tests/common` (`compile`).
+
+## Phase 10: US5 - Téléchargement (Priority: P2)
+
+- [ ] T042 [P] [US5] Ajouter des tests dans `tests/api_render.rs` :
+  - `?download=true&filename=Facture 042` donne `attachment; filename="Facture 042.pdf"; filename*=UTF-8''Facture%20042.pdf` ;
+  - sans nom, `<id>.pdf` ;
+  - nom dangereux nettoyé ;
+  - nom accentué en ASCII de repli plus `filename*` ;
+  - `download=oui` donne 400 `invalid-parameter` ;
+  - sans paramètre, `inline` inchangé.
+- [ ] T043 [US5] Dans `src/api/render.rs`, ajouter une struct `RenderQuery` (`IntoParams`) et une fonction pure `content_disposition(id, download, filename)` avec ses tests unitaires. Ajouter `ErrorCode::InvalidParameter` (400) dans `src/error.rs`. Régénérer l'OpenAPI.
+
+## Phase 11: US8 - Exemples riches et Bruno (Priority: P2)
+
+- [ ] T044 [US8] Créer `examples/templates/facture-situation/` (R19) :
+  - `template.json` ;
+  - `schema.json` complet : `data` (entreprise, client, chantier, marché, situation, lots et postes, avenants, conditions) et `layout` avec ses valeurs par défaut ;
+  - `assets/logo.svg` de démonstration ;
+  - `main.typ` et des sous-fichiers `parts/` (en-tête, tableau, récapitulatif, conditions).
+- [ ] T045 [US8] Créer `examples/requests/facture-situation/` avec ces requêtes :
+  - `01-premiere-situation.json` : retenue de garantie 5 %, TVA 20 %, une page ;
+  - `02-situation-longue.json` : au moins 3 pages, plusieurs lots, avenants, révision de prix, remboursement d'avance, compte prorata, QR SEPA ;
+  - `03-sous-traitance-autoliquidation.json` : autoliquidation, caution bancaire au lieu de la retenue, `layout` différent (logo à droite, autres couleurs, densité compacte) ;
+  - `04-multi-taux-tva.json` : rénovation à 10 % et 5,5 %, métadonnées et sans montant en lettres.
+- [ ] T046 [P] [US8] Écrire `tests/examples.rs` :
+  - chaque requête d'exemple, y compris `sample` et `packages-demo`, produit un PDF ;
+  - `01` est vérifiée au centime par un calcul indépendant fait dans le test ;
+  - `02` fait au moins 3 pages ;
+  - `03` mentionne l'autoliquidation et aucune TVA.
+- [ ] T047 [US8] Créer la collection Bruno `examples/bruno/` :
+  - `bruno.json` et `environments/local.bru` ;
+  - une requête par route : santé, disponibilité, liste, détail, schéma, paquets, OpenAPI ;
+  - les rendus : `sample`, `packages-demo`, chaque variante de facture, un téléchargement, des métadonnées, un import incorrect.
+
+  Ajouter dans `tests/examples.rs` un test vérifiant que chaque `.bru` cible une route présente dans `openapi/openapi.json`. Documenter l'usage dans le README.
+
+## Phase 12: Polish (extension)
+
+- [ ] T048 Mettre à jour `quickstart.md` (paramètres `download` et `filename`, `metadata`, `layout`, Bruno), `docs/templates.md` (métadonnées et `layout`), `synthese.md` et la mémoire du projet.
+- [ ] T049 Lancer `cargo fmt`, `clippy -D warnings` et `cargo test`. Rejouer la collection Bruno contre `docker compose up --build`, avec `bru run` si la CLI est disponible, sinon avec `curl` sur les mêmes requêtes.
