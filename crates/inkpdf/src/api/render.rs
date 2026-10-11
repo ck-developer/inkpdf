@@ -1,7 +1,5 @@
 //! `POST /templates/{templateId}/render`.
 
-use std::time::Instant;
-
 use axum::body::Bytes;
 use axum::extract::rejection::BytesRejection;
 use axum::extract::{Path, RawQuery, State};
@@ -14,11 +12,9 @@ use utoipa::openapi::RefOr;
 use utoipa::openapi::schema::{ObjectBuilder, Schema, Type};
 
 use crate::AppState;
-use crate::api::templates::TemplatePath;
+use crate::api::templates::{self, TemplatePath};
 use crate::error::{ApiError, Problem};
-use crate::registry::TemplateStatus;
-use crate::render;
-use crate::template::TemplateId;
+use crate::render::{self, Interface};
 
 /// Generic shape; the exact shape of `data` and `layout` is given by the template's schema
 /// (`GET /templates/{templateId}/schema`).
@@ -109,13 +105,11 @@ pub async fn render_template(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    let Ok(id) = template_id.parse::<TemplateId>() else {
-        return ApiError::TemplateNotFound.into_response();
-    };
-    let Some(entry) = state.registry.get(&id) else {
-        return ApiError::TemplateNotFound
-            .for_template(id.as_str())
-            .into_response();
+    // An unknown template is reported before any query or body error; `render::run` looks
+    // the template up again for its own checks.
+    let id = match templates::find(&state, &template_id) {
+        Ok(entry) => entry.id.clone(),
+        Err(error) => return error.into_response(),
     };
     let fail = |error: ApiError| error.for_template(id.as_str()).into_response();
     let query = match RenderQuery::parse(query.as_deref()) {
@@ -153,53 +147,8 @@ pub async fn render_template(
         }
     };
 
-    let schema = match (&entry.status, &entry.schema) {
-        (TemplateStatus::Valid, Some(schema)) => schema,
-        (TemplateStatus::Invalid { reason }, _) => {
-            return fail(ApiError::TemplateInvalid {
-                reason: reason.clone(),
-            });
-        }
-        (TemplateStatus::Valid, None) => {
-            return fail(ApiError::TemplateInvalid {
-                reason: "schema unavailable".into(),
-            });
-        }
-    };
-
-    // No body data is logged (FR-022).
-    let started = Instant::now();
-    let log = |outcome: &str| {
-        tracing::info!(
-            event = "render",
-            templateId = %id,
-            durationMs = started.elapsed().as_millis() as u64,
-            outcome,
-        );
-    };
-
-    // `metadata` is validated by the service's fixed schema, `data` and `layout` by the
-    // template's; all violations are returned together.
-    let mut body = body;
-    let metadata = match body.as_object_mut().map(render::metadata::extract) {
-        Some(Ok(metadata)) => Ok(metadata),
-        Some(Err(violations)) => Err(violations),
-        None => Ok(Default::default()),
-    };
-    let prepared = schema.prepare(body);
-    let (prepared, metadata) = match (prepared, metadata) {
-        (Ok(prepared), Ok(metadata)) => (prepared, metadata),
-        (prepared, metadata) => {
-            let mut violations = metadata.err().unwrap_or_default();
-            violations.extend(prepared.err().unwrap_or_default());
-            log("validation_failed");
-            return fail(ApiError::ValidationFailed { violations });
-        }
-    };
-
-    match render::render(entry.clone(), prepared, metadata, &state).await {
+    match render::run(&state, id.as_str(), body, Interface::Http).await {
         Ok(pdf) => {
-            log("ok");
             let disposition =
                 content_disposition(id.as_str(), query.download, query.filename.as_deref());
             let mut response = (StatusCode::OK, pdf).into_response();
@@ -213,14 +162,7 @@ pub async fn render_template(
             }
             response
         }
-        Err(error) => {
-            log(match error {
-                ApiError::RenderTimeout => "timeout",
-                ApiError::Overloaded => "overloaded",
-                _ => "render_failed",
-            });
-            fail(error)
-        }
+        Err(error) => fail(error),
     }
 }
 
@@ -315,8 +257,7 @@ fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
 
 /// `Content-Disposition` header (RFC 6266): cleaned name, ASCII fallback and UTF-8 `filename*`.
 fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> String {
-    let name = filename.map(clean_filename).filter(|n| !n.is_empty());
-    let name = format!("{}.pdf", name.as_deref().unwrap_or(id));
+    let name = pdf_file_name(id, filename);
     let ascii: String = name
         .chars()
         .map(|c| if c.is_ascii() { c } else { '_' })
@@ -344,6 +285,13 @@ fn content_disposition(id: &str, download: bool, filename: Option<&str>) -> Stri
         .collect();
     let kind = if download { "attachment" } else { "inline" };
     format!("{kind}; filename=\"{ascii}\"; filename*=UTF-8''{encoded}")
+}
+
+/// Suggested file name of a render: the cleaned `filename`, or the template id when it is
+/// absent or empty after cleaning, with `.pdf` appended.
+pub(crate) fn pdf_file_name(id: &str, filename: Option<&str>) -> String {
+    let name = filename.map(clean_filename).filter(|n| !n.is_empty());
+    format!("{}.pdf", name.as_deref().unwrap_or(id))
 }
 
 /// Strips paths, quotes and control characters; drops the `.pdf` extension.

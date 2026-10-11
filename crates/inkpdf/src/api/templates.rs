@@ -114,7 +114,11 @@ impl From<&TemplateEntry> for TemplateDetail {
     }
 }
 
-fn find(state: &AppState, template_id: &str) -> Result<Arc<TemplateEntry>, TemplateError> {
+/// Looks a template up by its raw id; a malformed id is unknown and not echoed in the error.
+pub(crate) fn find(
+    state: &AppState,
+    template_id: &str,
+) -> Result<Arc<TemplateEntry>, TemplateError> {
     let Ok(id) = template_id.parse::<TemplateId>() else {
         return Err(ApiError::TemplateNotFound.into());
     };
@@ -133,13 +137,18 @@ fn find(state: &AppState, template_id: &str) -> Result<Arc<TemplateEntry>, Templ
     responses((status = 200, description = "Known templates, valid or invalid, sorted by identifier.", body = TemplateList)),
 )]
 pub async fn list_templates(State(state): State<AppState>) -> Json<TemplateList> {
+    Json(template_list(&state))
+}
+
+/// Every known template, valid or invalid, sorted by id: the body of `GET /templates`.
+pub(crate) fn template_list(state: &AppState) -> TemplateList {
     let templates = state
         .registry
         .list()
         .iter()
         .map(|entry| TemplateSummary::from(entry.as_ref()))
         .collect();
-    Json(TemplateList { templates })
+    TemplateList { templates }
 }
 
 /// Template detail, schema included

@@ -1,4 +1,4 @@
-//! Rendering pipeline: slot, timeout, Typst compilation, PDF export.
+//! Rendering pipeline: validation, slot, timeout, Typst compilation, PDF export.
 
 pub mod fonts;
 pub mod metadata;
@@ -18,12 +18,100 @@ use typst_pdf::PdfOptions;
 
 use crate::AppState;
 use crate::error::{ApiError, Diagnostic};
-use crate::registry::TemplateEntry;
+use crate::registry::{TemplateEntry, TemplateStatus};
+use crate::template::TemplateId;
 use metadata::DocumentMetadata;
 use world::SandboxWorld;
 
 /// Age kept by the compilation cache between two renders.
 const CACHE_MAX_AGE: usize = 10;
+
+/// Interface a render request came through; recorded in the `render` log event.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Interface {
+    Http,
+    Mcp,
+}
+
+impl Interface {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Http => "http",
+            Self::Mcp => "mcp",
+        }
+    }
+}
+
+/// Validate-and-render pipeline shared by the HTTP API and the MCP interface, from a parsed
+/// request body (`{ data, layout?, metadata? }`) to the PDF.
+///
+/// In order: template lookup and status, `metadata` extraction, schema preparation (all
+/// violations together), the `render` log event, then [`render`]. A malformed id is treated as
+/// unknown. The caller attaches the template id to the error ([`ApiError::for_template`]).
+pub async fn run(
+    state: &AppState,
+    template_id: &str,
+    body: serde_json::Value,
+    interface: Interface,
+) -> Result<Vec<u8>, ApiError> {
+    let id = template_id
+        .parse::<TemplateId>()
+        .map_err(|_| ApiError::TemplateNotFound)?;
+    let entry = state.registry.get(&id).ok_or(ApiError::TemplateNotFound)?;
+    let schema = match (&entry.status, &entry.schema) {
+        (TemplateStatus::Valid, Some(schema)) => schema,
+        (TemplateStatus::Invalid { reason }, _) => {
+            return Err(ApiError::TemplateInvalid {
+                reason: reason.clone(),
+            });
+        }
+        (TemplateStatus::Valid, None) => {
+            return Err(ApiError::TemplateInvalid {
+                reason: "schema unavailable".into(),
+            });
+        }
+    };
+
+    // No body data is logged (FR-022).
+    let started = Instant::now();
+    let log = |outcome: &str| {
+        tracing::info!(
+            event = "render",
+            templateId = %id,
+            interface = interface.as_str(),
+            durationMs = started.elapsed().as_millis() as u64,
+            outcome,
+        );
+    };
+
+    // `metadata` is validated by the service's fixed schema, `data` and `layout` by the
+    // template's; all violations are returned together.
+    let mut body = body;
+    let metadata = match body.as_object_mut().map(metadata::extract) {
+        Some(Ok(metadata)) => Ok(metadata),
+        Some(Err(violations)) => Err(violations),
+        None => Ok(Default::default()),
+    };
+    let prepared = schema.prepare(body);
+    let (prepared, metadata) = match (prepared, metadata) {
+        (Ok(prepared), Ok(metadata)) => (prepared, metadata),
+        (prepared, metadata) => {
+            let mut violations = metadata.err().unwrap_or_default();
+            violations.extend(prepared.err().unwrap_or_default());
+            log("validation_failed");
+            return Err(ApiError::ValidationFailed { violations });
+        }
+    };
+
+    let result = render(entry.clone(), prepared, metadata, state).await;
+    log(match &result {
+        Ok(_) => "ok",
+        Err(ApiError::RenderTimeout) => "timeout",
+        Err(ApiError::Overloaded) => "overloaded",
+        Err(_) => "render_failed",
+    });
+    result
+}
 
 /// Generates a template's PDF from an already validated body.
 ///
