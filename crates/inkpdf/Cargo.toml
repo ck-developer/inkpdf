@@ -45,6 +45,7 @@ tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 time = { version = "0.3", features = ["formatting"] }
 regex = "1"
 num_cpus = "1"
+rmcp = { version = "3.5", default-features = false, features = ["server", "macros", "transport-streamable-http-server"] }
 
 # Embedded Typst packages: verified and extracted by build.rs (specs/002-typst-packages, R1).
 [build-dependencies]
