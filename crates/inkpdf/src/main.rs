@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use inkpdf::config::{Config, LogFormat};
 use inkpdf::{AppState, build_app, registry};
+use tokio_util::sync::CancellationToken;
 use tracing_subscriber::EnvFilter;
 
 fn main() -> ExitCode {
@@ -66,12 +67,17 @@ async fn run(config: Config) -> std::io::Result<()> {
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
     tracing::info!(event = "server.listening", address = %listen);
+    let shutdown = state.shutdown.clone();
     axum::serve(listener, build_app(state))
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(shutdown))
         .await
 }
 
-async fn shutdown_signal() {
+/// Resolves on Ctrl-C or SIGTERM, then cancels `shutdown`, which stops the MCP service.
+///
+/// In-flight HTTP requests are drained; an MCP call still running at that point is answered
+/// with a `500` by rmcp, which stops waiting for its handler once the token is cancelled.
+async fn shutdown_signal(shutdown: CancellationToken) {
     let ctrl_c = async {
         let _ = tokio::signal::ctrl_c().await;
     };
@@ -92,6 +98,7 @@ async fn shutdown_signal() {
         () = terminate => {},
     }
     tracing::info!(event = "server.shutdown");
+    shutdown.cancel();
 }
 
 fn init_tracing(format: LogFormat) {

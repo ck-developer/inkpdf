@@ -19,8 +19,8 @@ use utoipa::openapi::{self, ContentBuilder, Ref, RefOr, ResponseBuilder};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-use crate::AppState;
 use crate::error::{Diagnostic, ErrorCode, Problem, Violation};
+use crate::{AppState, mcp};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -90,14 +90,25 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     DOC.get_or_init(|| router().into_openapi()).clone()
 }
 
-/// Builds the complete HTTP application.
+/// Builds the complete HTTP application, with the MCP service at `/mcp` when it is enabled.
 pub fn build_app(state: AppState) -> Router {
     let (router, _api) = router().split_for_parts();
+    let mut router = router.route("/docs", axum::routing::get(docs::docs_page));
+    if state.config.mcp_enabled {
+        // Outside the OpenAPI router: the OpenAPI document does not change (FR-016).
+        router = router.nest_service(
+            "/mcp",
+            mcp::service(state.clone(), state.shutdown.child_token()),
+        );
+    }
     router
-        .route("/docs", axum::routing::get(docs::docs_page))
         // Limit enforced by the body extractor; the handler turns an overflow into a
-        // problem+json `413 payload-too-large`.
+        // problem+json `413 payload-too-large`. `DefaultBodyLimit` only stores the limit in
+        // the request extensions for axum's extractors: the MCP service reads the raw body
+        // and never consults it, whatever the layer order. Its own limit
+        // (`max_body_bytes` + 64 KiB, see `mcp::service`) governs `/mcp` (research R5).
         .layer(DefaultBodyLimit::max(state.config.max_body_bytes))
+        // Also traces `/mcp` (research R8).
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

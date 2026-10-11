@@ -45,7 +45,12 @@ tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 time = { version = "0.3", features = ["formatting"] }
 regex = "1"
 num_cpus = "1"
+# Optional MCP interface (specs/004-mcp-server, R1): server and Streamable HTTP only, no client,
+# child process or reqwest.
 rmcp = { version = "3.5", default-features = false, features = ["server", "macros", "transport-streamable-http-server"] }
+# `CancellationToken` of the MCP service's shutdown; rmcp does not re-export it and already
+# depends on this crate.
+tokio-util = "0.7"
 
 # Embedded Typst packages: verified and extracted by build.rs (specs/002-typst-packages, R1).
 [build-dependencies]
