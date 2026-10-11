@@ -168,7 +168,8 @@ only.
   summary and its full data description as published by the HTTP API (business data and layout
   parameters, with required fields, types, allowed values, descriptions and defaults), unaltered.
 - **FR-007**: The render tool MUST take a template identifier, the business data, and the
-  optional layout parameters and document metadata accepted by the HTTP API, and MUST return
+  optional layout parameters, document metadata and file name accepted by the HTTP API, and
+  MUST return
   the PDF itself as a file (PDF media type, suggested file name) within the tool's answer,
   together with a short text summary (template, file name, size).
 - **FR-008**: The render tool MUST produce the same document as the HTTP API for the same

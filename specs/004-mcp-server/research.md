@@ -108,6 +108,9 @@ such as Claude can offer it as a download.
   it with `payload-too-large` above `INKPDF_MAX_BODY_BYTES`, like the HTTP API. The transport
   limit (`max_request_body_bytes`) is set to `INKPDF_MAX_BODY_BYTES + 64 KiB` to leave room for
   the JSON-RPC envelope, so the tool sees oversized input and reports it properly.
+  **To confirm during implementation**: `build_app` applies `DefaultBodyLimit` as a layer over
+  the whole router; check which limit governs `/mcp` (axum's or rmcp's), so that the oversized
+  input reaches the tool and becomes a tool error.
 - Concurrency, queue timeout and render timeout: shared by construction (R3).
 
 ## R6 — Browser origins and hosts
@@ -185,8 +188,10 @@ Raw JSON-RPC keeps the tests on the wire contract and avoids pulling `rmcp`'s cl
 - **Claude Code**: `claude mcp add --transport http inkpdf http://<host>:3000/mcp`.
 - **Claude Desktop**: an entry in `claude_desktop_config.json`. The app's "Connectors" screen
   calls remote servers from Anthropic's cloud, which cannot reach a private network; the local
-  configuration file is the way to reach a private address. The exact entry is checked against
-  the current Claude Desktop documentation when the page is written.
+  configuration file is the way to reach a private address. **To confirm during
+  implementation**: whether that file accepts a remote HTTP server directly, or needs a
+  stdio-to-HTTP bridge (such as `mcp-remote`). Claude Code is therefore the primary documented
+  client, Claude Desktop the secondary one.
 - **MCP Inspector** for operators who want to try the tools by hand.
 
 ## R12 — Constitution
