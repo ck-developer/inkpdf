@@ -1,6 +1,33 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.3 → 1.1.0
+Bump rationale: MINOR — extension matérielle du principe VI : le service PEUT exposer une
+interface MCP (Model Context Protocol) optionnelle, désactivée par défaut, offrant les mêmes
+opérations en lecture seule que l'API REST, par le même pipeline et sous les mêmes limites
+(feature 004). La règle de workflow sur la documentation de l'API publique distingue désormais
+l'API REST (document OpenAPI) et l'interface MCP (documentation et tests de contrat). Aucun
+principe retiré ni renommé.
+
+Modifications 1.1.0 :
+- VI. API REST auto-descriptive : ajout d'une règle sur l'interface MCP optionnelle ; rationale
+  complétée.
+- Workflow de développement et qualité : tests de contrat de l'interface MCP quand elle est
+  présente ; la règle « toute modification de l'API publique … document OpenAPI » est scindée
+  entre API REST (OpenAPI et documentation) et interface MCP (documentation et tests de
+  contrat).
+- Inchangés et applicables à l'interface MCP : IV (JSON uniquement, bac à sable) et VII (ni
+  authentification, ni état, ni base de données).
+
+Templates dépendants :
+- .specify/templates/plan-template.md : aucun changement requis (le « Constitution Check »
+  vérifie toujours les principes I à VII).
+- .specify/templates/spec-template.md : aucun changement requis.
+- .specify/templates/tasks-template.md : aucun changement requis.
+
+TODO différés : aucun.
+
+Historique 1.0.3 :
 Version change: 1.0.2 → 1.0.3
 Bump rationale: PATCH — résolution du TODO(LICENSE) différé : double licence
 `MIT OR Apache-2.0` (convention Rust, compatible avec Typst sous Apache-2.0). Aucune règle
@@ -156,9 +183,20 @@ de livrer des documents sans toucher au service.
 - Les schémas de templates DOIVENT être exprimés en JSON Schema et exposés tels quels par l'API.
 - Les erreurs DOIVENT suivre un format structuré unique et distinguer erreur de l'appelant
   (template inconnu, JSON invalide) et erreur interne (échec de compilation).
+- En plus de l'API REST, le service PEUT exposer une interface MCP (Model Context Protocol),
+  optionnelle et désactivée par défaut. Si elle est présente :
+  - elle N'offre QUE les opérations en lecture seule de l'API REST : liste des templates, détail
+    et schéma d'un template, génération d'un PDF ;
+  - elle DOIT passer par le même pipeline que l'API REST (validation, valeurs par défaut,
+    moteur, limites, bac à sable) et produire, pour la même entrée, le même PDF et les mêmes
+    erreurs, dans le même format structuré ;
+  - elle est décrite dans la documentation et vérifiée par des tests de contrat ; le document
+    OpenAPI continue de décrire uniquement l'API REST.
 
 **Rationale** : un appelant doit pouvoir découvrir, comprendre et appeler un template sans
-lire son code Typst ni la documentation du dépôt.
+lire son code Typst ni la documentation du dépôt. L'interface MCP rend le même service à un
+assistant IA ; imposer le même pipeline garantit qu'elle n'élargit ni la surface d'attaque ni
+le périmètre du service.
 
 ### VII. Simplicité et périmètre maîtrisé
 
@@ -202,14 +240,18 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les tests DOIVENT couvrir au minimum :
   - la validation JSON contre schéma (entrées valides et invalides, sur les deux dimensions) ;
   - le contrat de l'API REST (codes, formats d'erreur, conformité au document OpenAPI) ;
+  - si l'interface MCP est présente, le contrat de ses outils (résultats, erreurs, refus des
+    requêtes d'origine navigateur) et l'identité de ses PDF avec ceux de l'API REST ;
   - la génération de bout en bout d'au moins un template d'exemple ;
   - les garanties de bac à sable (tentative d'accès réseau, de lecture hors dossier, de
     traversée de chemin dans l'identifiant).
 - Le dépôt DEVRAIT fournir au moins un template de démonstration neutre, sans domaine métier,
   illustrant les deux dimensions du JSON d'entrée ; il sert de référence de documentation et
   de test.
-- Toute modification de l'API publique ou du format d'un template DOIT être reflétée dans le
-  document OpenAPI et la documentation dans le même changement.
+- Toute modification de l'API REST ou du format d'un template DOIT être reflétée dans le
+  document OpenAPI et la documentation dans le même changement. Toute modification de
+  l'interface MCP DOIT être reflétée dans la documentation et ses tests de contrat dans le même
+  changement.
 
 ## Governance
 
@@ -227,4 +269,4 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les décisions différées (TODO) DOIVENT être résolues par un amendement PATCH ou MINOR dès
   qu'elles sont tranchées.
 
-**Version**: 1.0.3 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-10
+**Version**: 1.1.0 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-12
