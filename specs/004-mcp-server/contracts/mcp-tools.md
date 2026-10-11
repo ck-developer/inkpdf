@@ -85,8 +85,9 @@ openWorldHint: false }`.
     "isError": false }
   ```
 
-- **Errors**: every error of the HTTP render route except `unsupported-media-type`
-  (no content type in MCP).
+- **Errors**: every error of the HTTP render route except `unsupported-media-type` and
+  `invalid-json` (MCP arguments are already parsed JSON). `invalid-parameter` comes from an
+  invalid `filename` only.
 
 ## Tool errors
 
@@ -95,6 +96,7 @@ A pipeline error is a successful JSON-RPC response with `isError: true`:
 ```json
 { "content": [ { "type": "text", "text": "Validation failed: the input does not match the template's schema.\n- /data/employee/name: required property missing\n- /layout/accent: \"pink\" is not one of [\"blue\",\"green\"]\nFix the input and call render_template again." } ],
   "structuredContent": { "type": "https://github.com/ck-developer/inkpdf/errors/validation-failed",
+                         "code": "validation-failed",
                          "title": "Validation failed", "status": 422, "detail": "…",
                          "templateId": "employer-certificate", "violations": [ … ] },
   "isError": true }
@@ -102,7 +104,7 @@ A pipeline error is a successful JSON-RPC response with `isError: true`:
 
 | Error slug | Closing hint in the text |
 |---|---|
-| `validation-failed`, `invalid-json`, `invalid-parameter`, `payload-too-large` | Fix the input and call `render_template` again. |
+| `validation-failed`, `invalid-parameter`, `payload-too-large` | Fix the input and call `render_template` again. |
 | `template-not-found` | Call `list_templates` to see the available templates. |
 | `template-invalid` | This template cannot be used until the operator fixes it. |
 | `overloaded`, `render-timeout` | Try again in a moment. |
@@ -110,8 +112,10 @@ A pipeline error is a successful JSON-RPC response with `isError: true`:
 
 `structuredContent` is the exact problem object the HTTP API returns for the same error.
 
-Protocol faults (unknown tool name, arguments that break the tool's input schema) are JSON-RPC
-errors produced by `rmcp`.
+Protocol faults are JSON-RPC errors produced by `rmcp`, not tool results: unknown tool name,
+missing `templateId` or `data`, `data` that is not an object, and unknown argument keys (the
+input schemas forbid them). The input *inside* `data`, `layout` and `metadata` is checked by the
+template's schema and reported as a tool error, like the HTTP API.
 
 ## Logs
 

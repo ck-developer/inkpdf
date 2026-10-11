@@ -53,7 +53,7 @@ The MCP service is outside the `utoipa` router, so the OpenAPI document and the 
 into one function, for example:
 
 ```text
-render::run(state, template_id, body: serde_json::Value, interface) -> Result<RenderedPdf, ApiError>
+render::run(state, template_id, body: serde_json::Value, interface) -> Result<Vec<u8>, ApiError>
 ```
 
 It does, in order: template lookup and status, `metadata` extraction, schema preparation and
@@ -96,8 +96,8 @@ such as Claude can offer it as a download.
     `detail`, `templateId`, `violations`);
   - a text block in plain language: the title, the detail, one line per violation
     (`<path>: <message>`), then a closing hint:
-    - *fixable* (`validation-failed`, `template-not-found`, `invalid-json`,
-      `invalid-parameter`, `payload-too-large`): "Fix the input and call again" (for an unknown template: "call
+    - *fixable* (`validation-failed`, `template-not-found`, `invalid-parameter`,
+      `payload-too-large`): "Fix the input and call again" (for an unknown template: "call
       `list_templates`");
     - *not fixable by the caller* (`template-invalid`, `overloaded`, `render-timeout`,
       `render-failed`): "Try again later or tell the operator".

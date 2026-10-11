@@ -80,11 +80,11 @@ No open unknowns: decisions R1–R12 are in [research.md](./research.md).
 | III | Two-dimension input, validated | ✅ | `render_template` takes `data` and `layout` separately, and both go through the same schema validation before any compilation. |
 | IV | Security by construction | ✅ | <ul><li>The assistant sends JSON only: no Typst code, no paths.</li><li>Data is injected as data, through the same pipeline.</li><li>Same size, time and concurrency limits.</li><li>Cross-origin browser requests are refused.</li></ul> |
 | V | Hot templates, frozen binary | ✅ | Tools read the current registry snapshot, so hot reload applies. The setting is read at startup, like the others. |
-| VI | Self-describing REST API | ⚠️ → ✅ after amendment | The principle names REST as *the* public interface. A MINOR amendment (1.0.3 → 1.1.0) allows an optional MCP interface over the same operations, documented in the docs site rather than in OpenAPI. The REST API and its OpenAPI document are unchanged. |
+| VI | Self-describing REST API | ✅ (amended, 1.1.0) | Constitution 1.1.0 (2026-10-12) allows an optional MCP interface over the same read-only operations and pipeline, documented in the docs site and covered by contract tests rather than by OpenAPI. The REST API and its OpenAPI document are unchanged. |
 | VII | Simplicity and scope | ✅ | <ul><li>No authentication, no users, no state: the MCP server is stateless.</li><li>One dependency.</li><li>No new operation: read and render only.</li><li>Document storage stays out (feature 005).</li></ul> |
 | Workflow | fmt, clippy, tests; docs in the same change | ✅ | Tests cover the tool contract, errors and sandbox limits through MCP. The docs page and the configuration reference ship in the same change. |
 
-**Re-check after Phase 1**: ✅ with the amendment.
+**Re-check after Phase 1**: ✅ (constitution 1.1.0).
 [contracts/mcp-tools.md](./contracts/mcp-tools.md) adds no write operation, no network access
 and no stored state.
 
@@ -107,6 +107,7 @@ crates/inkpdf/
 ├── Cargo.toml                  # + rmcp
 ├── src/
 │   ├── config.rs               # + mcp_enabled (INKPDF_MCP_ENABLED)
+│   ├── lib.rs                  # + pub mod mcp
 │   ├── api/mod.rs              # build_app: nest /mcp when enabled
 │   ├── main.rs                 # startup log: mcp on/off; shutdown token
 │   ├── render/mod.rs           # + run(): shared validate-and-render pipeline, Interface

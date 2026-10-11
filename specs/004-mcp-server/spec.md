@@ -135,8 +135,9 @@ only.
   assistants limit the size of what they accept and that very large documents are better
   produced through the HTTP API.
 - The assistant sends anything other than the expected data (Typst code, a file path, extra
-  unknown keys at the top level): handled exactly like the HTTP API: data is only ever data,
-  unknown top-level keys are refused.
+  unknown keys at the top level): data is only ever data, as with the HTTP API; unknown
+  top-level keys are refused, as a protocol error since the tool's input description forbids
+  them.
 - The template's layout parameters are omitted: their defaults apply, as with the HTTP API.
 - A browser page tries to reach the MCP server from another site: refused (see FR-012).
 - The MCP server is on but no template is loaded: the listing is empty and says so; nothing

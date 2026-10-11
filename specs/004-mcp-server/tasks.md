@@ -34,7 +34,10 @@ shared render pipeline and the MCP service skeleton are foundational.
 
 ## Phase 1: Setup
 
-- [ ] T001 Amend the constitution with `/speckit-constitution`: version 1.0.3 → 1.1.0 (MINOR), principle VI allows an optional MCP interface, off by default, offering the same read-only operations (list, detail and schema, render) through the same pipeline and limits, documented in the documentation site rather than in the OpenAPI document (research R12). Update the Sync Impact Report in `.specify/memory/constitution.md`.
+- [X] T001 Amend the constitution with `/speckit-constitution` in `.specify/memory/constitution.md`: version 1.0.3 → 1.1.0 (MINOR).
+  - Principle VI allows an optional MCP interface, off by default, offering the same read-only operations (list, detail and schema, render) through the same pipeline and limits, documented in the documentation site and covered by contract tests rather than by the OpenAPI document (research R12).
+  - The workflow rules require MCP contract tests when the interface exists, and split the "public API → OpenAPI" rule between the REST API (OpenAPI and documentation) and the MCP interface (documentation and contract tests).
+  - The Sync Impact Report is updated.
 - [ ] T002 Add `rmcp = { version = "3.5", default-features = false, features = ["server", "macros", "transport-streamable-http-server"] }` to `crates/inkpdf/Cargo.toml` and update `Cargo.lock`. Check with `cargo tree -p inkpdf -e normal` that neither `reqwest` nor `tokio/process` is pulled in.
 
 ---
@@ -43,7 +46,7 @@ shared render pipeline and the MCP service skeleton are foundational.
 
 **Purpose**: one render pipeline for both interfaces, the setting, and an MCP service that answers `initialize`.
 
-- [ ] T003 Add `mcp_enabled: bool` (default `false`) to `Config` in `crates/inkpdf/src/config.rs`, read from `INKPDF_MCP_ENABLED` in `from_lookup`. Accept `true`, `false`, `1`, `0`; any other value returns a `ConfigError` naming the variable. Add unit tests in the same file for the default, the four accepted values and a rejected value.
+- [ ] T003 [P] Add `mcp_enabled: bool` (default `false`) to `Config` in `crates/inkpdf/src/config.rs`, read from `INKPDF_MCP_ENABLED` in `from_lookup`. Accept `true`, `false`, `1`, `0`; any other value returns a `ConfigError` naming the variable. Add unit tests in the same file for the default, the four accepted values and a rejected value.
 - [ ] T004 Extract the shared pipeline into `crates/inkpdf/src/render/mod.rs`: `pub async fn run(state: &AppState, template_id: &str, body: serde_json::Value, interface: Interface) -> Result<Vec<u8>, ApiError>` with `pub enum Interface { Http, Mcp }`. It moves from `api/render.rs`, in order:
   - template id parsing and lookup (`template-not-found`);
   - status check (`template-invalid`);
@@ -95,6 +98,7 @@ shared render pipeline and the MCP service skeleton are foundational.
 - [ ] T011 [P] [US1] In `crates/inkpdf/tests/mcp.rs`, test the reading tools against the HTTP API, using the `examples/templates` volume plus the `invalid-schema` fixture:
   - `list_templates`: its `structuredContent` equals the body of `GET /templates`, and its text block parses to the same JSON;
   - `get_template`: for each template, its `structuredContent` equals the body of `GET /templates/{id}`.
+  - With an empty volume, `list_templates` returns an empty list and its text says "No template is loaded." (spec edge case).
 - [ ] T012 [P] [US1] In `crates/inkpdf/tests/mcp.rs`, test `render_template` (SC-002):
   - **Same PDF as HTTP.** For `sample` (`examples/requests/sample.json`), `packages-demo` (`examples/requests/packages-demo.json`) and `progress-invoice` (a request from `examples/requests/progress-invoice/`), the decoded PDF is byte-identical to `POST /templates/{id}/render` with the same body.
   - **Shape of the result.**
@@ -123,7 +127,7 @@ shared render pipeline and the MCP service skeleton are foundational.
 
   Wire it into `render_template`.
 - [ ] T016 [US1] Log every tool call in `crates/inkpdf/src/mcp/tools.rs`: `event = "mcp.tool"`, `tool`, `templateId` when present, `durationMs`, `outcome` (`ok` or the error code). No argument values.
-- [ ] T017 [US1] In `crates/inkpdf/tests/perf.rs`, add a test that renders `sample` 50 times through MCP and 50 times through HTTP, and asserts that MCP's p95 is within 10 % of HTTP's (SC-004). Mark it `#[ignore]` if the existing perf tests are, and follow their warm-up.
+- [ ] T017 [US1] In `crates/inkpdf/tests/perf.rs`, add a test that renders `sample` 50 times through MCP and 50 times through HTTP, and asserts that MCP's p95 is within 10 % of HTTP's (SC-004). Mark it `#[ignore]` like the existing perf tests, so that it runs in release mode with `cargo test --release --test perf -- --ignored`, and follow their warm-up and varying data.
 
 **Checkpoint**: T010–T012 pass; an MCP client can list, read and render.
 
@@ -144,6 +148,7 @@ shared render pipeline and the MCP service skeleton are foundational.
     - the text lists every violation path and ends with "call render_template again".
   - **Wrong `metadata.date`.** It is reported the same way.
   - **Invalid `filename`.** It gives `invalid-parameter`.
+  - **Unknown argument key** (for example `{ templateId, data, colour }`). It is refused as a JSON-RPC "invalid params" error, not as a tool result, as stated in the contract.
 - [ ] T019 [P] [US2] In `crates/inkpdf/tests/mcp.rs`, test the other errors, each comparing `structuredContent` with the HTTP problem and checking the hint of the contract:
   - unknown template id, and a traversal id (`../x`): `template-not-found`, with a hint to call `list_templates`;
   - the `invalid-schema` fixture: `template-invalid`;
@@ -151,7 +156,8 @@ shared render pipeline and the MCP service skeleton are foundational.
   - `data` larger than `max_body_bytes`: `payload-too-large`, as a tool error, not a transport refusal;
   - one slot held and a short `queue_timeout`: `overloaded` (reuse the technique of `tests/render_limits.rs`);
   - the slow template of `tests/render_limits.rs` with a 1 s `render_timeout`: `render-timeout`;
-  - `tools/call` with an unknown tool name: a JSON-RPC error, not a tool result.
+  - `tools/call` with an unknown tool name: a JSON-RPC error, not a tool result;
+  - sandbox through MCP (constitution, workflow tests), with the fixtures of `tests/sandbox.rs`: `evil-parent` and `evil-absolute` give `render-failed` and no file content; `evil-package` gives the same error as through HTTP; Typst code in `data` for `sample` is rendered literally (`pdf_text` contains `#import`).
 
 ### Implementation
 
@@ -178,6 +184,7 @@ shared render pipeline and the MCP service skeleton are foundational.
 - [ ] T022 [P] [US3] In `crates/inkpdf/tests/mcp.rs`, test activation and security:
   - **Default config.** `POST /mcp` returns `404`, like `POST /does-not-exist`.
   - **Enabled.** A request with `Origin: https://evil.example` returns `403`. A request with `Host: inkpdf:3000` and no `Origin` succeeds.
+  - **No stream.** With MCP on, `GET /mcp` returns `405`, as stated in the contract. If `rmcp` answers differently, align the contract with the observed, standard-conformant behaviour.
   - **HTTP API unaffected.** With MCP on, `GET /openapi.json` without templates equals `openapi/openapi.json` (reuse the comparison of `tests/contract_openapi.rs`).
 - [ ] T023 [P] [US3] In `crates/inkpdf/tests/mcp.rs`, test hot reload (US3 scenario 4). Start with the `sample` template, call `list_templates`, copy a second template into the `TestVolume`, rescan the way `tests/hot_reload.rs` does, then call `list_templates` again: the new template is listed.
 
@@ -195,7 +202,7 @@ shared render pipeline and the MCP service skeleton are foundational.
   - the private-network warning;
   - a worked conversation that produces a document;
   - connecting **Claude Code** (`claude mcp add --transport http inkpdf http://<host>:3000/mcp`) as the primary client;
-  - connecting **Claude Desktop**. **Resolve the open point of research R11** first: check the current Claude Desktop documentation to see whether `claude_desktop_config.json` takes a remote HTTP server directly or needs a stdio bridge (`mcp-remote`). Document what works, and update R11.
+  - connecting **Claude Desktop**. **Resolve the open point of research R11** first: check the current Claude Desktop documentation to see whether `claude_desktop_config.json` takes a remote HTTP server directly or needs a stdio bridge (`mcp-remote`). Document what works, and update R11. If Desktop needs a bridge, also update FR-015 and SC-005 in `specs/004-mcp-server/spec.md` to say so.
 - [ ] T026 [P] [US3] Document `INKPDF_MCP_ENABLED` in `docs/src/reference/configuration.md`, and run `cargo xtask docs check`, which must pass. Add the variable, commented, to the Compose example in `docs/src/operations/deployment.md` and to `compose.yaml` (`INKPDF_MCP_ENABLED: "${INKPDF_MCP_ENABLED:-false}"`).
 - [ ] T027 [P] [US3] In `docs/src/operations/security.md`, add an MCP section:
   - no authentication;
@@ -218,6 +225,7 @@ shared render pipeline and the MCP service skeleton are foundational.
   - `docker compose up --build` with `INKPDF_MCP_ENABLED=true`;
   - the curl checks;
   - a real conversation in Claude Code producing `progress-invoice`, including one corrected mistake;
+  - the logs of that conversation (FR-014): one `mcp.tool` event per tool call with `tool`, `templateId`, `durationMs` and `outcome`; `render` events carry `interface = "mcp"`, HTTP renders `interface = "http"`; no input value appears;
   - `cargo xtask docs check` and `mdbook build docs`.
 
   Fix anything stale.

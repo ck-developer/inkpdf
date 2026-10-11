@@ -17,11 +17,11 @@ No stored data. The feature adds one setting and in-memory types only.
 
 ## Shared pipeline (refactor, no new data)
 
-`render::run(state, templateId, body, interface) -> Result<RenderedPdf, ApiError>`
+`render::run(state, templateId, body, interface) -> Result<Vec<u8>, ApiError>`
 
 - **Input**: the same JSON object as the HTTP request body, and the calling `Interface`
   (`Http` | `Mcp`, used only for logs).
-- **Output**: `RenderedPdf { bytes }`, or one `ApiError` (unchanged enum).
+- **Output**: the PDF bytes, or one `ApiError` (unchanged enum).
 - **Steps**: lookup → status check → metadata extraction → schema preparation → violations
   merged → render under the semaphore and timeouts.
 
