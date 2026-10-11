@@ -18,6 +18,7 @@ a restart.
 | `INKPDF_MAX_TEMPLATE_BYTES` | `52428800` (50 MiB) | Maximum total size of a template folder, in bytes. A template is loaded in memory; a larger one is marked invalid. |
 | `INKPDF_LOG_FORMAT` | `json` | Log format on stdout: `json` (one JSON object per line) or `pretty` (human-readable, for local use). |
 | `INKPDF_DEFAULT_AUTHOR` | `inkpdf` | PDF author used when neither the request (`metadata.author`) nor the template (`set document(author: …)`) provides one. Surrounding whitespace is trimmed. |
+| `INKPDF_MCP_ENABLED` | `false` | Serves the MCP server at `/mcp`, on the same address and port as the HTTP API, so that AI assistants can list templates and render documents. Off, `/mcp` answers `404`. See [Using inkpdf from an AI assistant](../guides/mcp.md). |
 | `RUST_LOG` | `info` | Log filter, in the [`tracing-subscriber` `EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html) syntax, for example `warn` or `info,inkpdf=debug`. |
 
 ## Validation
@@ -25,6 +26,7 @@ a restart.
 - Numeric values must be positive integers: `0` is refused for every size, count and duration.
 - `INKPDF_LISTEN` must be a socket address such as `127.0.0.1:8080` or `[::]:3000`.
 - `INKPDF_LOG_FORMAT` accepts only `json` and `pretty`.
+- `INKPDF_MCP_ENABLED` accepts only `true`, `false`, `1` and `0`.
 
 A malformed value prevents startup. The process prints an explicit message naming the variable
 and exits with status `2`, for example:

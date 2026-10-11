@@ -188,15 +188,58 @@ Raw JSON-RPC keeps the tests on the wire contract and avoids pulling `rmcp`'s cl
 
 ## R11 — Connecting Claude
 
-**Decision.** The documentation covers:
-- **Claude Code**: `claude mcp add --transport http inkpdf http://<host>:3000/mcp`.
-- **Claude Desktop**: an entry in `claude_desktop_config.json`. The app's "Connectors" screen
-  calls remote servers from Anthropic's cloud, which cannot reach a private network; the local
-  configuration file is the way to reach a private address. **To confirm during
-  implementation**: whether that file accepts a remote HTTP server directly, or needs a
-  stdio-to-HTTP bridge (such as `mcp-remote`). Claude Code is therefore the primary documented
-  client, Claude Desktop the secondary one.
-- **MCP Inspector** for operators who want to try the tools by hand.
+**Decision.** The documentation (`docs/src/guides/mcp.md`) covers:
+- **Claude Code**, the primary client: it connects over HTTP from the user's computer, so it
+  reaches a private address directly:
+  `claude mcp add --transport http inkpdf http://<host>:3000/mcp`, with `--scope user` or
+  `--scope project` (a `.mcp.json` entry with `"type": "http"` and `"url"`; an entry with a
+  `url` and no `type` is read as a stdio server), checked with `claude mcp list` and `/mcp`.
+- **Claude Desktop**, the secondary client, **through a stdio-to-HTTP bridge**, `mcp-remote`,
+  started by the app from `claude_desktop_config.json`:
+
+  ```json
+  { "mcpServers": { "inkpdf": { "command": "npx",
+      "args": ["-y", "mcp-remote", "http://<host>:3000/mcp", "--allow-http",
+               "--transport", "http-only"] } } }
+  ```
+
+  It needs Node.js 18 or later on the user's computer.
+- **MCP Inspector** and a `curl` call for operators who want to try the tools by hand.
+
+**Resolved (2026-10-12): Claude Desktop needs a bridge.** Official sources:
+- Custom connectors (Settings > Connectors, added by URL) connect "from Anthropic's cloud
+  infrastructure, rather than from your local device"; servers "hosted on a private corporate
+  network, behind a VPN, or blocked by a firewall won't connect". Local servers configured in
+  `claude_desktop_config.json` "are a separate mechanism" and "do use your local network".
+  <https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp>
+- A remote server is added "by its URL as a custom connector"; the desktop app itself only
+  installs local servers (desktop extensions). A server inside a private network is pointed to
+  MCP tunnels. <https://claude.com/docs/connectors/custom/remote-mcp>
+- `claude_desktop_config.json` declares servers the app starts, by `command` and `args`; it
+  documents no `url` entry. <https://modelcontextprotocol.io/docs/develop/connect-local-servers>
+- MCP tunnels, the official way for claude.ai to reach a private network, are a research
+  preview for the Enterprise plan only, and require OAuth on each MCP server, so they do not
+  apply to inkpdf (no authentication). <https://claude.com/docs/connectors/mcp-tunnels/overview>
+- `mcp-remote` (0.14.3, checked in its source) runs as a stdio server for the app and forwards
+  to a Streamable HTTP server. It refuses a non-HTTPS URL other than `localhost` or `127.0.0.1`
+  unless `--allow-http` is given; `--transport http-only` skips the SSE fallback; it needs
+  Node.js 18 or later, and the app runs it with the system's Node.js. Checked against inkpdf
+  on 2026-10-12: driven over stdio as the app does, `mcp-remote@0.14.3 <url> --allow-http
+  --transport http-only` relays `initialize` (negotiated at `2025-06-18`) and `tools/list`; a
+  LAN address without `--allow-http` is refused at startup.
+  <https://github.com/geelen/mcp-remote>, <https://www.npmjs.com/package/mcp-remote>
+- Claude Code: `claude mcp add --transport http <name> <url>`, scopes `local` (default),
+  `project` and `user`; `.mcp.json` uses `"type": "http"`. <https://code.claude.com/docs/en/mcp>
+
+FR-015 and SC-005 of the spec say that Claude Desktop goes through this bridge.
+
+**Alternatives.**
+- *Custom connector in Claude Desktop or claude.ai.* Needs a server reachable from the Internet:
+  out of scope until the access-key feature.
+- *A `url` entry in `claude_desktop_config.json`.* Not documented by Anthropic or by the MCP
+  documentation, so not offered.
+- *A local stdio transport in inkpdf.* Rejected in the spec: inkpdf runs as a service in a
+  container; the bridge is a client-side tool and needs nothing from inkpdf.
 
 ## R12 — Constitution
 

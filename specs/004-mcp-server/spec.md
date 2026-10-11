@@ -206,9 +206,13 @@ only.
   when relevant, duration and outcome, and MUST be distinguishable from HTTP API calls in the
   logs.
 - **FR-015**: The documentation site MUST gain an MCP page: what it is for, how to turn it on,
-  how to connect Claude (desktop app and Claude Code) with a ready-to-copy configuration, the
-  three tools, the limits, and a worked example of a conversation producing a document. The
-  Docker Compose example and the settings reference MUST include the new setting.
+  how to connect Claude with a ready-to-copy configuration, the three tools, the limits, and a
+  worked example of a conversation producing a document. Claude Code connects directly over
+  HTTP. The desktop app connects through a local stdio-to-HTTP bridge (`mcp-remote`, which
+  needs Node.js on the user's computer), because its configuration file only starts local
+  programs and its Connectors screen reaches servers from Anthropic's cloud, not from the
+  private network (research R11). The Docker Compose example and the settings reference MUST
+  include the new setting.
 - **FR-016**: The HTTP API's OpenAPI document MUST stay unchanged: the MCP server is described
   in the documentation, not as a REST operation.
 
@@ -234,8 +238,9 @@ only.
   100% of the faulty fields that the HTTP API names.
 - **SC-004**: Rendering through the MCP server adds no noticeable delay compared with the HTTP
   API: generation time stays within 10% of the HTTP API's for the same template and input.
-- **SC-005**: An operator turns the MCP server on and connects Claude in under 10 minutes using
-  only the documentation.
+- **SC-005**: An operator turns the MCP server on and connects Claude Code in under 10 minutes
+  using only the documentation. Connecting the Claude desktop app, through the documented
+  bridge, takes the same time once Node.js is installed on the user's computer.
 - **SC-006**: With the MCP server off (the default), the service behaves exactly as before: all
   existing tests pass unchanged and the MCP path answers "not found".
 

@@ -83,6 +83,8 @@ services:
       INKPDF_LOG_FORMAT: json
       # PDF author when neither the request nor the template sets one.
       INKPDF_DEFAULT_AUTHOR: inkpdf
+      # MCP server for AI assistants at /mcp: `true` to turn it on. Private network only.
+      INKPDF_MCP_ENABLED: "false"
       # Log filter (tracing EnvFilter syntax), e.g. `warn` or `info,inkpdf=debug`.
       RUST_LOG: info
     # The image already declares this health check; shown here to tune it.
@@ -167,7 +169,9 @@ Notes:
   `INKPDF_MAX_TEMPLATE_BYTES`), plus one compilation per render slot.
 - ConfigMaps and network volumes may not deliver file system events. The periodic rescan
   (`INKPDF_RESCAN_INTERVAL_SECS`) picks up their changes anyway.
-- On `SIGTERM`, the server stops accepting connections and finishes the requests in flight.
+- On `SIGTERM`, the server stops accepting connections and finishes the requests in flight. An
+  MCP tool call still running at that moment is cut short with an error instead; the assistant
+  can call again once the service is back.
 
 ## Logs
 
@@ -178,11 +182,13 @@ Each event carries an `event` field, for example:
 
 | Event | When |
 |-------|------|
-| `server.listening`, `server.shutdown` | Start and stop of the HTTP server. |
+| `server.listening`, `server.shutdown` | Start and stop of the HTTP server. `server.listening` says whether the MCP server is on (`mcp`). |
+| `mcp.listening` | The MCP server is on, with its `path` (`/mcp`). |
 | `registry.ready` | End of the initial scan, with template counts and duration. |
 | `template.loaded`, `template.invalid`, `template.removed` | Hot reload of a template. |
 | `template.link_excluded` | A symbolic link pointing outside a template folder was ignored. |
-| `render` | One per render request, with `templateId`, `durationMs` and `outcome` (`ok`, `validation_failed`, `render_failed`, `timeout`, `overloaded`). |
+| `render` | One per render request, with `templateId`, `durationMs`, `outcome` (`ok`, `validation_failed`, `render_failed`, `timeout`, `overloaded`) and `interface` (`http` or `mcp`). |
+| `mcp.tool` | One per MCP tool call, with `tool`, `templateId` when there is one, `durationMs` and `outcome` (`ok` or the error code). See [Using inkpdf from an AI assistant](../guides/mcp.md). |
 | `render.overrun` | A compilation finished after its deadline (see [Limits](limits.md)). |
 
 Request bodies are never logged.

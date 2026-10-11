@@ -29,9 +29,13 @@ Expected: the startup log says `mcp: true` and gives the `/mcp` path.
 ```sh
 curl -s localhost:3000/mcp \
   -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
-  -H 'mcp-protocol-version: 2026-07-28' \
+  -H 'mcp-protocol-version: 2025-06-18' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
+
+Under protocol `2026-07-28`, the same call also needs an `Mcp-Method: tools/list` header and a
+request `_meta` (`io.modelcontextprotocol/protocolVersion` and `…/clientCapabilities`), as
+`rpc` in `tests/mcp.rs` sends; without them rmcp answers a JSON-RPC error.
 
 Expected: exactly `list_templates`, `get_template`, `render_template`, as in
 [contracts/mcp-tools.md](./contracts/mcp-tools.md).

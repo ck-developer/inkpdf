@@ -1,7 +1,8 @@
 # Architecture
 
 inkpdf is a single Rust binary: an [axum](https://docs.rs/axum) HTTP server with the Typst
-compiler embedded as a library. It starts no subprocess and no browser.
+compiler embedded as a library. It starts no subprocess and no browser. When
+`INKPDF_MCP_ENABLED=true`, the same server also answers MCP clients at `/mcp`.
 
 ## Repository layout
 
@@ -24,10 +25,11 @@ The `inkpdf` crate (`crates/inkpdf/src/`) is split into:
 | Module | Role |
 |--------|------|
 | `main.rs` | Entry point. `inkpdf [serve]` reads the configuration, runs the initial scan, starts the watcher and the server, and handles graceful shutdown. `inkpdf healthcheck` queries `/health` for the Docker `HEALTHCHECK`. |
-| `lib.rs` | `AppState`, shared by the handlers: configuration, registry, render slots (a semaphore) and the live OpenAPI cache. |
+| `lib.rs` | `AppState`, shared by the handlers: configuration, registry, render slots (a semaphore), the live OpenAPI cache and the shutdown token. `build_app` builds the router and mounts `/mcp` when MCP is on. |
 | `config.rs` | The `INKPDF_*` variables (see [Configuration](../reference/configuration.md)). |
 | `error.rs` | `ApiError` and its RFC 9457 `problem+json` rendering, with the error codes. |
 | `api/` | HTTP routes and the OpenAPI document. |
+| `mcp/` | The optional MCP server: its three tools over the same pipeline as the HTTP API. |
 | `registry/` | Discovery, loading and hot reload of the templates. |
 | `template/` | The template model: id, `template.json` manifest, `schema.json`, package imports. |
 | `render/` | The rendering pipeline: sandboxed `World`, fonts, JSON to Typst values, PDF metadata. |
@@ -44,6 +46,25 @@ The `inkpdf` crate (`crates/inkpdf/src/`) is split into:
   The result is cached and rebuilt only when the registry snapshot changes.
 - `docs.rs` serves `GET /docs`: a static page that loads the Scalar API reference (pinned
   version) in the browser and points it at `/openapi.json`.
+
+### `mcp/`
+
+The MCP server, built on [`rmcp`](https://docs.rs/rmcp), the official Rust SDK of the protocol.
+It is mounted at `/mcp` only when `INKPDF_MCP_ENABLED=true`, and is not part of the OpenAPI
+document. See [Using inkpdf from an AI assistant](../guides/mcp.md).
+
+- Transport: Streamable HTTP, stateless (no session, nothing kept between requests) and with
+  plain JSON answers. Requests with an `Origin` header are refused; the `Host` check is off (see
+  [Security](../operations/security.md#the-mcp-server)). The transport's body limit is
+  `INKPDF_MAX_BODY_BYTES` plus 64 KiB for the JSON-RPC envelope.
+- Tools: `list_templates` and `get_template` return the same JSON as `GET /templates` and
+  `GET /templates/{templateId}`, built by the same functions of `api/templates.rs`.
+  `render_template` builds the `{ data, layout, metadata }` body and calls `render::run`, the
+  pipeline the HTTP handler uses; the PDF comes back as an embedded resource.
+- Errors: an `ApiError` of the pipeline becomes a tool error (`isError: true`) whose structured
+  content is the HTTP API's problem object, plus a plain-language text with a closing hint.
+  Protocol faults (unknown tool, arguments that do not fit the tool's input schema) are left to
+  `rmcp` as JSON-RPC errors.
 
 ### `registry/`
 
@@ -74,7 +95,10 @@ The `inkpdf` crate (`crates/inkpdf/src/`) is split into:
 - `value.rs`: conversion of JSON values into Typst values.
 - `metadata.rs`: the optional `metadata` section of the body, validated against a fixed schema
   and applied to the compiled document (never injected as Typst code).
-- `mod.rs`: the pipeline, described below.
+- `mod.rs`: the pipeline, described below. `run` is its entry point for both interfaces: from a
+  parsed body to the PDF bytes, it looks the template up, validates the input and renders it.
+  The HTTP handler and the MCP `render_template` tool both call it, so both give the same PDF
+  and the same errors for the same input.
 
 ### `packages/` and `build.rs`
 
@@ -86,7 +110,8 @@ per name); `dependency` packages only serve imports between packages.
 
 ## Request flow
 
-`POST /templates/{templateId}/render`:
+`POST /templates/{templateId}/render`. Steps 3 to 8 are `render::run`, which the MCP
+`render_template` tool calls too:
 
 1. The template id is validated (`^[a-z0-9][a-z0-9_-]{0,63}$`) and looked up in the registry
    snapshot (`404`). The query (`download`, `filename`) is parsed (`400`).
@@ -108,14 +133,15 @@ per name); `dependency` packages only serve imports between packages.
    `render.overrun` if it ended after its deadline.
 9. The PDF is returned with a `Content-Disposition` header built from the cleaned filename.
 
-One `render` log event records the template id, the duration and the outcome; the body is never
-logged.
+One `render` log event records the template id, the duration, the outcome and the interface
+(`http` or `mcp`); the body is never logged. An MCP call also logs one `mcp.tool` event.
 
 ## Startup
 
 `main.rs` reads the configuration (exit code `2` on a malformed value), initialises logging,
 scans the whole volume, marks the registry ready, starts the watcher, then binds the listener.
-`SIGTERM` or `Ctrl-C` triggers a graceful shutdown.
+`SIGTERM` or `Ctrl-C` triggers a graceful shutdown: HTTP requests in flight are drained, and the
+shutdown token stops the MCP service.
 
 ## Design principles
 
@@ -128,5 +154,7 @@ respect, among them:
   injected as data.
 - The engine runs sandboxed, and every render is bounded in size and time.
 - Templates are hot-loaded; the binary and image are fixed.
-- The API is a self-describing REST API (OpenAPI).
+- The API is a self-describing REST API (OpenAPI). An optional MCP interface, off by default,
+  may offer the same read-only operations through the same pipeline and limits; it is described
+  in this documentation, not in the OpenAPI document.
 - Simplicity first: no authentication, no users, no document-specific logic.
