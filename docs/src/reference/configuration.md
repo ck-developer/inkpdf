@@ -55,3 +55,6 @@ docker run --rm -p 3000:3000 \
 
 See [Limits and performance](../operations/limits.md) for how the limits interact, and
 [Deployment](../operations/deployment.md) for the container setup.
+
+A Docker Compose file setting every variable, with its default, is in
+[Deployment → Complete example](../operations/deployment.md#complete-example).

@@ -5,7 +5,7 @@
 //! - `packages.md` from `packages/lock.toml` and the vendored archives.
 //!
 //! `check` also verifies that every `INKPDF_*` variable read by the service is documented in the
-//! hand-written `configuration.md`.
+//! hand-written `configuration.md` and in the complete Compose example of `deployment.md`.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -72,12 +72,17 @@ pub fn check(root: &Path) -> Result<()> {
         }
     }
     let config = fs::read_to_string(root.join("crates/inkpdf/src/config.rs"))?;
-    let documented =
-        fs::read_to_string(root.join("docs/src/reference/configuration.md")).unwrap_or_default();
-    let missing: Vec<String> = config_variables(&config)
-        .into_iter()
-        .filter(|var| !documented.contains(var.as_str()))
-        .collect();
+    // Every variable read by the service appears in the configuration reference and in the
+    // complete Docker Compose example.
+    let mut missing = Vec::new();
+    for page in ["reference/configuration.md", "operations/deployment.md"] {
+        let text = fs::read_to_string(root.join("docs/src").join(page)).unwrap_or_default();
+        for var in config_variables(&config) {
+            if !text.contains(var.as_str()) {
+                missing.push(format!("{var} (docs/src/{page})"));
+            }
+        }
+    }
 
     if !stale.is_empty() {
         eprintln!(
@@ -87,7 +92,7 @@ pub fn check(root: &Path) -> Result<()> {
     }
     if !missing.is_empty() {
         eprintln!(
-            "not documented in docs/src/reference/configuration.md: {}",
+            "configuration variables not documented: {}",
             missing.join(", ")
         );
     }

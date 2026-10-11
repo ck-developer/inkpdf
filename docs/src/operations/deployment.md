@@ -34,6 +34,8 @@ Every setting is an environment variable; see [Configuration](../reference/confi
 
 ## Docker Compose
 
+A minimal service:
+
 ```yaml
 services:
   inkpdf:
@@ -42,10 +44,56 @@ services:
       - "3000:3000"
     volumes:
       - ./templates:/templates:ro
+    restart: unless-stopped
+```
+
+### Complete example
+
+Every setting, with its default value. Uncomment and change only what you need; see
+[Configuration](../reference/configuration.md) for the details of each variable.
+
+```yaml
+services:
+  inkpdf:
+    # `X.Y.Z` (recommended in production), `X.Y`, `latest`, or `dev` (latest main).
+    image: ghcr.io/ck-developer/inkpdf:0.1.0
+    ports:
+      - "3000:3000"                 # host:container; the container listens on 3000
+    volumes:
+      # One sub-folder per template; read-only is enough. Changes are picked up live.
+      - ./templates:/templates:ro
     environment:
-      INKPDF_RENDER_TIMEOUT_SECS: "30"
+      # Where the templates are, inside the container (the volume above).
+      INKPDF_TEMPLATES_DIR: /templates
+      # Address and port the server listens on, inside the container.
+      INKPDF_LISTEN: 0.0.0.0:3000
+      # Maximum request body size, in bytes (413 beyond). Default: 5 MiB.
       INKPDF_MAX_BODY_BYTES: "5242880"
+      # Maximum duration of a render, in seconds (504 beyond).
+      INKPDF_RENDER_TIMEOUT_SECS: "30"
+      # Renders running at the same time. Default: number of CPUs.
+      # INKPDF_MAX_CONCURRENT_RENDERS: "4"
+      # Maximum wait for a free render slot, in seconds (503 beyond).
+      INKPDF_QUEUE_TIMEOUT_SECS: "10"
+      # Periodic rescan of the templates folder, in seconds (backs up file events).
+      INKPDF_RESCAN_INTERVAL_SECS: "2"
+      # Maximum total size of a template folder, in bytes. Default: 50 MiB.
+      INKPDF_MAX_TEMPLATE_BYTES: "52428800"
+      # Log format: `json` (one object per line) or `pretty` (human-readable).
+      INKPDF_LOG_FORMAT: json
+      # PDF author when neither the request nor the template sets one.
+      INKPDF_DEFAULT_AUTHOR: inkpdf
+      # Log filter (tracing EnvFilter syntax), e.g. `warn` or `info,inkpdf=debug`.
       RUST_LOG: info
+    # The image already declares this health check; shown here to tune it.
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/inkpdf", "healthcheck"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    # The image runs as a non-root user and needs no write access.
+    read_only: true
     restart: unless-stopped
 ```
 
