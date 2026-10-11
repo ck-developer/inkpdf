@@ -108,9 +108,13 @@ such as Claude can offer it as a download.
   it with `payload-too-large` above `INKPDF_MAX_BODY_BYTES`, like the HTTP API. The transport
   limit (`max_request_body_bytes`) is set to `INKPDF_MAX_BODY_BYTES + 64 KiB` to leave room for
   the JSON-RPC envelope, so the tool sees oversized input and reports it properly.
-  **To confirm during implementation**: `build_app` applies `DefaultBodyLimit` as a layer over
-  the whole router; check which limit governs `/mcp` (axum's or rmcp's), so that the oversized
-  input reaches the tool and becomes a tool error.
+  **Confirmed during implementation**: rmcp's limit alone governs `/mcp`. axum's
+  `DefaultBodyLimit` layer only stores the limit in the request extensions, where axum's body
+  extractors (`Bytes`, `Json`) read it; rmcp's service reads the raw body against its own
+  `max_request_body_bytes` and never consults it, whatever the layer order. A body above
+  `INKPDF_MAX_BODY_BYTES` but within the 64 KiB headroom reaches the server; a larger one gets
+  rmcp's `413` (`tests/mcp.rs`, `mcp_body_limit_leaves_room_for_the_envelope`). `/mcp` is
+  mounted before the router's layers, so `TraceLayer` covers it too (R8).
 - Concurrency, queue timeout and render timeout: shared by construction (R3).
 
 ## R6 — Browser origins and hosts
