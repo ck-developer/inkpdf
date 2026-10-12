@@ -43,7 +43,7 @@ Dependencies.
   - empty `plugins/inkpdf/skills/generate-document/` and `plugins/inkpdf/skills/write-template/` folders.
 
   Run `claude plugin validate plugins/inkpdf` if Claude Code is available.
-- [X] T002 [P] Add `plugins/inkpdf/.claude-plugin/plugin.json` (JSON path `$.version`) to release-please's `extra-files` in `release-please-config.json`. Release-please resolves those paths relative to the package path `crates/inkpdf` (research R7).
+- [X] T002 [P] Add `plugins/inkpdf/.claude-plugin/plugin.json` (JSON path `$.version`) to release-please's `extra-files` in `release-please-config.json`. Release-please resolves those paths relative to the package path `crates/inkpdf`, unless they start with `/` (research R7).
   - Check from release-please's documentation and source which path form reaches a file outside the package.
   - If none does, drop the change, keep the plugin version independent, and record the decision in `specs/005-mcp-agent-efficiency/research.md` (R7, "Version").
 
@@ -328,6 +328,7 @@ Dependencies.
 - [ ] T041 [P] [US6] Update the Bruno collection: `examples/bruno/2 Templates/02 Template detail.bru`, `03 Template schema.bru` and the `examples/bruno/4 Render/` requests use `demo` and its example. Delete `examples/bruno/4 Render/04 Package demo.bru`.
 - [ ] T042 [P] [US6] Replace every remaining reference to the removed templates with `demo`, or with a short inline snippet where a package example is needed, in:
   - `docs/src/concepts/packages.md`, `docs/src/guides/packages.md`, `docs/src/guides/exploring-the-api.md`;
+  - `docs/src/getting-started/docker.md`, `docs/src/concepts/request-body.md`, `docs/src/guides/downloads-and-metadata.md` (their curl examples post `examples/requests/sample.json` to `/templates/sample/render`, both gone since T003);
   - `docs/src/guides/mcp.md` (the worked conversation uses `demo`);
   - `docs/src/contributing/development.md` (fixtures location);
   - `README.md`, and the `compose.yaml` header comment.

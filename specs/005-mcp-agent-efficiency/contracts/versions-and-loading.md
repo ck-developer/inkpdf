@@ -17,7 +17,7 @@ templates/
 |---|---|
 | Flat layout | One version: `template.json`'s `version`, or none |
 | Flat layout, manifest version `MAJOR.MINOR.PATCH` | Selectable like any version |
-| Flat layout, manifest version that does not parse (`1.0`, `v1`) | Shown as is; used when no version is asked for; any explicit selector gives `template-version-not-found` |
+| Flat layout, manifest version that does not parse (`1.0`, `v1`) | Shown as is; used when no version is asked for; any well-formed selector gives `template-version-not-found` |
 | Versioned layout | One version per `MAJOR.MINOR.PATCH` sub-folder, each loaded and checked on its own |
 | Template files at the root and version sub-folders | Template invalid: `put the template files either at the root or in version folders, not both` |
 | Sub-folder that is not a version (`draft/`) | Skipped; log `{"event":"template.version_ignored","templateId":"facture","folder":"draft"}` |
@@ -34,7 +34,7 @@ templates/
 | `1.0.0` | exactly `1.0.0` (an invalid one gives `template-invalid`) |
 | `latest`, `v2`, `1.2`, `` | `invalid-parameter` (400) on `version` |
 | no match | `template-version-not-found` (404) |
-| any selector, on a flat template whose version does not parse | `template-version-not-found` (404) |
+| any well-formed selector, on a flat template whose version does not parse | `template-version-not-found` (404) |
 
 `template-version-not-found` problem:
 
