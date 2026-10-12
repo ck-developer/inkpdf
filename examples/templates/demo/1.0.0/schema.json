@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["data"],
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "type": "object",
+      "description": "Content of the document.",
+      "additionalProperties": false,
+      "required": ["title", "reference", "date", "recipient", "lines"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Document title.",
+          "x-role": "ask"
+        },
+        "reference": {
+          "type": "string",
+          "pattern": "^[A-Z0-9-]{3,30}$",
+          "description": "Document reference. Build it as DEMO-YYYY-NNN if the user gives none.",
+          "x-role": "fill"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Document date, YYYY-MM-DD. Today's date unless the user says otherwise.",
+          "x-role": "fill"
+        },
+        "recipient": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "address"],
+          "description": "Who the document is for.",
+          "x-role": "ask",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Full name.",
+              "x-role": "ask"
+            },
+            "address": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Postal address; line breaks allowed.",
+              "x-role": "ask"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Optional e-mail address.",
+              "x-role": "default"
+            }
+          }
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "description": "Lines of the document.",
+          "x-role": "ask",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "quantity", "amount"],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "What the line is about.",
+                "x-role": "ask"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9999,
+                "description": "Number of units.",
+                "x-role": "ask"
+              },
+              "amount": {
+                "type": "string",
+                "pattern": "^[0-9]{1,9}(\\.[0-9]{1,2})?$",
+                "description": "Unit amount in euros, dot as decimal separator, e.g. \"12.50\".",
+                "x-role": "ask"
+              }
+            }
+          }
+        },
+        "urgent": {
+          "type": "boolean",
+          "default": false,
+          "description": "Shows an \"Urgent\" badge.",
+          "x-role": "default"
+        },
+        "status": {
+          "enum": ["draft", "final"],
+          "default": "draft",
+          "description": "Shown in the header; draft adds a watermark.",
+          "x-role": "default"
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional free text at the end.",
+          "x-role": "default"
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "description": "Appearance of the document; every setting has a default.",
+      "additionalProperties": false,
+      "properties": {
+        "accentColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#1f4e79",
+          "description": "Colour of the title and the table header, as #RRGGBB.",
+          "x-role": "default"
+        },
+        "font": {
+          "enum": ["Libertinus Serif", "New Computer Modern"],
+          "default": "Libertinus Serif",
+          "description": "Font of the document.",
+          "x-role": "default"
+        },
+        "density": {
+          "enum": ["normal", "compact"],
+          "default": "normal",
+          "description": "Spacing and text size.",
+          "x-role": "default"
+        },
+        "showTotal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prints the total under the table.",
+          "x-role": "default"
+        }
+      }
+    }
+  }
+}
