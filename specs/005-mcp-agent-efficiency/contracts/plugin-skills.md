@@ -55,7 +55,9 @@ The version follows the crate version (release-please updates it; see the plan).
 
 ## Skills
 
-Both `SKILL.md` frontmatters use only `name`, `description`, `license`, `metadata` (portable set).
+Both `SKILL.md` frontmatters use only `name`, `description`, `license`, `metadata`, four of the
+six portable Agent Skills fields (`name`, `description`, `license`, `compatibility`, `metadata`,
+`allowed-tools`; research R7).
 
 ### `generate-document`
 
