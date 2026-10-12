@@ -49,7 +49,8 @@ templates/
 
 - `GET /templates/{templateId}?version=…`, `GET /templates/{templateId}/schema?version=…`,
   `POST /templates/{templateId}/render?version=…`.
-- Render responses carry `Inkpdf-Template-Version: 2.0.0` when the template has a version.
+- Schema and render responses carry `Inkpdf-Template-Version: 2.0.0` when the template has a
+  version (the detail gives it in its `version` field).
 - `GET /templates`: each summary has `version` (default version) and `versions`:
 
   ```json

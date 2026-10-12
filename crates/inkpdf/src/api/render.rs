@@ -78,13 +78,15 @@ impl ToSchema for PdfDocument {}
 /// Generate a PDF
 ///
 /// Validates the body against the template's schema (after applying the `default` values of
-/// `layout`), then returns the PDF. No generation is attempted if validation fails.
+/// `layout`), then returns the PDF. No generation is attempted if validation fails. Standard
+/// `format` values (`date`, `date-time`, `email`, …) are asserted: an impossible date such as
+/// `2026-02-30` is a 422 `validation-failed`.
 #[utoipa::path(
     post,
     path = "/templates/{templateId}/render",
     tag = "render",
     operation_id = "renderTemplate",
-    params(TemplatePath, RenderQuery),
+    params(TemplatePath, RenderQuery, templates::VersionQuery),
     request_body(content = RenderRequest, content_type = "application/json"),
     responses(
         (status = 200, description = "Generated document.", content_type = "application/pdf",
@@ -203,9 +205,8 @@ pub struct RenderQuery {
     /// File name (no path; `.pdf` appended). Default: `<templateId>.pdf`.
     #[param(max_length = 200)]
     filename: Option<String>,
-    /// Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version
-    /// (`2.0.0`). Default: the highest valid version.
-    #[param(value_type = Option<String>, pattern = r"^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))?$", example = "2.0.0")]
+    /// Published by [`templates::VersionQuery`].
+    #[param(ignore)]
     version: Option<VersionSelector>,
 }
 

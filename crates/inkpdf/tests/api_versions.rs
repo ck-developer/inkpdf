@@ -105,6 +105,17 @@ async fn detail_and_schema_describe_the_version_asked_for() {
     assert_eq!(schema.pointer(default).unwrap(), "#1f4e79");
     let (_, schema) = get_json(&app, "/templates/facture/schema?version=1.0.0").await;
     assert_eq!(schema.pointer(default).unwrap(), "#000000");
+
+    // The schema response names the version it served (constitution VI).
+    for (query, version) in [
+        ("?version=1", "1.1.0"),
+        ("?version=1.0.0", "1.0.0"),
+        ("", "2.0.0"),
+    ] {
+        let (status, headers, _) = get(&app, &format!("/templates/facture/schema{query}")).await;
+        assert_eq!(status, StatusCode::OK, "{query}");
+        assert_eq!(headers["inkpdf-template-version"], version, "{query}");
+    }
 }
 
 #[tokio::test]

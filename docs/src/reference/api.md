@@ -60,6 +60,10 @@ cannot be imported.
 
 **Template detail, schema included**
 
+Each variable of the schema may carry an `x-role` (`ask`, `fill` or `default`) telling an AI
+assistant who provides its value. `example` is a complete request body to start from, given
+when the template ships a valid `example.json`.
+
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `templateId` | path | yes | Template identifier (its folder name). |
@@ -76,7 +80,9 @@ cannot be imported.
 **Generate a PDF**
 
 Validates the body against the template's schema (after applying the `default` values of
-`layout`), then returns the PDF. No generation is attempted if validation fails.
+`layout`), then returns the PDF. No generation is attempted if validation fails. Standard
+`format` values (`date`, `date-time`, `email`, …) are asserted: an impossible date such as
+`2026-02-30` is a 422 `validation-failed`.
 
 | Parameter | In | Required | Description |
 |---|---|---|---|

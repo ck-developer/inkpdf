@@ -11,7 +11,7 @@ use time::format_description::well_known::Rfc3339;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AppState;
-use crate::api::render::form_urlencoded_pairs;
+use crate::api::render::{TEMPLATE_VERSION_HEADER, form_urlencoded_pairs};
 use crate::error::{ApiError, TemplateError};
 use crate::registry::{TemplateEntry, TemplateStatus, TemplateVersions, VersionSelector};
 use crate::template::TemplateId;
@@ -30,7 +30,8 @@ pub struct TemplatePath {
     pub template_id: String,
 }
 
-/// `version` query parameter of the template operations (research R9 of feature 005).
+/// `version` query parameter of the template operations (research R9 of feature 005); the
+/// render operation publishes it too.
 #[derive(Debug, Default, PartialEq, Eq, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct VersionQuery {
@@ -120,7 +121,10 @@ pub struct TemplateDetail {
     pub summary: TemplateSummary,
     #[schema(format = DateTime)]
     pub loaded_at: String,
-    /// Input JSON Schema (absent when the template is invalid).
+    /// Input JSON Schema (absent when the template is invalid). Each variable may carry an
+    /// `x-role` telling an AI assistant who provides the value: `ask` (the end user), `fill`
+    /// (the assistant, from the context) or `default` (keep the default unless the user
+    /// mentions it).
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<Object>, nullable = false)]
     pub schema: Option<serde_json::Value>,
@@ -258,6 +262,10 @@ pub(crate) fn template_list(state: &AppState) -> TemplateList {
 }
 
 /// Template detail, schema included
+///
+/// Each variable of the schema may carry an `x-role` (`ask`, `fill` or `default`) telling an AI
+/// assistant who provides its value. `example` is a complete request body to start from, given
+/// when the template ships a valid `example.json`.
 #[utoipa::path(
     get,
     path = "/templates/{templateId}",
@@ -292,7 +300,10 @@ pub async fn get_template(
     params(TemplatePath, VersionQuery),
     responses(
         (status = 200, description = "JSON Schema (draft 2020-12).",
-            content_type = "application/schema+json", body = Object),
+            content_type = "application/schema+json", body = Object,
+            headers(
+                ("Inkpdf-Template-Version" = String, description = "Version of the template whose schema is returned; absent when the template has no version."),
+            )),
         (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
         (status = 409, response = crate::api::ProblemResponse),
@@ -311,10 +322,19 @@ pub async fn get_template_schema(
         (TemplateStatus::Valid, Some(schema)) => {
             // The file's original bytes, exposed as is (constitution VI).
             let mut response = (StatusCode::OK, schema.raw().as_slice().to_vec()).into_response();
-            response.headers_mut().insert(
+            let headers = response.headers_mut();
+            headers.insert(
                 header::CONTENT_TYPE,
                 HeaderValue::from_static("application/schema+json"),
             );
+            // Same rule as the render: a version that is not a valid header value is left out.
+            if let Some(value) = entry
+                .version
+                .as_deref()
+                .and_then(|v| HeaderValue::from_str(v).ok())
+            {
+                headers.insert(TEMPLATE_VERSION_HEADER, value);
+            }
             response
         }
         _ => ApiError::TemplateInvalid {
