@@ -602,51 +602,108 @@ async fn too_long_filename_is_an_invalid_parameter() {
     assert_tool_error(&result, &expected, FIX_INPUT);
 }
 
-/// Faults in the arguments themselves (unknown key, missing `templateId` or `data`, `data`
-/// not an object) are refused before the tool runs, as a JSON-RPC "invalid params" error
-/// (`-32602`), not as a tool result (contract, "Protocol faults"), with rmcp's
-/// deserialization message.
+/// Closing hint of a tool error on the arguments themselves.
+const FIX_ARGUMENTS: &str = "Fix the arguments and call the tool again.";
+
+/// FR-014 (005): faults in the arguments themselves (unknown key, missing `templateId` or
+/// `data`, wrongly typed argument) are refused before the tool runs, as a tool error the
+/// assistant sees: one line per faulty argument, naming it, then the hint; no structured
+/// content, since no HTTP problem matches.
 #[tokio::test]
-async fn malformed_arguments_are_refused_before_the_tool_runs() {
+async fn malformed_arguments_are_tool_errors() {
     let volume = examples_volume();
     let app = mcp_app(&volume);
     let data = sample_request()["data"].clone();
+    let render_arguments = "render_template takes data, filename, layout, metadata, templateId";
     let cases = [
         (
+            "render_template",
             json!({ "templateId": "sample", "data": data, "colour": "blue" }),
-            "colour",
+            vec![format!("unknown argument `colour`; {render_arguments}")],
         ),
-        (json!({ "data": data }), "templateId"),
-        (json!({ "templateId": "sample" }), "data"),
         (
+            "render_template",
+            json!({ "data": data }),
+            vec!["missing argument `templateId`".to_owned()],
+        ),
+        (
+            "render_template",
+            json!({ "templateId": "sample" }),
+            vec!["missing argument `data`".to_owned()],
+        ),
+        (
+            "render_template",
             json!({ "templateId": "sample", "data": [] }),
-            "expected a map",
+            vec!["argument `data` must be an object, not an array".to_owned()],
+        ),
+        (
+            "render_template",
+            json!({ "templateId": "sample", "data": "Confidential" }),
+            vec!["argument `data` must be an object, not a string".to_owned()],
+        ),
+        // Every fault at once.
+        (
+            "render_template",
+            json!({ "templateId": 7, "data": null, "colour": "blue" }),
+            vec![
+                format!("unknown argument `colour`; {render_arguments}"),
+                "argument `data` must be an object, not null".to_owned(),
+                "argument `templateId` must be a string, not a number".to_owned(),
+            ],
+        ),
+        (
+            "get_template",
+            json!({}),
+            vec!["missing argument `templateId`".to_owned()],
+        ),
+        // An argument given to `list_templates`, which takes none.
+        (
+            "list_templates",
+            json!({ "templateId": "sample" }),
+            vec!["unknown argument `templateId`; list_templates takes no arguments".to_owned()],
         ),
     ];
-    for (args, mention) in cases {
+    for (tool, args, faults) in cases {
         for protocol in [STATELESS_PROTOCOL, HANDSHAKE_PROTOCOL] {
-            let params = tool_params("render_template", args.clone());
+            let params = tool_params(tool, args.clone());
             let (status, body) = rpc(&app, 1, "tools/call", params, protocol).await;
 
-            // The transport answers a JSON-RPC error with HTTP 200.
             assert_eq!(status, StatusCode::OK, "{protocol} {args}: {body}");
-            assert!(body.get("result").is_none(), "{protocol} {args}: {body}");
-            assert_eq!(body["error"]["code"], -32602, "{protocol} {args}: {body}");
-            let message = body["error"]["message"].as_str().unwrap_or_default();
-            assert!(message.contains(mention), "{protocol} {args}: {message}");
+            assert!(body.get("error").is_none(), "{protocol} {args}: {body}");
+            let result = &body["result"];
+            assert_eq!(result["isError"], true, "{protocol} {args}: {result}");
+            assert!(
+                result.get("structuredContent").is_none(),
+                "{protocol} {args}: {result}"
+            );
+            let mut expected = format!("Invalid arguments for {tool}");
+            for fault in &faults {
+                expected.push_str(&format!("\n- {fault}"));
+            }
+            expected.push_str(&format!("\n{FIX_ARGUMENTS}"));
+            assert_eq!(texts(result), [expected.as_str()], "{protocol} {args}");
         }
     }
 
-    // An argument given to `list_templates`, which takes none.
-    let params = tool_params("list_templates", json!({ "templateId": "sample" }));
-    let (_, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
-    assert_eq!(body["error"]["code"], -32602, "{body}");
-
-    // `arguments` is optional in MCP: without it, `list_templates` runs.
+    // `arguments` is optional in MCP: without it, `list_templates` runs and `render_template`
+    // misses both of its required arguments.
     let params = json!({ "name": "list_templates" });
     let (status, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     assert_eq!(body["result"]["isError"], false, "{body}");
+    let params = json!({ "name": "render_template" });
+    let (_, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+    assert_eq!(body["result"]["isError"], true, "{body}");
+    assert_eq!(
+        texts(&body["result"]),
+        [format!(
+            "Invalid arguments for render_template\n\
+             - missing argument `data`\n\
+             - missing argument `templateId`\n\
+             {FIX_ARGUMENTS}"
+        )
+        .as_str()]
+    );
 }
 
 #[tokio::test]

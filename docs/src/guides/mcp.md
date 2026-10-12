@@ -267,11 +267,21 @@ protocol failure. It carries:
 The first three, and an unknown template, are for the assistant to fix, usually by asking the
 user. The others are not: the assistant retries later or tells the user.
 
-Some mistakes are refused earlier, by the protocol layer, before inkpdf sees them: an unknown
-tool name, a missing `templateId` or `data`, a `data` that is not an object, or an argument the
-tool does not declare. The assistant gets a protocol error and usually corrects the call by
-itself. What is *inside* `data`, `layout` and `metadata` is always checked against the
-template's schema and reported as above.
+Mistakes in the arguments themselves are refused before the tool runs: an argument the tool
+does not declare, a missing `templateId` or `data`, or an argument of the wrong type (a `data`
+that is not an object). They also come back as a tool error, so that the assistant always sees
+them, but without structured content, since the HTTP API has no such error. The text names each
+faulty argument and ends with "Fix the arguments and call the tool again.":
+
+```text
+Invalid arguments for render_template
+- unknown argument `colour`; render_template takes data, filename, layout, metadata, templateId
+- argument `data` must be an object, not an array
+Fix the arguments and call the tool again.
+```
+
+Only an unknown tool name is a protocol error. What is *inside* `data`, `layout` and `metadata`
+is always checked against the template's schema and reported as above.
 
 ## Limits
 

@@ -3,6 +3,7 @@
 //! Streamable HTTP transport, stateless, JSON responses. The tools offer the HTTP API's
 //! read-only operations through the same pipeline and limits (constitution VI).
 
+mod arguments;
 mod result;
 mod tools;
 
@@ -66,9 +67,11 @@ impl ServerHandler for InkpdfMcp {
     }
 
     /// The router's `tools/call`, except for arguments that do not fit the tool's input schema
-    /// (unknown key, missing `templateId` or `data`, `data` not an object). rmcp returns them
-    /// as a tool error; the contract makes them a JSON-RPC "invalid params" error (`-32602`),
-    /// with rmcp's message. Such a call is still logged, without its arguments (FR-014).
+    /// (unknown key, missing `templateId` or `data`, wrongly typed argument). rmcp refuses
+    /// them with serde's message; they come back as a tool error naming each faulty argument,
+    /// so that the assistant sees it and fixes the call (FR-014 of feature 005). Such a call is
+    /// still logged, without its arguments. An unknown tool stays a JSON-RPC "invalid params"
+    /// error (`-32602`), from the router.
     async fn call_tool(
         &self,
         request: CallToolRequestParams,
@@ -76,20 +79,18 @@ impl ServerHandler for InkpdfMcp {
     ) -> Result<CallToolResponse, ErrorData> {
         let started = Instant::now();
         let tool = request.name.clone();
-        let response = Self::tool_router()
+        let outline = arguments::outline(request.arguments.as_ref());
+        let router = Self::tool_router();
+        let response = router
             .call(ToolCallContext::new(self, request, context))
             .await?;
         match response {
             CallToolResponse::Complete(result) if is_argument_refusal(&result) => {
                 // The router only gets here for one of the three tools: the name is ours.
                 tools::log_call(&tool, None, started, "invalid-arguments");
-                let message = result
-                    .content
-                    .iter()
-                    .find_map(|block| block.as_text())
-                    .map(|text| text.text.clone())
-                    .unwrap_or_else(|| "invalid arguments".into());
-                Err(ErrorData::invalid_params(message, None))
+                let input_schema = router.get(&tool).map(|tool| tool.input_schema.as_ref());
+                let result = arguments::error_result(&tool, input_schema, &outline, &result);
+                Ok(CallToolResponse::Complete(result))
             }
             response => Ok(response),
         }

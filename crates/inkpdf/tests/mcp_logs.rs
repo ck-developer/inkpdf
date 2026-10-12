@@ -76,8 +76,8 @@ async fn tool_calls_are_logged_without_their_input() {
         call_tool(&app, "render_template", render_args("sample")).await;
         call_tool(&app, "render_template", render_args("unknown")).await;
         call_tool(&app, "render_template", render_args("../x")).await;
-        // Refused for their arguments (protocol faults), before the tool runs; the second
-        // error message quotes the value.
+        // Refused for their arguments, before the tool runs (tool errors); the second one
+        // carries the secret as a wrongly typed `data`.
         let mut args = render_args("sample");
         args["colour"] = "blue".into();
         let params = tool_params("render_template", args);

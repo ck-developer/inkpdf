@@ -124,6 +124,13 @@ server's `tools/call` turns into this error. The input *inside* `data`, `layout`
 is checked by the template's schema and reported as a tool error, like the HTTP API; so is a
 `layout` or `metadata` that is `null` or not an object.
 
+> **Changed by feature 005** (FR-014 of `specs/005-mcp-agent-efficiency/spec.md`): faults in the
+> arguments themselves (unknown key, missing `templateId` or `data`, wrongly typed argument such
+> as a `data` that is not an object) are now tool errors (`isError: true`, no
+> `structuredContent`), whose text names each faulty argument and ends with "Fix the arguments
+> and call the tool again.". Only an unknown tool name stays a JSON-RPC "invalid params" error.
+> The `mcp.tool` log still records them with outcome `invalid-arguments`.
+
 ## Logs
 
 - `event = "render"` gains `interface = "http" | "mcp"`.
