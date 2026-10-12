@@ -7,11 +7,17 @@ mod result;
 mod tools;
 
 use std::sync::Arc;
+use std::time::Instant;
 
-use rmcp::model::{Implementation, ServerCapabilities, ServerConfig};
+use rmcp::handler::server::tool::ToolCallContext;
+use rmcp::model::{
+    CallToolRequestParams, CallToolResponse, CallToolResult, Implementation, ServerCapabilities,
+    ServerConfig,
+};
+use rmcp::service::RequestContext;
 use rmcp::transport::streamable_http_server::session::never::NeverSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-use rmcp::{ServerHandler, tool_handler};
+use rmcp::{ErrorData, RoleServer, ServerHandler, tool_handler};
 use tokio_util::sync::CancellationToken;
 
 use crate::AppState;
@@ -49,6 +55,43 @@ impl ServerHandler for InkpdfMcp {
             .with_server_info(Implementation::new("inkpdf", env!("CARGO_PKG_VERSION")))
             .with_instructions(INSTRUCTIONS)
     }
+
+    /// The router's `tools/call`, except for arguments that do not fit the tool's input schema
+    /// (unknown key, missing `templateId` or `data`, `data` not an object). rmcp returns them
+    /// as a tool error; the contract makes them a JSON-RPC "invalid params" error (`-32602`),
+    /// with rmcp's message. Such a call is still logged, without its arguments (FR-014).
+    async fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResponse, ErrorData> {
+        let started = Instant::now();
+        let tool = request.name.clone();
+        let response = Self::tool_router()
+            .call(ToolCallContext::new(self, request, context))
+            .await?;
+        match response {
+            CallToolResponse::Complete(result) if is_argument_refusal(&result) => {
+                // The router only gets here for one of the three tools: the name is ours.
+                tools::log_call(&tool, None, started, "invalid-arguments");
+                let message = result
+                    .content
+                    .iter()
+                    .find_map(|block| block.as_text())
+                    .map(|text| text.text.clone())
+                    .unwrap_or_else(|| "invalid arguments".into());
+                Err(ErrorData::invalid_params(message, None))
+            }
+            response => Ok(response),
+        }
+    }
+}
+
+/// rmcp's refusal of a call's arguments: a tool error without structured content. Every tool
+/// error of the tools themselves carries the HTTP problem as structured content
+/// (`result::error_result`).
+fn is_argument_refusal(result: &CallToolResult) -> bool {
+    result.is_error == Some(true) && result.structured_content.is_none()
 }
 
 /// Tower service mounted at `/mcp`.

@@ -188,7 +188,7 @@ Each event carries an `event` field, for example:
 | `template.loaded`, `template.invalid`, `template.removed` | Hot reload of a template. |
 | `template.link_excluded` | A symbolic link pointing outside a template folder was ignored. |
 | `render` | One per render request, with `templateId`, `durationMs`, `outcome` (`ok`, `validation_failed`, `render_failed`, `timeout`, `overloaded`) and `interface` (`http` or `mcp`). |
-| `mcp.tool` | One per MCP tool call, with `tool`, `templateId` when there is one, `durationMs` and `outcome` (`ok` or the error code). See [Using inkpdf from an AI assistant](../guides/mcp.md). |
+| `mcp.tool` | One per MCP tool call, with `tool`, `templateId` when there is one, `durationMs` and `outcome` (`ok`, the error code, or `invalid-arguments` for a call refused for its arguments). See [Using inkpdf from an AI assistant](../guides/mcp.md). |
 | `render.overrun` | A compilation finished after its deadline (see [Limits](limits.md)). |
 
 Request bodies are never logged.

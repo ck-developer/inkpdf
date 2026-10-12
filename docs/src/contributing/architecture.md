@@ -63,8 +63,9 @@ document. See [Using inkpdf from an AI assistant](../guides/mcp.md).
   pipeline the HTTP handler uses; the PDF comes back as an embedded resource.
 - Errors: an `ApiError` of the pipeline becomes a tool error (`isError: true`) whose structured
   content is the HTTP API's problem object, plus a plain-language text with a closing hint.
-  Protocol faults (unknown tool, arguments that do not fit the tool's input schema) are left to
-  `rmcp` as JSON-RPC errors.
+  Protocol faults (unknown tool, arguments that do not fit the tool's input schema) are
+  JSON-RPC "invalid params" errors. `rmcp` returns argument faults as tool errors; the
+  hand-written `call_tool` of `mcp/mod.rs` turns them into that error and logs the call.
 
 ### `registry/`
 

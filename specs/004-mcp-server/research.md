@@ -104,6 +104,12 @@ such as Claude can offer it as a download.
   This is FR-009 and FR-010.
 - JSON-RPC errors are left to rmcp for protocol faults only: unknown tool, arguments that do
   not match the tool's input schema.
+  **Confirmed during implementation**: rmcp 3.5.1 answers an unknown tool with `-32602`, but
+  returns a failure to deserialize the arguments as a tool error (`isError: true`, text
+  `failed to deserialize parameters: …`, no `structuredContent`), as the MCP specification
+  of 2025-11-25 advises for input validation. To keep the contract, the server writes
+  `call_tool` itself: it delegates to the tool router and turns such a result into
+  `-32602` with rmcp's message, and logs the call with outcome `invalid-arguments`.
 - Size: the render tool measures the serialised `{ data, layout, metadata }` object and refuses
   it with `payload-too-large` above `INKPDF_MAX_BODY_BYTES`, like the HTTP API. The transport
   limit (`max_request_body_bytes`) is set to `INKPDF_MAX_BODY_BYTES + 64 KiB` to leave room for

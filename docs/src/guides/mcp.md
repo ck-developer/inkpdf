@@ -309,6 +309,7 @@ on claude.ai, is a planned feature.
 ## Logs
 
 Each tool call writes one `mcp.tool` log event with the tool, the template id when there is
-one, the duration and the outcome (`ok` or the error code). Each render also writes the usual
+one, the duration and the outcome: `ok`, the error code, or `invalid-arguments` for a call
+refused for its arguments. Each render also writes the usual
 `render` event, with `interface` set to `mcp` (or `http` for the HTTP API). The input data is
 never logged. See [Deployment → Logs](../operations/deployment.md#logs).

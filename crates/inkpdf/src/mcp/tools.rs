@@ -187,14 +187,19 @@ fn finish(tool: &str, started: Instant, outcome: Outcome) -> CallToolResult {
             (error.template_id.clone(), error_result(error), code)
         }
     };
+    log_call(tool, template_id.as_deref(), started, outcome);
+    result
+}
+
+/// The `mcp.tool` log event of one call (FR-014).
+pub(super) fn log_call(tool: &str, template_id: Option<&str>, started: Instant, outcome: &str) {
     tracing::info!(
         event = "mcp.tool",
         tool,
-        templateId = template_id.as_deref(),
+        templateId = template_id,
         durationMs = started.elapsed().as_millis() as u64,
         outcome,
     );
-    result
 }
 
 /// JSON of a response body of the HTTP API.

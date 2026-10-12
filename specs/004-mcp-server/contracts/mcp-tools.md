@@ -112,12 +112,17 @@ A pipeline error is a successful JSON-RPC response with `isError: true`:
 
 `structuredContent` is the exact problem object the HTTP API returns for the same error.
 
-Protocol faults are JSON-RPC errors produced by `rmcp`, not tool results: unknown tool name,
-missing `templateId` or `data`, `data` that is not an object, and unknown argument keys (the
-input schemas forbid them). The input *inside* `data`, `layout` and `metadata` is checked by the
-template's schema and reported as a tool error, like the HTTP API.
+Protocol faults are JSON-RPC "invalid params" errors (`-32602`, with HTTP `200`), not tool
+results: unknown tool name, missing `templateId` or `data`, `data` that is not an object, and
+unknown argument keys (the input schemas forbid them). The message names the faulty argument.
+`rmcp` reports an unknown tool this way; it returns argument faults as tool errors, which the
+server's `tools/call` turns into this error. The input *inside* `data`, `layout` and `metadata`
+is checked by the template's schema and reported as a tool error, like the HTTP API; so is a
+`layout` or `metadata` that is `null` or not an object.
 
 ## Logs
 
 - `event = "render"` gains `interface = "http" | "mcp"`.
-- `event = "mcp.tool"`, `tool`, `templateId?`, `durationMs`, `outcome` (`ok` or error slug).
+- `event = "mcp.tool"`, `tool`, `templateId?`, `durationMs`, `outcome` (`ok`, the error slug, or
+  `invalid-arguments` for a call refused for its arguments). An unknown tool name is not
+  logged as `mcp.tool`.

@@ -533,9 +533,9 @@ async fn too_long_filename_is_an_invalid_parameter() {
 }
 
 /// Faults in the arguments themselves (unknown key, missing `templateId` or `data`, `data`
-/// not an object) are refused by rmcp before the tool runs. Following the current MCP
-/// specification, rmcp reports them as a tool error carrying its deserialization message,
-/// so that the assistant can correct the call, rather than as a JSON-RPC error.
+/// not an object) are refused before the tool runs, as a JSON-RPC "invalid params" error
+/// (`-32602`), not as a tool result (contract, "Protocol faults"). The message names the
+/// faulty argument.
 #[tokio::test]
 async fn malformed_arguments_are_refused_before_the_tool_runs() {
     let volume = examples_volume();
@@ -554,19 +554,23 @@ async fn malformed_arguments_are_refused_before_the_tool_runs() {
         ),
     ];
     for (args, mention) in cases {
-        let params = tool_params("render_template", args.clone());
-        let (status, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+        for protocol in [STATELESS_PROTOCOL, HANDSHAKE_PROTOCOL] {
+            let params = tool_params("render_template", args.clone());
+            let (status, body) = rpc(&app, 1, "tools/call", params, protocol).await;
 
-        assert_eq!(status, StatusCode::OK, "{args}: {body}");
-        let result = &body["result"];
-        assert_eq!(result["isError"], true, "{args}: {body}");
-        assert!(result.get("structuredContent").is_none(), "{args}: {body}");
-        let text = texts(result).join("\n");
-        assert!(
-            text.starts_with("failed to deserialize parameters:") && text.contains(mention),
-            "{args}: {text}"
-        );
+            // The transport answers a JSON-RPC error with HTTP 200.
+            assert_eq!(status, StatusCode::OK, "{protocol} {args}: {body}");
+            assert!(body.get("result").is_none(), "{protocol} {args}: {body}");
+            assert_eq!(body["error"]["code"], -32602, "{protocol} {args}: {body}");
+            let message = body["error"]["message"].as_str().unwrap_or_default();
+            assert!(message.contains(mention), "{protocol} {args}: {message}");
+        }
     }
+
+    // An argument given to `list_templates`, which takes none.
+    let params = tool_params("list_templates", json!({ "templateId": "sample" }));
+    let (_, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+    assert_eq!(body["error"]["code"], -32602, "{body}");
 }
 
 #[tokio::test]
