@@ -219,7 +219,7 @@ shared render pipeline and the MCP service skeleton are foundational.
 ## Phase 6: Polish
 
 - [X] T028 [P] Add one line on the optional MCP server to the feature list in `README.md`. Mention `src/mcp/` and the shared `render::run` pipeline in `docs/src/contributing/architecture.md`.
-- [ ] T029 [P] Update the user's project memory note `repo-layout-003.md` (outside the repository) on the layout (`src/mcp/`, `INKPDF_MCP_ENABLED`, MCP tests in `tests/mcp.rs`).
+- [X] T029 [P] Update the user's project memory note `repo-layout-003.md` (outside the repository) on the layout (`src/mcp/`, `INKPDF_MCP_ENABLED`, MCP tests in `tests/mcp.rs`).
 - [ ] T030 Run [quickstart.md](./quickstart.md) §1–§6 end to end:
   - `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`, perf;
   - `docker compose up --build` with `INKPDF_MCP_ENABLED=true`;
