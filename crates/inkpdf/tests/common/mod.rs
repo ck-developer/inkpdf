@@ -24,9 +24,9 @@ pub fn crate_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
-/// Demo template shipped in `examples/`.
+/// `sample` test template, from `tests/fixtures/templates/`.
 pub fn sample_template() -> PathBuf {
-    repo_root().join("examples/templates/sample")
+    fixture("sample")
 }
 
 /// Fixture from `tests/fixtures/templates/`.
@@ -34,10 +34,15 @@ pub fn fixture(name: &str) -> PathBuf {
     crate_root().join("tests/fixtures/templates").join(name)
 }
 
-/// Sample body `examples/requests/sample.json`.
-pub fn sample_request() -> Value {
-    let raw = fs::read(repo_root().join("examples/requests/sample.json")).unwrap();
+/// Request body from `tests/fixtures/requests/`.
+pub fn fixture_request(name: &str) -> Value {
+    let raw = fs::read(crate_root().join("tests/fixtures/requests").join(name)).unwrap();
     serde_json::from_slice(&raw).unwrap()
+}
+
+/// Sample body `tests/fixtures/requests/sample.json`.
+pub fn sample_request() -> Value {
+    fixture_request("sample.json")
 }
 
 /// Disposable templates volume.

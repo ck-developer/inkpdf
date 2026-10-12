@@ -1,6 +1,6 @@
-//! Rendering pipeline benchmark (SC-001): `examples/templates/sample` with
-//! `examples/requests/sample.json`. Fine-grained and comparable across versions; the
-//! blocking threshold (p95 < 200 ms) is checked by `tests/perf.rs`.
+//! Rendering pipeline benchmark (SC-001): the `sample` test template with its request, from
+//! `tests/fixtures/`. Fine-grained and comparable across versions; the blocking threshold
+//! (p95 < 200 ms) is checked by `tests/perf.rs`.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -12,9 +12,9 @@ use inkpdf::registry::loader::{self, LoadOutcome};
 use inkpdf::render::compile_pdf;
 
 fn render_sample(c: &mut Criterion) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
     let entry: Arc<TemplateEntry> = match loader::load(
-        &root.join("examples/templates/sample"),
+        &fixtures.join("templates/sample"),
         "sample".parse().unwrap(),
         u64::MAX,
     ) {
@@ -22,7 +22,7 @@ fn render_sample(c: &mut Criterion) {
         LoadOutcome::Unstable => panic!("sample template is changing"),
     };
     let request: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(root.join("examples/requests/sample.json")).unwrap())
+        serde_json::from_slice(&std::fs::read(fixtures.join("requests/sample.json")).unwrap())
             .unwrap();
     let body = entry.schema.as_ref().unwrap().prepare(request).unwrap();
 

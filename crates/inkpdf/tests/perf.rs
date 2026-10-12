@@ -47,15 +47,9 @@ async fn sample_p95_is_below_200ms() {
 async fn packages_demo_p95_is_below_1s() {
     const BUDGET: Duration = Duration::from_secs(1);
     let volume = TestVolume::new();
-    volume.copy_template(
-        &repo_root().join("examples/templates/packages-demo"),
-        "packages-demo",
-    );
+    volume.copy_template(&fixture("packages-demo"), "packages-demo");
     let app = test_app(test_config(&volume));
-    let body: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(repo_root().join("examples/requests/packages-demo.json")).unwrap(),
-    )
-    .unwrap();
+    let body = fixture_request("packages-demo.json");
 
     let (status, _, _) = post_json(&app, "/templates/packages-demo/render", &body).await;
     assert_eq!(status, StatusCode::OK);

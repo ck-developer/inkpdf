@@ -51,7 +51,7 @@ Dependencies.
 
 ## Phase 2: Foundational — test templates become fixtures (blocks US6)
 
-- [ ] T003 With `git mv`, move:
+- [X] T003 With `git mv`, move:
   - `examples/templates/sample` and `examples/templates/packages-demo` to `crates/inkpdf/tests/fixtures/templates/`;
   - `examples/requests/sample.json` and `examples/requests/packages-demo.json` to `crates/inkpdf/tests/fixtures/requests/`.
 

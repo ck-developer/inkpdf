@@ -15,9 +15,13 @@ fn examples() -> PathBuf {
 
 fn volume() -> TestVolume {
     let volume = TestVolume::new();
-    for template in ["sample", "packages-demo", "progress-invoice"] {
-        volume.copy_template(&examples().join("templates").join(template), template);
+    for template in ["sample", "packages-demo"] {
+        volume.copy_template(&fixture(template), template);
     }
+    volume.copy_template(
+        &examples().join("templates/progress-invoice"),
+        "progress-invoice",
+    );
     volume
 }
 
@@ -73,8 +77,13 @@ fn percent_of(cents: i128, percent: i128) -> i128 {
 async fn every_example_request_renders() {
     let volume = volume();
     let app = test_app(test_config(&volume));
-    render(&app, "sample", &request("sample.json")).await;
-    render(&app, "packages-demo", &request("packages-demo.json")).await;
+    render(&app, "sample", &fixture_request("sample.json")).await;
+    render(
+        &app,
+        "packages-demo",
+        &fixture_request("packages-demo.json"),
+    )
+    .await;
     let mut invoices = fs::read_dir(examples().join("requests/progress-invoice"))
         .unwrap()
         .map(|e| e.unwrap().path())

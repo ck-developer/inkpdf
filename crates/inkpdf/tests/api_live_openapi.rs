@@ -12,9 +12,13 @@ use serde_json::Value;
 
 fn examples_volume() -> TestVolume {
     let volume = TestVolume::new();
-    for id in ["sample", "packages-demo", "progress-invoice"] {
-        volume.copy_template(&repo_root().join("examples/templates").join(id), id);
+    for id in ["sample", "packages-demo"] {
+        volume.copy_template(&fixture(id), id);
     }
+    volume.copy_template(
+        &repo_root().join("examples/templates/progress-invoice"),
+        "progress-invoice",
+    );
     volume.copy_template(&fixture("invalid-schema"), "invalid-schema");
     volume
 }
@@ -153,7 +157,7 @@ async fn empty_volume_gives_the_static_document() {
 async fn colliding_prefixes_are_made_unique() {
     let volume = TestVolume::new();
     for id in ["a-b", "a_b"] {
-        volume.copy_template(&repo_root().join("examples/templates/sample"), id);
+        volume.copy_template(&sample_template(), id);
     }
     let app = test_app(test_config(&volume));
     let doc = document(&app).await;
@@ -196,11 +200,11 @@ async fn eventually(app: &Router, what: &str, check: impl Fn(&Value) -> bool) {
 #[tokio::test]
 async fn document_follows_hot_reload() {
     let volume = TestVolume::new();
-    volume.copy_template(&repo_root().join("examples/templates/sample"), "sample");
+    volume.copy_template(&sample_template(), "sample");
     let live = live_app(&volume);
     let path = "/templates/added/render";
 
-    volume.copy_template(&repo_root().join("examples/templates/sample"), "added");
+    volume.copy_template(&sample_template(), "added");
     eventually(&live.app, "template added", |d| {
         d["paths"].get(path).is_some()
     })

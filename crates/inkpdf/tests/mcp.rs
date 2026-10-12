@@ -16,15 +16,17 @@ use inkpdf::registry::watcher;
 use inkpdf::{Config, build_app};
 use serde_json::{Value, json};
 
-/// The example templates, plus a template whose schema does not load.
+/// The `sample` and `packages-demo` fixtures, the example template, plus a template whose
+/// schema does not load.
 fn examples_volume() -> TestVolume {
     let volume = TestVolume::new();
-    for template in ["sample", "packages-demo", "progress-invoice"] {
-        volume.copy_template(
-            &repo_root().join("examples/templates").join(template),
-            template,
-        );
+    for template in ["sample", "packages-demo"] {
+        volume.copy_template(&fixture(template), template);
     }
+    volume.copy_template(
+        &repo_root().join("examples/templates/progress-invoice"),
+        "progress-invoice",
+    );
     volume.copy_template(&fixture("invalid-schema"), "invalid-schema");
     volume
 }
@@ -39,8 +41,8 @@ fn example_request(path: &str) -> Value {
 /// `progress-invoice` request.
 fn example_cases() -> Vec<(&'static str, Value)> {
     let mut cases = vec![
-        ("sample", example_request("sample.json")),
-        ("packages-demo", example_request("packages-demo.json")),
+        ("sample", fixture_request("sample.json")),
+        ("packages-demo", fixture_request("packages-demo.json")),
     ];
     let mut invoices: Vec<_> = fs::read_dir(repo_root().join("examples/requests/progress-invoice"))
         .unwrap()

@@ -180,15 +180,9 @@ async fn identical_renders_are_byte_identical() {
 #[tokio::test]
 async fn template_using_bundled_packages_renders() {
     let volume = TestVolume::new();
-    volume.copy_template(
-        &repo_root().join("examples/templates/packages-demo"),
-        "packages-demo",
-    );
+    volume.copy_template(&fixture("packages-demo"), "packages-demo");
     let app = test_app(test_config(&volume));
-    let request: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(repo_root().join("examples/requests/packages-demo.json")).unwrap(),
-    )
-    .unwrap();
+    let request = fixture_request("packages-demo.json");
     let (status, headers, body) =
         post_json(&app, "/templates/packages-demo/render", &request).await;
     assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
