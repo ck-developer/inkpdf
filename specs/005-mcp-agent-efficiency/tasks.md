@@ -36,7 +36,7 @@ Dependencies.
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Create the plugin skeleton as in [contracts/plugin-skills.md](./contracts/plugin-skills.md):
+- [X] T001 [P] Create the plugin skeleton as in [contracts/plugin-skills.md](./contracts/plugin-skills.md):
   - `.claude-plugin/marketplace.json`;
   - `plugins/inkpdf/.claude-plugin/plugin.json`, with `userConfig.server_url` defaulting to `http://localhost:3000`, and `version` equal to the crate version in `crates/inkpdf/Cargo.toml`;
   - `plugins/inkpdf/.mcp.json`, with an `http` server `inkpdf` at `${user_config.server_url}/mcp`;

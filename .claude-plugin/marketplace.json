@@ -1,0 +1,13 @@
+{
+  "name": "inkpdf",
+  "owner": {
+    "name": "inkpdf"
+  },
+  "plugins": [
+    {
+      "name": "inkpdf",
+      "source": "./plugins/inkpdf",
+      "description": "Generate PDF documents with an inkpdf server, and write inkpdf templates."
+    }
+  ]
+}

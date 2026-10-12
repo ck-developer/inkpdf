@@ -1,0 +1,15 @@
+{
+  "name": "inkpdf",
+  "version": "0.1.0",
+  "description": "Connects an inkpdf server and adds two skills: generate a document from a template, and write a template.",
+  "license": "MIT OR Apache-2.0",
+  "repository": "https://github.com/ck-developer/inkpdf",
+  "userConfig": {
+    "server_url": {
+      "type": "string",
+      "title": "inkpdf server URL",
+      "description": "Base URL of your inkpdf server, without /mcp. The server must run with INKPDF_MCP_ENABLED=true.",
+      "default": "http://localhost:3000"
+    }
+  }
+}
