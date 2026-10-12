@@ -41,6 +41,8 @@ pub struct Config {
     pub log_format: LogFormat,
     /// PDF author when neither the request nor the template provides one.
     pub default_author: String,
+    /// Serves the MCP interface at `/mcp` (off by default).
+    pub mcp_enabled: bool,
 }
 
 impl Default for Config {
@@ -56,6 +58,7 @@ impl Default for Config {
             max_template_bytes: 50 * 1024 * 1024,
             log_format: LogFormat::Json,
             default_author: "inkpdf".to_owned(),
+            mcp_enabled: false,
         }
     }
 }
@@ -109,6 +112,9 @@ impl Config {
         if let Some(v) = var("INKPDF_DEFAULT_AUTHOR") {
             config.default_author = v.trim().to_owned();
         }
+        if let Some(v) = var("INKPDF_MCP_ENABLED") {
+            config.mcp_enabled = parse_bool("INKPDF_MCP_ENABLED", &v)?;
+        }
         Ok(config)
     }
 }
@@ -141,6 +147,18 @@ where
 
 fn parse_secs(name: &'static str, value: &str) -> Result<Duration, ConfigError> {
     parse_positive::<u64>(name, value).map(Duration::from_secs)
+}
+
+/// Same values as the `download` query parameter: `true`, `false`, `1`, `0`.
+fn parse_bool(name: &'static str, value: &str) -> Result<bool, ConfigError> {
+    match value.trim() {
+        "true" | "1" => Ok(true),
+        "false" | "0" => Ok(false),
+        other => Err(ConfigError {
+            name,
+            message: format!("expected `true` or `false`, got `{other}`"),
+        }),
+    }
 }
 
 #[cfg(test)]
@@ -196,5 +214,27 @@ mod tests {
 
         let err = Config::from_lookup(lookup(&[("INKPDF_RENDER_TIMEOUT_SECS", "0")])).unwrap_err();
         assert_eq!(err.name, "INKPDF_RENDER_TIMEOUT_SECS");
+    }
+
+    #[test]
+    fn mcp_is_off_by_default() {
+        let config = Config::from_lookup(lookup(&[])).unwrap();
+        assert!(!config.mcp_enabled);
+    }
+
+    #[test]
+    fn mcp_accepts_boolean_values() {
+        for (value, expected) in [("true", true), ("1", true), ("false", false), ("0", false)] {
+            let config = Config::from_lookup(lookup(&[("INKPDF_MCP_ENABLED", value)])).unwrap();
+            assert_eq!(config.mcp_enabled, expected, "{value}");
+        }
+    }
+
+    #[test]
+    fn mcp_rejects_other_values() {
+        let err = Config::from_lookup(lookup(&[("INKPDF_MCP_ENABLED", "yes")])).unwrap_err();
+        assert_eq!(err.name, "INKPDF_MCP_ENABLED");
+        assert!(err.to_string().contains("INKPDF_MCP_ENABLED"));
+        assert!(err.to_string().contains("yes"));
     }
 }

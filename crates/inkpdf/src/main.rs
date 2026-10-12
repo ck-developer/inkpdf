@@ -9,6 +9,8 @@ use std::time::Duration;
 use inkpdf::config::{Config, LogFormat};
 use inkpdf::{AppState, build_app, registry};
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 fn main() -> ExitCode {
     let command = std::env::args().nth(1);
@@ -65,12 +67,22 @@ async fn run(config: Config) -> std::io::Result<()> {
     let _watcher = registry::watcher::spawn(state.registry.clone(), state.config.rescan_interval);
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
-    tracing::info!(event = "server.listening", address = %listen);
-    axum::serve(listener, build_app(state))
+    let mcp = state.config.mcp_enabled;
+    tracing::info!(event = "server.listening", address = %listen, mcp);
+    if mcp {
+        tracing::info!(event = "mcp.listening", path = "/mcp");
+    }
+    let shutdown = state.shutdown.clone();
+    let served = axum::serve(listener, build_app(state))
         .with_graceful_shutdown(shutdown_signal())
-        .await
+        .await;
+    // Only once every request in flight, MCP calls included, has been answered: rmcp answers
+    // a call still running when the token is cancelled with a `500`.
+    shutdown.cancel();
+    served
 }
 
+/// Resolves on Ctrl-C or SIGTERM; requests in flight are then drained.
 async fn shutdown_signal() {
     let ctrl_c = async {
         let _ = tokio::signal::ctrl_c().await;
@@ -94,12 +106,15 @@ async fn shutdown_signal() {
     tracing::info!(event = "server.shutdown");
 }
 
+/// `RUST_LOG` (default `info`), with rmcp's events below `error` dropped
+/// ([`inkpdf::mcp::log_cap`]).
 fn init_tracing(format: LogFormat) {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let builder = tracing_subscriber::fmt().with_env_filter(filter);
+    let cap = inkpdf::mcp::log_cap();
     match format {
-        LogFormat::Json => builder.json().flatten_event(true).init(),
-        LogFormat::Pretty => builder.pretty().init(),
+        LogFormat::Json => builder.json().flatten_event(true).finish().with(cap).init(),
+        LogFormat::Pretty => builder.pretty().finish().with(cap).init(),
     }
 }
 

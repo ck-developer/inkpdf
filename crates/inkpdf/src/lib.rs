@@ -6,6 +6,7 @@
 pub mod api;
 pub mod config;
 pub mod error;
+pub mod mcp;
 pub mod packages;
 pub mod registry;
 pub mod render;
@@ -14,6 +15,7 @@ pub mod template;
 use std::sync::Arc;
 
 use tokio::sync::Semaphore;
+use tokio_util::sync::CancellationToken;
 
 pub use api::{ApiDoc, build_app, openapi};
 pub use config::Config;
@@ -28,6 +30,9 @@ pub struct AppState {
     pub render_slots: Arc<Semaphore>,
     /// Cached live OpenAPI document.
     pub live_doc: Arc<api::live::LiveDoc>,
+    /// Cancelled once the server has shut down and drained its requests; stops the MCP
+    /// service.
+    pub shutdown: CancellationToken,
 }
 
 impl AppState {
@@ -37,6 +42,7 @@ impl AppState {
         Self {
             render_slots: Arc::new(Semaphore::new(config.max_concurrent_renders)),
             live_doc: Arc::default(),
+            shutdown: CancellationToken::new(),
             registry: Arc::new(registry),
             config: Arc::new(config),
         }

@@ -23,6 +23,7 @@
 - [Using bundled packages](guides/packages.md)
 - [Downloads and PDF metadata](guides/downloads-and-metadata.md)
 - [Exploring the API](guides/exploring-the-api.md)
+- [Using inkpdf from an AI assistant](guides/mcp.md)
 - [Walkthrough: a progress invoice](guides/progress-invoice.md)
 
 # Reference

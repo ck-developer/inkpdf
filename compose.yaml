@@ -3,6 +3,9 @@
 # Templates are read from the host folder named by INKPDF_TEMPLATES (./examples/templates
 # by default); adding, editing or removing a template in that folder is picked up live,
 # without restarting the container.
+#
+# INKPDF_MCP_ENABLED=true docker compose up --build also serves the MCP server for AI
+# assistants at http://localhost:3000/mcp (see docs/src/guides/mcp.md).
 services:
   inkpdf:
     build: .
@@ -16,4 +19,5 @@ services:
       RUST_LOG: "${RUST_LOG:-info}"
       INKPDF_RENDER_TIMEOUT_SECS: "${INKPDF_RENDER_TIMEOUT_SECS:-30}"
       INKPDF_MAX_BODY_BYTES: "${INKPDF_MAX_BODY_BYTES:-5242880}"
+      INKPDF_MCP_ENABLED: "${INKPDF_MCP_ENABLED:-false}"
     restart: unless-stopped

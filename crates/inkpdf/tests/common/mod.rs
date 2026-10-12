@@ -12,6 +12,8 @@ use inkpdf::{AppState, Config, build_app};
 use serde_json::Value;
 use tower::ServiceExt;
 
+pub mod mcp;
+
 /// Repository root.
 pub fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")

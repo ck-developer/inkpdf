@@ -7,10 +7,11 @@ service protects against and what it leaves to the deployment.
 ## Deploy on a private network
 
 inkpdf has **no authentication, no authorization and no users**. Anyone who can reach the port
-can list the templates, read their schemas and render documents. Run it on a private network
-(a VPC, a Kubernetes cluster network, a Docker network) and expose it only to the services that
-need it. If it must be reachable from a wider network, put it behind a gateway or reverse proxy
-that handles authentication, TLS and rate limiting.
+can list the templates, read their schemas and render documents, through the HTTP API and, when
+it is on, through the [MCP server](#the-mcp-server). Run it on a private network (a VPC, a
+Kubernetes cluster network, a Docker network) and expose it only to the services that need it.
+If it must be reachable from a wider network, put it behind a gateway or reverse proxy that
+handles authentication, TLS and rate limiting.
 
 The service itself speaks plain HTTP; terminate TLS in front of it when needed.
 
@@ -50,6 +51,35 @@ Templates are trusted code written by your team, but the engine still runs them 
 - **No environment variables or processes.** The engine is a library inside the binary; it
   starts no subprocess and no browser, and environment variables are not exposed to templates.
 
+## The MCP server
+
+The MCP server for AI assistants (see
+[Using inkpdf from an AI assistant](../guides/mcp.md)) is off by default. Turned on with
+`INKPDF_MCP_ENABLED=true`, it is served at `/mcp`, on the same port as the HTTP API.
+
+- **No authentication.** Like the HTTP API, anyone who can reach `/mcp` can list the templates
+  and render documents.
+- **Private network only.** Turn it on only where the port is reachable from a private network
+  alone, and connect assistants from inside that network or through a VPN. Never expose `/mcp`
+  on the Internet.
+- **Web pages are refused.** Any request that carries an `Origin` header is refused with `403`
+  before it is processed. MCP clients (Claude Code, Claude Desktop, the MCP SDKs) send no
+  `Origin`; a browser always does. This stops a malicious web page from driving the server
+  through a user's browser, including by DNS rebinding, as the MCP standard requires.
+- **The `Host` check is off.** The MCP library accepts by default only requests addressed to
+  `localhost`, which would refuse `http://inkpdf:3000/mcp` inside a Compose network or a VPC.
+  Since requests from web pages are already refused, the `Host` check would add nothing for a
+  private service, so inkpdf turns it off.
+- **Same sandbox and limits.** A render through the MCP server goes through the same pipeline as
+  the HTTP API: the input is only data, validated against the template's schema before any
+  compilation; the same body size limit, render slots, queue and render timeout apply; the
+  same sandbox (no network, no file outside the template) runs the template. The input is never
+  logged.
+
+Access from the Internet, with an access key, is a planned feature. Until then, do not make
+inkpdf reachable to assistants that run in the cloud, such as a connector configured on
+claude.ai: that would mean exposing it on the Internet.
+
 ## The image
 
 The container image is based on `gcr.io/distroless/cc-debian12:nonroot`: it runs as an
@@ -59,7 +89,7 @@ read-only. See [Deployment](deployment.md).
 ## Logs
 
 Request bodies are never logged. Render logs carry only the template id, the duration and the
-outcome.
+outcome; MCP tool logs add the tool name, never its input.
 
 ## Reporting a vulnerability
 

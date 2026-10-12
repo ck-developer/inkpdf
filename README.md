@@ -16,6 +16,8 @@ foundation: it knows nothing about invoices or reports — your templates define
   OpenAPI document (`/openapi.json`, `/docs`).
 - 20 bundled Typst packages (QR codes, barcodes, charts, number and date formatting…).
 - Deterministic PDFs, PDF metadata, downloads, RFC 9457 errors.
+- Optional MCP server: AI assistants such as Claude list the templates, ask for the missing
+  fields and render the PDF ([guide](https://ck-developer.github.io/inkpdf/guides/mcp.html)).
 
 ## Quick start
 
