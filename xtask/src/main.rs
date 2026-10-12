@@ -1,11 +1,13 @@
 //! Maintainer commands for the inkpdf repository: `cargo xtask <command>`.
 //!
-//! - `docs generate|check`: generated reference pages of the documentation site.
+//! - `docs generate|check`: generated reference pages of the documentation site and of the
+//!   plugin's skills; `check` also validates the plugin files (see `plugin.rs`).
 //! - `packages …`: the bundled Typst packages (see `packages.rs`).
 
 mod docs;
 mod lock;
 mod packages;
+mod plugin;
 mod universe;
 
 use std::path::PathBuf;
@@ -65,9 +67,9 @@ enum PackagesAction {
 
 #[derive(Subcommand)]
 enum DocsAction {
-    /// Regenerates the generated reference pages.
+    /// Regenerates the generated reference pages and the skills' generated files.
     Generate,
-    /// Fails when a generated page is out of date.
+    /// Fails when a generated page is out of date or a plugin file is invalid.
     Check,
 }
 
