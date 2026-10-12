@@ -482,6 +482,35 @@ async fn wrong_metadata_date_is_a_validation_error() {
     assert!(texts(&result)[0].contains("\n- /metadata/date: "));
 }
 
+/// A `layout` or `metadata` that is `null` or not an object reaches the shared pipeline as it
+/// came, and is refused with the HTTP API's problem, next to every other faulty field.
+#[tokio::test]
+async fn non_object_layout_or_metadata_is_refused_as_over_http() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    for (key, value) in [
+        ("layout", Value::Null),
+        ("layout", json!("big")),
+        ("metadata", Value::Null),
+        ("metadata", json!("x")),
+    ] {
+        let mut body = sample_request();
+        body[key] = value.clone();
+        body["data"]["items"] = json!("none");
+        let expected = http_problem(&app, "sample", "", &body).await;
+        assert_eq!(expected["code"], "validation-failed", "{key}: {value}");
+        let paths = violation_paths(&expected);
+        assert!(
+            paths.contains(&format!("/{key}").as_str()) && paths.contains(&"/data/items"),
+            "{key}: {value}: {paths:?}"
+        );
+
+        let result = call_tool(&app, "render_template", render_args("sample", &body)).await;
+
+        assert_tool_error(&result, &expected, FIX_INPUT);
+    }
+}
+
 #[tokio::test]
 async fn too_long_filename_is_an_invalid_parameter() {
     let volume = examples_volume();

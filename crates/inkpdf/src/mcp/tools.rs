@@ -8,7 +8,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ContentBlock};
 use rmcp::schemars::{self, JsonSchema, Schema, SchemaGenerator};
 use rmcp::{tool, tool_router};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use serde_json::{Map, Value};
 
 use super::InkpdfMcp;
@@ -36,8 +36,9 @@ pub struct GetTemplateArgs {
 /// Arguments of `render_template`: the HTTP render body (`data`, `layout`, `metadata`), the
 /// template id and the `filename` query parameter.
 ///
-/// Only the keys are checked here. What `data`, `layout` and `metadata` hold is validated by
-/// the shared pipeline, so that it is reported exactly as over HTTP.
+/// Only the keys, and that `data` is an object, are checked here. What `data`, `layout` and
+/// `metadata` hold is validated by the shared pipeline, so that it is reported exactly as over
+/// HTTP: `layout` and `metadata` are taken as any JSON value, an explicit `null` included.
 ///
 /// On the optional fields, `skip_serializing_if` only keeps schemars from writing
 /// `"default": null` into the input schema.
@@ -51,20 +52,25 @@ pub struct RenderTemplateArgs {
     #[schemars(schema_with = "object_schema")]
     pub data: Map<String, Value>,
     /// Layout parameters; omitted properties take their default.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "present")]
     #[schemars(schema_with = "object_schema", skip_serializing_if = "Option::is_none")]
-    pub layout: Option<Map<String, Value>>,
+    pub layout: Option<Value>,
     /// PDF metadata (title, author, subject, keywords, date as `YYYY-MM-DD`), all optional.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "present")]
     #[schemars(
         schema_with = "metadata_schema",
         skip_serializing_if = "Option::is_none"
     )]
-    pub metadata: Option<Map<String, Value>>,
+    pub metadata: Option<Value>,
     /// File name without extension; defaults to the template id.
     #[serde(default)]
     #[schemars(with = "String", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
+}
+
+/// A key that is present, `null` included; a missing key stays `None` (`#[serde(default)]`).
+fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
+    Value::deserialize(deserializer).map(Some)
 }
 
 /// Any JSON object; its content is described by the template's schema.
@@ -151,10 +157,10 @@ impl InkpdfMcp {
         let mut body = Map::new();
         body.insert("data".into(), Value::Object(args.data));
         if let Some(layout) = args.layout {
-            body.insert("layout".into(), Value::Object(layout));
+            body.insert("layout".into(), layout);
         }
         if let Some(metadata) = args.metadata {
-            body.insert(render::metadata::KEY.into(), Value::Object(metadata));
+            body.insert(render::metadata::KEY.into(), metadata);
         }
         let body = Value::Object(body);
         // The HTTP API's body limit, on the same JSON (FR-011).
