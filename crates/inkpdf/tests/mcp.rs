@@ -133,6 +133,45 @@ async fn initialize_describes_the_server() {
     assert!(instructions.contains("list_templates"), "{instructions}");
 }
 
+/// US1 (005): the instructions explain the roles, their fallback and that the tools are the
+/// only source; the `get_template` description announces the roles and the example.
+#[tokio::test]
+async fn instructions_explain_the_roles() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+
+    let params = initialize_params(HANDSHAKE_PROTOCOL);
+    let (_, body) = rpc(&app, 1, "initialize", params, HANDSHAKE_PROTOCOL).await;
+
+    let instructions = body["result"]["instructions"].as_str().unwrap_or_default();
+    for expected in [
+        "Everything you need is available through these tools; do not look for templates, \
+         schemas or examples in local files.",
+        "`x-role`",
+        "`ask` — ask the user unless they already gave the value",
+        "`fill` — fill it in yourself",
+        "`default` — leave the default unless the user mentions it",
+        "Without a role, treat a required variable as `ask` and an optional one with a default \
+         as `default`.",
+        "Never invent a value you should have asked for.",
+        "Start from the example's structure.",
+        "optional `version`",
+    ] {
+        assert!(
+            instructions.contains(expected),
+            "{expected}: {instructions}"
+        );
+    }
+
+    let (_, body) = rpc(&app, 2, "tools/list", Value::Null, STATELESS_PROTOCOL).await;
+    let tools = body["result"]["tools"].as_array().expect("tools");
+    let get = tools.iter().find(|tool| tool["name"] == "get_template");
+    let description = get.unwrap()["description"].as_str().unwrap_or_default();
+    for expected in ["`x-role`", "`ask`, `fill` or `default`", "`example`"] {
+        assert!(description.contains(expected), "{expected}: {description}");
+    }
+}
+
 /// Research R5: axum's `DefaultBodyLimit` does not apply to `/mcp`; rmcp's limit,
 /// `max_body_bytes` + 64 KiB, does.
 #[tokio::test]

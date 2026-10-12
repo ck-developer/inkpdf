@@ -29,12 +29,19 @@ use crate::AppState;
 /// instead of a transport refusal (research R5).
 const ENVELOPE_HEADROOM_BYTES: usize = 64 * 1024;
 
-/// Flow expected from the assistant, sent in the `initialize` answer (research R9).
-const INSTRUCTIONS: &str = "Use `list_templates` to find a template matching the user's \
-request. Call `get_template` to read its schema. Ask the user for every required field you do \
-not know; never invent values. Use the defaults of `layout` unless the user asks otherwise. \
-Then call `render_template`. If it returns validation errors, ask the user about those fields \
-and call it again.";
+/// Flow expected from the assistant, sent in the `initialize` answer (research R4 of feature
+/// 005): the tools as the only source, the variable roles and their fallback, the example.
+const INSTRUCTIONS: &str = "Everything you need is available through these tools; do not look \
+for templates, schemas or examples in local files. Use `list_templates` to find a template \
+matching the user's request, then `get_template` to read its schema and its example. Each \
+variable has a description and may have an `x-role`: `ask` — ask the user unless they already \
+gave the value; `fill` — fill it in yourself (for example today's date), and ask if you cannot \
+work it out; `default` — leave the default unless the user mentions it, or leave the variable \
+out if it has none. Without a role, treat a required variable as `ask` and an optional one with \
+a default as `default`. Never invent a value you should have asked for. Start from the \
+example's structure. Then call `render_template`; if it returns validation errors, ask the user \
+about those fields only and call it again. Use a template's default version unless the user \
+asks for a specific one; `get_template` and `render_template` take an optional `version`.";
 
 /// MCP server handler. The service is stateless: one handler per request, all sharing the
 /// service's state (registry snapshot, render slots, configuration).

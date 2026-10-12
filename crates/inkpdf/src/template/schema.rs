@@ -51,6 +51,7 @@ impl TemplateSchema {
                 "only internal `$ref` (starting with `#`) are supported, found `{reference}`"
             ));
         }
+        check_roles(&value, &mut String::new())?;
 
         let mut compiled = value.clone();
         if let Some(root) = compiled.as_object_mut() {
@@ -147,6 +148,84 @@ fn has_defaults(schema: &Value) -> bool {
                 .values()
                 .any(|p| p.get("default").is_some() || has_defaults(p))
         })
+}
+
+/// Values of the `x-role` annotation (research R1).
+const ROLES: [&str; 3] = ["ask", "fill", "default"];
+
+/// Keywords whose value is a map of sub-schemas.
+const SCHEMA_MAPS: [&str; 5] = [
+    "properties",
+    "patternProperties",
+    "$defs",
+    "definitions",
+    "dependentSchemas",
+];
+
+/// Keywords whose value is one sub-schema (`items` may also be an array, before 2020-12).
+const SCHEMA_VALUES: [&str; 11] = [
+    "items",
+    "additionalProperties",
+    "unevaluatedProperties",
+    "unevaluatedItems",
+    "contains",
+    "propertyNames",
+    "if",
+    "then",
+    "else",
+    "not",
+    "additionalItems",
+];
+
+/// Keywords whose value is an array of sub-schemas.
+const SCHEMA_ARRAYS: [&str; 4] = ["prefixItems", "allOf", "anyOf", "oneOf"];
+
+/// Checks every `x-role` of a (sub-)schema, `pointer` being its JSON pointer in the schema.
+///
+/// Only the keywords that hold sub-schemas are followed, so that an `x-role` key inside a
+/// `default`, `const`, `enum` or `examples` value, or a property named `x-role`, is not
+/// mistaken for a role. Reports the first invalid role.
+fn check_roles(schema: &Value, pointer: &mut String) -> Result<(), String> {
+    let Some(map) = schema.as_object() else {
+        // `true`, `false`: no annotation.
+        return Ok(());
+    };
+    if let Some(role) = map.get("x-role")
+        && !role.as_str().is_some_and(|role| ROLES.contains(&role))
+    {
+        return Err(format!(
+            "invalid role {role} at {pointer}/x-role; expected \"ask\", \"fill\" or \"default\""
+        ));
+    }
+
+    let visit = |pointer: &mut String, tokens: &[&str], schema: &Value| {
+        let length = pointer.len();
+        for token in tokens {
+            pointer.push('/');
+            pointer.push_str(&token.replace('~', "~0").replace('/', "~1"));
+        }
+        let outcome = check_roles(schema, pointer);
+        pointer.truncate(length);
+        outcome
+    };
+    for (keyword, value) in map {
+        let keyword = keyword.as_str();
+        match value {
+            Value::Object(schemas) if SCHEMA_MAPS.contains(&keyword) => {
+                for (name, schema) in schemas {
+                    visit(pointer, &[keyword, name], schema)?;
+                }
+            }
+            Value::Array(schemas) if SCHEMA_ARRAYS.contains(&keyword) || keyword == "items" => {
+                for (index, schema) in schemas.iter().enumerate() {
+                    visit(pointer, &[keyword, &index.to_string()], schema)?;
+                }
+            }
+            _ if SCHEMA_VALUES.contains(&keyword) => visit(pointer, &[keyword], value)?,
+            _ => {}
+        }
+    }
+    Ok(())
 }
 
 fn find_external_ref(value: &Value) -> Option<&str> {
@@ -298,5 +377,187 @@ mod tests {
             .unwrap();
         assert_eq!(body["layout"]["header"]["visible"], false);
         assert_eq!(body["layout"]["header"]["size"], 12);
+    }
+
+    /// A schema with a role at every place one is allowed: `data`, `layout`, nested
+    /// `properties`, array `items`, `$defs` and `oneOf`.
+    fn with_roles() -> Value {
+        json!({
+            "type": "object",
+            "required": ["data"],
+            "$defs": {
+                "amount": { "type": "string", "pattern": "^[0-9]+$", "x-role": "ask" }
+            },
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "required": ["title", "lines"],
+                    "properties": {
+                        "title": { "type": "string", "minLength": 1, "x-role": "ask" },
+                        "date": { "type": "string", "x-role": "fill" },
+                        "recipient": {
+                            "type": "object",
+                            "x-role": "ask",
+                            "properties": {
+                                "name": { "type": "string", "x-role": "ask" }
+                            }
+                        },
+                        "lines": {
+                            "type": "array",
+                            "x-role": "ask",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "position": { "type": "integer", "x-role": "fill" },
+                                    "amount": { "$ref": "#/$defs/amount" }
+                                }
+                            }
+                        },
+                        "status": {
+                            "x-role": "default",
+                            "oneOf": [
+                                { "const": "draft", "x-role": "default" },
+                                { "const": "final", "x-role": "default" }
+                            ]
+                        }
+                    }
+                },
+                "layout": {
+                    "type": "object",
+                    "properties": {
+                        "color": { "type": "string", "default": "#000000", "x-role": "default" }
+                    }
+                }
+            }
+        })
+    }
+
+    fn load(value: &Value) -> Result<TemplateSchema, String> {
+        TemplateSchema::load(Bytes::new(serde_json::to_vec(value).unwrap()))
+    }
+
+    #[test]
+    fn valid_roles_are_accepted_everywhere() {
+        let schema = load(&with_roles()).unwrap();
+        assert_eq!(schema.value(), &with_roles());
+    }
+
+    #[test]
+    fn invalid_roles_are_refused_with_their_pointer() {
+        let cases = [
+            (
+                "/properties/data/properties/title",
+                json!("maybe"),
+                "\"maybe\"",
+            ),
+            (
+                "/properties/data/properties/recipient/properties/name",
+                json!(""),
+                "\"\"",
+            ),
+            (
+                "/properties/data/properties/lines/items/properties/position",
+                json!(1),
+                "1",
+            ),
+            ("/$defs/amount", json!("maybe"), "\"maybe\""),
+            (
+                "/properties/data/properties/status/oneOf/1",
+                json!("Ask"),
+                "\"Ask\"",
+            ),
+            ("/properties/layout/properties/color", json!(null), "null"),
+        ];
+        for (at, role, shown) in cases {
+            let mut value = with_roles();
+            value.pointer_mut(at).unwrap()["x-role"] = role;
+            let error = load(&value).unwrap_err();
+            assert_eq!(
+                error,
+                format!(
+                    "invalid role {shown} at {at}/x-role; expected \"ask\", \"fill\" or \"default\""
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn role_pointer_escapes_property_names() {
+        let value = json!({
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": { "a/b~c": { "type": "string", "x-role": "maybe" } }
+                }
+            }
+        });
+        assert_eq!(
+            load(&value).unwrap_err(),
+            "invalid role \"maybe\" at /properties/data/properties/a~1b~0c/x-role; \
+             expected \"ask\", \"fill\" or \"default\""
+        );
+    }
+
+    /// `x-role` is only a keyword where a schema is expected: inside a `default`, a `const` or
+    /// an `enum`, and as a property name, it is data.
+    #[test]
+    fn x_role_outside_a_schema_is_not_a_role() {
+        let value = json!({
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "x-role": { "type": "string", "x-role": "ask" },
+                        "options": {
+                            "type": "object",
+                            "default": { "x-role": "maybe" },
+                            "examples": [{ "x-role": "maybe" }]
+                        },
+                        "fixed": { "const": { "x-role": 1 } },
+                        "choice": { "enum": [{ "x-role": "" }] }
+                    }
+                }
+            }
+        });
+        assert!(load(&value).is_ok());
+    }
+
+    #[test]
+    fn roles_do_not_change_what_input_is_accepted() {
+        fn strip_roles(value: &mut Value) {
+            match value {
+                Value::Object(map) => {
+                    map.remove("x-role");
+                    map.values_mut().for_each(strip_roles);
+                }
+                Value::Array(items) => items.iter_mut().for_each(strip_roles),
+                _ => {}
+            }
+        }
+        let mut without = with_roles();
+        strip_roles(&mut without);
+        let (with, without) = (load(&with_roles()).unwrap(), load(&without).unwrap());
+
+        let line = json!({ "position": 1, "amount": "12" });
+        let inputs = [
+            json!({ "data": { "title": "T", "lines": [line] } }),
+            json!({ "data": { "title": "T", "lines": [line], "status": "final" } }),
+            json!({ "data": { "title": "", "lines": [{ "position": "1", "amount": "x" }] } }),
+            json!({ "data": { "title": "T", "lines": [line], "status": "other" } }),
+            json!({ "data": { "lines": [] }, "layout": { "color": 1 } }),
+        ];
+        let outcome = |schema: &TemplateSchema, input: &Value| {
+            schema.prepare(input.clone()).map_err(|violations| {
+                violations
+                    .into_iter()
+                    .map(|v| (v.path, v.schema_path, v.message))
+                    .collect::<Vec<_>>()
+            })
+        };
+        for input in inputs {
+            assert_eq!(outcome(&with, &input), outcome(&without, &input), "{input}");
+        }
     }
 }

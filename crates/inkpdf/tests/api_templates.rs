@@ -166,3 +166,48 @@ async fn incorrect_package_imports_make_templates_invalid() {
     assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
     assert_eq!(problem(&body)["code"], "render-failed");
 }
+
+/// US1 (005): a role outside `ask`, `fill` and `default` makes the template invalid at load
+/// time, with the pointer of the role; the other templates stay valid.
+#[tokio::test]
+async fn invalid_role_makes_the_template_invalid() {
+    let volume = TestVolume::new();
+    let schema = |role: &str| {
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "title": { "type": "string", "description": "Title.", "x-role": role }
+                    }
+                }
+            }
+        })
+        .to_string()
+    };
+    volume
+        .write_file("bad-role/main.typ", "= Bad role")
+        .write_file("bad-role/schema.json", schema("maybe"))
+        .write_file("good-role/main.typ", "= Good role")
+        .write_file("good-role/schema.json", schema("ask"));
+    let app = test_app(test_config(&volume));
+
+    let (status, body) = get_json(&app, "/templates").await;
+
+    assert_eq!(status, StatusCode::OK);
+    let templates = body["templates"].as_array().unwrap();
+    assert_eq!(templates.len(), 2, "{body}");
+    let bad = &templates[0];
+    assert_eq!(bad["id"], "bad-role");
+    assert_eq!(bad["status"], "invalid");
+    assert_eq!(
+        bad["reason"],
+        "schema.json: invalid role \"maybe\" at /properties/data/properties/title/x-role; \
+         expected \"ask\", \"fill\" or \"default\""
+    );
+    let good = &templates[1];
+    assert_eq!(good["id"], "good-role");
+    assert_eq!(good["status"], "valid", "{good}");
+    assert!(good.get("reason").is_none());
+}
