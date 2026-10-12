@@ -4,11 +4,14 @@
 mod common;
 
 use std::fs;
+use std::time::{Duration, Instant};
 
+use axum::Router;
 use axum::http::StatusCode;
 use common::mcp::*;
 use common::*;
 use inkpdf::Config;
+use inkpdf::error::ApiError;
 use serde_json::{Value, json};
 
 /// The example templates, plus a template whose schema does not load.
@@ -385,4 +388,344 @@ async fn render_options_follow_the_http_api() {
     let pdf = decode_pdf(&render(render_args("sample", &titled)).await);
     assert!(String::from_utf8_lossy(&pdf).contains("Employer certificate"));
     assert!(pdf == http(titled).await);
+}
+
+// --- User story 2: readable errors ----------------------------------------------------------
+
+/// Closing hints of the contract's error table.
+const FIX_INPUT: &str = "Fix the input and call render_template again.";
+const LIST_TEMPLATES: &str = "Call list_templates to see the available templates.";
+const OPERATOR_FIXES: &str = "This template cannot be used until the operator fixes it.";
+const TRY_AGAIN: &str = "Try again in a moment.";
+const TELL_OPERATOR: &str = "Tell the operator; the template failed to render.";
+
+/// Problem body of the HTTP render of `body`; `path_id` is the template id as it appears in
+/// the URL, `query` starts with `?` when present.
+async fn http_problem(app: &Router, path_id: &str, query: &str, body: &Value) -> Value {
+    let uri = format!("/templates/{path_id}/render{query}");
+    let (status, _, bytes) = post_json(app, &uri, body).await;
+    assert!(!status.is_success(), "{uri}: {status}");
+    problem(&bytes)
+}
+
+/// A tool error carrying the HTTP problem `expected`: `isError`, the problem as
+/// `structuredContent`, a text ending with `hint`, and no PDF.
+fn assert_tool_error(result: &Value, expected: &Value, hint: &str) {
+    assert_eq!(result["isError"], true, "{result}");
+    assert_eq!(result["structuredContent"], *expected, "{result}");
+    let text = texts(result).join("\n");
+    let title = expected["title"].as_str().unwrap();
+    assert!(text.starts_with(title), "{text}");
+    assert!(text.ends_with(hint), "{text}");
+    let blocks = result["content"].as_array().unwrap();
+    assert!(blocks.iter().all(|b| b["type"] == "text"), "{result}");
+}
+
+/// Paths of a problem's violations.
+fn violation_paths(problem: &Value) -> Vec<&str> {
+    problem["violations"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|v| v["path"].as_str())
+        .collect()
+}
+
+/// SC-003: every faulty field the HTTP API names, all at once, with a hint to fix the input.
+#[tokio::test]
+async fn validation_errors_name_every_faulty_field() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let mut body = sample_request();
+    body["data"].as_object_mut().unwrap().remove("title");
+    body["layout"] = json!({ "align": "justify" });
+    let expected = http_problem(&app, "sample", "", &body).await;
+    assert_eq!(expected["code"], "validation-failed");
+    let paths = violation_paths(&expected);
+    assert!(
+        paths.contains(&"/data") && paths.contains(&"/layout/align"),
+        "{paths:?}"
+    );
+
+    let result = call_tool(&app, "render_template", render_args("sample", &body)).await;
+
+    assert_tool_error(&result, &expected, FIX_INPUT);
+    let text = texts(&result).join("\n");
+    for path in paths {
+        assert!(
+            text.contains(&format!("\n- {path}: ")),
+            "{path} missing: {text}"
+        );
+    }
+    assert!(
+        text.trim_end_matches('.')
+            .ends_with("call render_template again"),
+        "{text}"
+    );
+}
+
+#[tokio::test]
+async fn wrong_metadata_date_is_a_validation_error() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let mut body = sample_request();
+    body["metadata"] = json!({ "date": "01/10/2026" });
+    let expected = http_problem(&app, "sample", "", &body).await;
+    assert_eq!(expected["code"], "validation-failed");
+    assert_eq!(violation_paths(&expected), ["/metadata/date"]);
+
+    let result = call_tool(&app, "render_template", render_args("sample", &body)).await;
+
+    assert_tool_error(&result, &expected, FIX_INPUT);
+    assert!(texts(&result)[0].contains("\n- /metadata/date: "));
+}
+
+#[tokio::test]
+async fn too_long_filename_is_an_invalid_parameter() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let name = "x".repeat(201);
+    let expected = http_problem(
+        &app,
+        "sample",
+        &format!("?filename={name}"),
+        &sample_request(),
+    )
+    .await;
+    assert_eq!(expected["code"], "invalid-parameter");
+
+    let mut args = render_args("sample", &sample_request());
+    args["filename"] = name.into();
+    let result = call_tool(&app, "render_template", args).await;
+
+    assert_tool_error(&result, &expected, FIX_INPUT);
+}
+
+/// Faults in the arguments themselves (unknown key, missing `templateId` or `data`, `data`
+/// not an object) are refused by rmcp before the tool runs. Following the current MCP
+/// specification, rmcp reports them as a tool error carrying its deserialization message,
+/// so that the assistant can correct the call, rather than as a JSON-RPC error.
+#[tokio::test]
+async fn malformed_arguments_are_refused_before_the_tool_runs() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let data = sample_request()["data"].clone();
+    let cases = [
+        (
+            json!({ "templateId": "sample", "data": data, "colour": "blue" }),
+            "colour",
+        ),
+        (json!({ "data": data }), "templateId"),
+        (json!({ "templateId": "sample" }), "data"),
+        (
+            json!({ "templateId": "sample", "data": [] }),
+            "expected a map",
+        ),
+    ];
+    for (args, mention) in cases {
+        let params = tool_params("render_template", args.clone());
+        let (status, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+
+        assert_eq!(status, StatusCode::OK, "{args}: {body}");
+        let result = &body["result"];
+        assert_eq!(result["isError"], true, "{args}: {body}");
+        assert!(result.get("structuredContent").is_none(), "{args}: {body}");
+        let text = texts(result).join("\n");
+        assert!(
+            text.starts_with("failed to deserialize parameters:") && text.contains(mention),
+            "{args}: {text}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn unknown_tool_is_a_protocol_error() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let params = tool_params("delete_template", json!({ "templateId": "sample" }));
+
+    let (status, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+
+    // JSON-RPC "invalid params" (-32602), which the transport answers with HTTP 200.
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert!(body.get("result").is_none(), "{body}");
+    assert_eq!(body["error"]["code"], -32602, "{body}");
+}
+
+/// Unknown or malformed ids: `template-not-found`, from both tools, as over HTTP (a malformed
+/// id is not echoed in the problem).
+#[tokio::test]
+async fn unknown_template_invites_to_list_the_templates() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+
+    for (id, path_id) in [("unknown", "unknown"), ("../x", "..%2Fx")] {
+        let expected = http_problem(&app, path_id, "", &sample_request()).await;
+        assert_eq!(expected["code"], "template-not-found", "{id}");
+        let result = call_tool(&app, "render_template", render_args(id, &sample_request())).await;
+        assert_tool_error(&result, &expected, LIST_TEMPLATES);
+
+        let (status, expected) = get_json(&app, &format!("/templates/{path_id}")).await;
+        assert_eq!(status, StatusCode::NOT_FOUND, "{id}");
+        let result = call_tool(&app, "get_template", json!({ "templateId": id })).await;
+        assert_tool_error(&result, &expected, LIST_TEMPLATES);
+    }
+}
+
+#[tokio::test]
+async fn invalid_template_cannot_be_used() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let expected = http_problem(&app, "invalid-schema", "", &json!({ "data": {} })).await;
+    assert_eq!(expected["code"], "template-invalid");
+
+    let args = json!({ "templateId": "invalid-schema", "data": {} });
+    let result = call_tool(&app, "render_template", args).await;
+
+    assert_tool_error(&result, &expected, OPERATOR_FIXES);
+}
+
+#[tokio::test]
+async fn typst_error_is_a_render_failure() {
+    let volume = TestVolume::new();
+    volume.copy_template(&fixture("broken-typst"), "broken-typst");
+    let app = mcp_app(&volume);
+    let expected = http_problem(&app, "broken-typst", "", &json!({ "data": {} })).await;
+    assert_eq!(expected["code"], "render-failed");
+
+    let args = json!({ "templateId": "broken-typst", "data": {} });
+    let result = call_tool(&app, "render_template", args).await;
+
+    assert_tool_error(&result, &expected, TELL_OPERATOR);
+    // The diagnostics, with their position, for the operator.
+    let diagnostic = &expected["diagnostics"][0];
+    let line = format!(
+        "\n- {}:{}:{}: {}",
+        diagnostic["file"].as_str().unwrap(),
+        diagnostic["line"],
+        diagnostic["column"],
+        diagnostic["message"].as_str().unwrap()
+    );
+    assert!(texts(&result)[0].contains(&line), "{result}");
+}
+
+/// The input is measured like an HTTP body; too large, it is a tool error, not a transport
+/// refusal.
+#[tokio::test]
+async fn oversized_input_is_a_tool_error() {
+    let volume = examples_volume();
+    let app = test_app(Config {
+        max_body_bytes: 1024,
+        ..mcp_config(&volume)
+    });
+    let mut body = sample_request();
+    body["data"]["title"] = "x".repeat(2048).into();
+    let expected = http_problem(&app, "sample", "", &body).await;
+    assert_eq!(expected["code"], "payload-too-large");
+
+    let result = call_tool(&app, "render_template", render_args("sample", &body)).await;
+
+    assert_tool_error(&result, &expected, FIX_INPUT);
+}
+
+/// Problem the HTTP API returns for `error` on template `id`.
+fn expected_problem(error: ApiError, id: &str) -> Value {
+    serde_json::to_value(error.into_problem(Some(id.into()))).unwrap()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn busy_slots_give_overloaded() {
+    let volume = TestVolume::new();
+    volume
+        .copy_template(&sample_template(), "sample")
+        .copy_template(&fixture("slow"), "slow");
+    let app = test_app(Config {
+        max_concurrent_renders: 1,
+        queue_timeout: Duration::from_secs(1),
+        render_timeout: Duration::from_secs(60),
+        ..mcp_config(&volume)
+    });
+    let slow = {
+        let app = app.clone();
+        tokio::spawn(async move { post_json(&app, "/templates/slow/render", &slow_body()).await })
+    };
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    let result = call_tool(
+        &app,
+        "render_template",
+        render_args("sample", &sample_request()),
+    )
+    .await;
+
+    assert_tool_error(
+        &result,
+        &expected_problem(ApiError::Overloaded, "sample"),
+        TRY_AGAIN,
+    );
+    let (status, _, _) = slow.await.unwrap();
+    assert_eq!(status, StatusCode::OK);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn slow_render_times_out() {
+    let volume = TestVolume::new();
+    volume.copy_template(&fixture("slow"), "slow");
+    let app = test_app(Config {
+        render_timeout: Duration::from_secs(1),
+        ..mcp_config(&volume)
+    });
+
+    let started = Instant::now();
+    let result = call_tool(&app, "render_template", render_args("slow", &slow_body())).await;
+
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "{:?}",
+        started.elapsed()
+    );
+    let expected = expected_problem(ApiError::RenderTimeout, "slow");
+    assert_tool_error(&result, &expected, TRY_AGAIN);
+}
+
+/// Body of the `slow` fixture: a few seconds of compilation (`tests/render_limits.rs`).
+fn slow_body() -> Value {
+    json!({ "data": { "iterations": 400_000 } })
+}
+
+/// Constitution IV through MCP: no read outside the template, no package the service does
+/// not offer, data rendered as data.
+#[tokio::test]
+async fn sandbox_holds_through_mcp() {
+    let volume = TestVolume::new();
+    volume.copy_template(&sample_template(), "sample");
+    for id in ["evil-parent", "evil-absolute", "evil-package"] {
+        volume.copy_template(&fixture(id), id);
+    }
+    let app = mcp_app(&volume);
+    let empty = json!({ "data": {} });
+
+    for id in ["evil-parent", "evil-absolute"] {
+        let expected = http_problem(&app, id, "", &empty).await;
+        assert_eq!(expected["code"], "render-failed", "{id}");
+        let result = call_tool(&app, "render_template", render_args(id, &empty)).await;
+        assert_tool_error(&result, &expected, TELL_OPERATOR);
+        // `/etc/passwd` starts with the `root` account; none of it leaks.
+        assert!(!result.to_string().contains("root:"), "{id}: {result}");
+    }
+
+    let expected = http_problem(&app, "evil-package", "", &empty).await;
+    assert_eq!(expected["code"], "template-invalid");
+    let result = call_tool(&app, "render_template", render_args("evil-package", &empty)).await;
+    assert_tool_error(&result, &expected, OPERATOR_FIXES);
+
+    let injected = "#import \"/etc/passwd\"";
+    let body = json!({ "data": { "title": injected, "items": [{ "label": "a", "value": 1 }] } });
+    let result = call_tool(&app, "render_template", render_args("sample", &body)).await;
+    assert_eq!(result["isError"], false, "{result}");
+    let text = pdf_text(&decode_pdf(&result));
+    assert!(
+        text.contains("#import") && text.contains("/etc/passwd"),
+        "{text}"
+    );
 }

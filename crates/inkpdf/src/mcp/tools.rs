@@ -1,6 +1,7 @@
 //! The three tools: list the templates, read one template's schema, render one template
 //! (contracts/mcp-tools.md). Each one reuses the HTTP API's code for the same operation.
 
+use std::io;
 use std::time::Instant;
 
 use rmcp::handler::server::wrapper::Parameters;
@@ -12,9 +13,9 @@ use serde_json::{Map, Value};
 
 use super::InkpdfMcp;
 use super::result::{error_result, pdf_result};
-use crate::api::render::pdf_file_name;
+use crate::api::render::{check_filename, pdf_file_name};
 use crate::api::templates::{self, TemplateDetail};
-use crate::error::TemplateError;
+use crate::error::{ApiError, TemplateError};
 use crate::render::{self, Interface};
 
 /// Arguments of `list_templates`: none.
@@ -136,11 +137,16 @@ impl InkpdfMcp {
 }
 
 impl InkpdfMcp {
-    /// Same steps as `POST /templates/{templateId}/render`, from the template lookup on: the
-    /// template id is attached to every error after it, as over HTTP.
+    /// Same steps as `POST /templates/{templateId}/render`, in the same order: template
+    /// lookup, `filename`, body size, then the shared pipeline. The template id is attached to
+    /// every error after the lookup, as over HTTP.
     async fn render(&self, args: RenderTemplateArgs) -> Outcome {
         let entry = templates::find(&self.state, &args.template_id)?;
         let id = entry.id.as_str();
+        let fail = |error: ApiError| error.for_template(id);
+        if let Some(filename) = &args.filename {
+            check_filename(filename).map_err(fail)?;
+        }
 
         let mut body = Map::new();
         body.insert("data".into(), Value::Object(args.data));
@@ -150,10 +156,16 @@ impl InkpdfMcp {
         if let Some(metadata) = args.metadata {
             body.insert(render::metadata::KEY.into(), Value::Object(metadata));
         }
+        let body = Value::Object(body);
+        // The HTTP API's body limit, on the same JSON (FR-011).
+        let limit = self.state.config.max_body_bytes;
+        if json_len(&body) > limit {
+            return Err(fail(ApiError::PayloadTooLarge { limit }));
+        }
 
-        let pdf = render::run(&self.state, id, Value::Object(body), Interface::Mcp)
+        let pdf = render::run(&self.state, id, body, Interface::Mcp)
             .await
-            .map_err(|error| error.for_template(id))?;
+            .map_err(fail)?;
         let file_name = pdf_file_name(id, args.filename.as_deref());
         Ok((Some(id.to_owned()), pdf_result(id, &file_name, &pdf)))
     }
@@ -182,4 +194,34 @@ fn finish(tool: &str, started: Instant, outcome: Outcome) -> CallToolResult {
 /// JSON of a response body of the HTTP API.
 fn to_json(body: &impl serde::Serialize) -> Value {
     serde_json::to_value(body).expect("API bodies are always serializable")
+}
+
+/// Length of the compact JSON of `value`, counted without building it.
+fn json_len(value: &Value) -> usize {
+    struct Counter(usize);
+    impl io::Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0 += bytes.len();
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut counter = Counter(0);
+    serde_json::to_writer(&mut counter, value).expect("a JSON value always serializes");
+    counter.0
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+
+    #[test]
+    fn json_len_is_the_compact_length() {
+        let value = json!({ "data": { "title": "Été", "items": [1, 2.5, null] } });
+        assert_eq!(json_len(&value), serde_json::to_vec(&value).unwrap().len());
+    }
 }

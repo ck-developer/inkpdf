@@ -207,12 +207,7 @@ impl RenderQuery {
                     }
                 }
                 "filename" => {
-                    if value.chars().count() > 200 {
-                        return Err(ApiError::InvalidParameter {
-                            name: "filename",
-                            message: "at most 200 characters".into(),
-                        });
-                    }
+                    check_filename(&value)?;
                     parsed.filename = Some(value);
                 }
                 _ => {}
@@ -220,6 +215,17 @@ impl RenderQuery {
         }
         Ok(parsed)
     }
+}
+
+/// Rule of the `filename` parameter, shared with the MCP render tool: at most 200 characters.
+pub(crate) fn check_filename(value: &str) -> Result<(), ApiError> {
+    if value.chars().count() > 200 {
+        return Err(ApiError::InvalidParameter {
+            name: "filename",
+            message: "at most 200 characters".into(),
+        });
+    }
+    Ok(())
 }
 
 /// Decodes `a=b&c=d` (`application/x-www-form-urlencoded`).
