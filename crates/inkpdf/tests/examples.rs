@@ -1,4 +1,6 @@
-//! 002/US8: every example request renders, and the progress-invoice totals are right to the cent.
+//! 005/US6: the example volume holds the `demo` template only; it guides assistants (a
+//! description and a role on every variable), its example renders, and so does every layout
+//! setting.
 
 mod common;
 
@@ -7,47 +9,38 @@ use std::path::PathBuf;
 
 use axum::http::StatusCode;
 use common::*;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 fn examples() -> PathBuf {
     repo_root().join("examples")
 }
 
+/// A copy of `examples/templates`, as `compose.yaml` mounts it.
 fn volume() -> TestVolume {
     let volume = TestVolume::new();
-    for template in ["sample", "packages-demo"] {
-        volume.copy_template(&fixture(template), template);
-    }
-    volume.copy_template(
-        &examples().join("templates/progress-invoice"),
-        "progress-invoice",
-    );
+    copy_dir(&examples().join("templates"), volume.path());
     volume
 }
 
-fn request(path: &str) -> Value {
-    serde_json::from_slice(&fs::read(examples().join("requests").join(path)).unwrap()).unwrap()
+/// The `example.json` of `demo`, read from the repository.
+fn demo_example() -> Value {
+    let path = examples().join("templates/demo/1.0.0/example.json");
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
 }
 
-async fn render(app: &axum::Router, template: &str, body: &Value) -> Vec<u8> {
-    let (status, _, pdf) = post_json(app, &format!("/templates/{template}/render"), body).await;
+async fn render(app: &axum::Router, body: &Value) -> Vec<u8> {
+    let (status, _, pdf) = post_json(app, "/templates/demo/render", body).await;
     assert_eq!(
         status,
         StatusCode::OK,
-        "{template}: {}",
+        "{body}: {}",
         String::from_utf8_lossy(&pdf)
     );
+    assert!(pdf.starts_with(b"%PDF"));
     pdf.to_vec()
 }
 
-/// Number of pages (`/Type/Page` objects, not `/Type/Pages`).
-fn page_count(pdf: &[u8]) -> usize {
-    pdf.windows(11)
-        .filter(|w| w.starts_with(b"/Type/Page") && w[10] != b's')
-        .count()
-}
-
-/// PDF text with every whitespace removed (amounts use narrow no-break spaces).
+/// PDF text with every whitespace removed.
 fn compact_text(pdf: &[u8]) -> String {
     pdf_text(pdf)
         .chars()
@@ -55,145 +48,176 @@ fn compact_text(pdf: &[u8]) -> String {
         .collect()
 }
 
-/// French amount as printed by the template, without spaces: `8550,00€`.
-fn euros(cents: i128) -> String {
-    format!("{},{:02}€", cents / 100, (cents % 100).abs())
-}
-
-/// `"18.50"` → 1850 (amounts in the examples have at most 2 decimals).
-fn to_cents(amount: &str) -> i128 {
-    let (int, frac) = amount.split_once('.').unwrap_or((amount, ""));
-    let frac = format!("{frac:0<2}");
-    int.parse::<i128>().unwrap() * 100 + frac[..2].parse::<i128>().unwrap()
-}
-
-/// `value × percent / 100`, rounded to the cent, half away from zero.
-fn percent_of(cents: i128, percent: i128) -> i128 {
-    let scaled = cents * percent;
-    (scaled + scaled.signum() * 50) / 100
-}
-
 #[tokio::test]
-async fn every_example_request_renders() {
+async fn the_volume_holds_only_demo() {
     let volume = volume();
     let app = test_app(test_config(&volume));
-    render(&app, "sample", &fixture_request("sample.json")).await;
-    render(
-        &app,
-        "packages-demo",
-        &fixture_request("packages-demo.json"),
-    )
-    .await;
-    let mut invoices = fs::read_dir(examples().join("requests/progress-invoice"))
+    let (status, list) = get_json(&app, "/templates").await;
+    assert_eq!(status, StatusCode::OK);
+    let templates: Vec<(&str, &str)> = list["templates"]
+        .as_array()
         .unwrap()
-        .map(|e| e.unwrap().path())
-        .collect::<Vec<_>>();
-    invoices.sort();
-    assert_eq!(invoices.len(), 4);
-    for path in invoices {
-        let body: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
-        let pdf = render(&app, "progress-invoice", &body).await;
-        assert!(pdf.starts_with(b"%PDF"), "{}", path.display());
-    }
+        .iter()
+        .map(|t| (t["id"].as_str().unwrap(), t["status"].as_str().unwrap()))
+        .collect();
+    assert_eq!(templates, [("demo", "valid")], "{list}");
+    assert_eq!(list["templates"][0]["version"], "1.0.0");
 }
 
-/// SC-009: the first claim is checked to the cent against an independent computation.
-#[tokio::test]
-async fn first_claim_totals_are_exact() {
-    let body = request("progress-invoice/01-first-claim.json");
-    let data = &body["data"];
-
-    // Independent computation, in integer cents (quantities are integers in this example).
-    let (mut contract, mut period) = (0i128, 0i128);
-    for lot in data["lots"].as_array().unwrap() {
-        for line in lot["lines"].as_array().unwrap() {
-            let quantity: i128 = line["quantity"].as_str().unwrap().parse().unwrap();
-            let market = quantity * to_cents(line["unitPrice"].as_str().unwrap());
-            let progress = line["progress"].as_i64().unwrap() as i128;
-            let previous = line["previousProgress"].as_i64().unwrap_or(0) as i128;
-            contract += market;
-            period += percent_of(market, progress) - percent_of(market, previous);
+/// Walks every property schema below `schema` (properties, array items, `$defs`, combinators)
+/// and records the pointer of each one that lacks a `description` or an `x-role`.
+fn missing_guidance(schema: &Value, pointer: &str, out: &mut Vec<String>) {
+    let Some(map) = schema.as_object() else {
+        return;
+    };
+    if let Some(properties) = map.get("properties").and_then(Value::as_object) {
+        for (name, property) in properties {
+            let here = format!("{pointer}/properties/{name}");
+            for key in ["description", "x-role"] {
+                if property.get(key).is_none() {
+                    out.push(format!("{here} has no {key}"));
+                }
+            }
+            missing_guidance(property, &here, out);
         }
     }
-    let vat = percent_of(period, 20);
-    let gross = period + vat;
-    let retention = percent_of(gross, 5);
-    let due = gross - retention;
-    assert_eq!(
-        (contract, period, vat, gross, retention, due),
-        (2_250_000, 750_000, 150_000, 900_000, 45_000, 855_000)
-    );
+    if let Some(items) = map.get("items") {
+        missing_guidance(items, &format!("{pointer}/items"), out);
+    }
+    for keyword in ["$defs", "definitions"] {
+        if let Some(defs) = map.get(keyword).and_then(Value::as_object) {
+            for (name, def) in defs {
+                missing_guidance(def, &format!("{pointer}/{keyword}/{name}"), out);
+            }
+        }
+    }
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        for (i, sub) in map
+            .get(keyword)
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .enumerate()
+        {
+            missing_guidance(sub, &format!("{pointer}/{keyword}/{i}"), out);
+        }
+    }
+}
 
+/// SC-002: every variable of `data` and `layout`, at any depth, has a description and a role.
+#[tokio::test]
+async fn every_variable_has_a_description_and_a_role() {
     let volume = volume();
     let app = test_app(test_config(&volume));
-    let text = compact_text(&render(&app, "progress-invoice", &body).await);
-    for amount in [contract, period, vat, gross, retention, due] {
-        assert!(
-            text.contains(&euros(amount)),
-            "{} missing in:\n{text}",
-            euros(amount)
+    let (status, detail) = get_json(&app, "/templates/demo").await;
+    assert_eq!(status, StatusCode::OK);
+    let schema = &detail["schema"];
+    let mut missing = Vec::new();
+    for part in ["data", "layout"] {
+        let sub = &schema["properties"][part];
+        assert!(sub.is_object(), "no {part} in {schema}");
+        missing_guidance(sub, &format!("/properties/{part}"), &mut missing);
+    }
+    assert!(missing.is_empty(), "{missing:#?}");
+    // The walk reaches the nested object and the array items.
+    for pointer in [
+        "/properties/data/properties/recipient/properties/email/x-role",
+        "/properties/data/properties/lines/items/properties/amount/x-role",
+    ] {
+        assert!(schema.pointer(pointer).is_some(), "{pointer}");
+    }
+}
+
+/// SC-003: the detail carries the example, which renders unchanged.
+#[tokio::test]
+async fn the_example_renders_unchanged() {
+    let volume = volume();
+    let app = test_app(test_config(&volume));
+    let (status, detail) = get_json(&app, "/templates/demo").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(detail["example"], demo_example());
+
+    let pdf = render(&app, &detail["example"]).await;
+    let text = compact_text(&pdf);
+    for expected in [
+        "Officesupplies",
+        "DEMO-2026-001",
+        "October12,2026",
+        "JaneDoe",
+        "jane.doe@example.com",
+        "Notebooks",
+        "42.00",
+        "Total:122.90EUR",
+        "page1/1",
+    ] {
+        assert!(text.contains(expected), "{expected} missing in:\n{text}");
+    }
+}
+
+#[tokio::test]
+async fn every_layout_setting_renders() {
+    let volume = volume();
+    let app = test_app(test_config(&volume));
+    let default = render(&app, &demo_example()).await;
+
+    for layout in [
+        json!({ "font": "Libertinus Serif" }),
+        json!({ "font": "New Computer Modern" }),
+        json!({ "density": "normal" }),
+        json!({ "density": "compact" }),
+        json!({ "showTotal": true }),
+        json!({ "showTotal": false }),
+        json!({ "accentColor": "#2e7d32" }),
+        json!({
+            "accentColor": "#7a1f5c",
+            "font": "New Computer Modern",
+            "density": "compact",
+            "showTotal": false
+        }),
+    ] {
+        let mut body = demo_example();
+        body["layout"] = layout.clone();
+        let pdf = render(&app, &body).await;
+        // The values that are the defaults give the default document; the others change it.
+        let is_default = layout == json!({ "font": "Libertinus Serif" })
+            || layout == json!({ "density": "normal" })
+            || layout == json!({ "showTotal": true });
+        assert_eq!(pdf == default, is_default, "{layout}");
+        let has_total = compact_text(&pdf).contains("Total:122.90EUR");
+        assert_eq!(has_total, layout["showTotal"] != false, "{layout}");
+    }
+}
+
+/// SC-004: the audit's impossible dates are refused with the path of the field.
+#[tokio::test]
+async fn impossible_dates_are_refused() {
+    let volume = volume();
+    let app = test_app(test_config(&volume));
+    for date in [
+        "2026-02-30",
+        "2026-13-45",
+        "2025-02-29",
+        "2026-04-31",
+        "0000-00-00",
+    ] {
+        let mut body = demo_example();
+        body["data"]["date"] = date.into();
+        let (status, _, bytes) = post_json(&app, "/templates/demo/render", &body).await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{date}");
+        let problem = problem(&bytes);
+        assert_eq!(problem["code"], "validation-failed", "{date}: {problem}");
+        let violations = problem["violations"].as_array().unwrap();
+        assert_eq!(violations.len(), 1, "{date}: {problem}");
+        assert_eq!(violations[0]["path"], "/data/date", "{date}");
+        assert_eq!(
+            violations[0]["message"],
+            format!("\"{date}\" is not a valid calendar date (YYYY-MM-DD)"),
         );
     }
-    assert!(text.contains("huitmillecinqcentcinquanteeuros"), "{text}");
-}
-
-#[tokio::test]
-async fn long_claim_spans_at_least_three_pages() {
-    let volume = volume();
-    let app = test_app(test_config(&volume));
-    let pdf = render(
-        &app,
-        "progress-invoice",
-        &request("progress-invoice/02-long-claim-all-conditions.json"),
-    )
-    .await;
-    assert!(page_count(&pdf) >= 3, "{} pages", page_count(&pdf));
-    let text = compact_text(&pdf);
-    for label in [
-        "Révisiondeprix",
-        "Compteprorata",
-        "Remboursementdel",
-        "Retenuedegarantie",
-        "Avenants",
-    ] {
-        assert!(text.contains(label), "{label} missing");
-    }
-}
-
-#[tokio::test]
-async fn subcontractor_claim_uses_reverse_charge() {
-    let volume = volume();
-    let app = test_app(test_config(&volume));
-    let pdf = render(
-        &app,
-        "progress-invoice",
-        &request("progress-invoice/03-subcontractor-reverse-charge.json"),
-    )
-    .await;
-    let text = compact_text(&pdf);
-    assert!(text.contains("Autoliquidation"), "{text}");
-    assert!(!text.contains("TVA20"), "no VAT line expected:\n{text}");
-    assert!(
-        !text.contains("Retenuedegarantie("),
-        "bank guarantee replaces the retention:\n{text}"
-    );
-}
-
-#[tokio::test]
-async fn several_vat_rates_are_broken_down() {
-    let volume = volume();
-    let app = test_app(test_config(&volume));
-    let pdf = render(
-        &app,
-        "progress-invoice",
-        &request("progress-invoice/04-final-claim-multiple-vat-rates.json"),
-    )
-    .await;
-    let text = compact_text(&pdf);
-    for rate in ["TVA20%", "TVA10%", "TVA5,5%"] {
-        assert!(text.contains(rate), "{rate} missing:\n{text}");
-    }
-    assert!(text.contains("Situationdesolde"), "{text}");
+    // A leap day is a valid date.
+    let mut body = demo_example();
+    body["data"]["date"] = "2024-02-29".into();
+    render(&app, &body).await;
 }
 
 /// All `.bru` files of the Bruno collection, recursively.

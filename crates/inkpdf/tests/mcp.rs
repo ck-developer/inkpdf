@@ -16,46 +16,40 @@ use inkpdf::registry::watcher;
 use inkpdf::{Config, build_app};
 use serde_json::{Value, json};
 
-/// The `sample` and `packages-demo` fixtures, the example template, plus a template whose
+/// The `sample` and `packages-demo` fixtures, the example template `demo`, plus a template whose
 /// schema does not load.
 fn examples_volume() -> TestVolume {
     let volume = TestVolume::new();
     for template in ["sample", "packages-demo"] {
         volume.copy_template(&fixture(template), template);
     }
-    volume.copy_template(
-        &repo_root().join("examples/templates/progress-invoice"),
-        "progress-invoice",
-    );
+    volume.copy_template(&repo_root().join("examples/templates/demo"), "demo");
     volume.copy_template(&fixture("invalid-schema"), "invalid-schema");
     volume
 }
 
-/// Request body from `examples/requests/`.
-fn example_request(path: &str) -> Value {
-    let raw = fs::read(repo_root().join("examples/requests").join(path)).unwrap();
+/// The `example.json` of the `demo` template.
+fn demo_example() -> Value {
+    let raw = fs::read(repo_root().join("examples/templates/demo/1.0.0/example.json")).unwrap();
     serde_json::from_slice(&raw).unwrap()
 }
 
-/// Every example request with its template: `sample`, `packages-demo` and each
-/// `progress-invoice` request.
+/// Every example request with its template: `sample`, `packages-demo`, and `demo` with its
+/// example as is and with every layout setting changed.
 fn example_cases() -> Vec<(&'static str, Value)> {
-    let mut cases = vec![
+    let mut demo_layout = demo_example();
+    demo_layout["layout"] = json!({
+        "accentColor": "#2e7d32",
+        "font": "New Computer Modern",
+        "density": "compact",
+        "showTotal": false
+    });
+    vec![
         ("sample", fixture_request("sample.json")),
         ("packages-demo", fixture_request("packages-demo.json")),
-    ];
-    let mut invoices: Vec<_> = fs::read_dir(repo_root().join("examples/requests/progress-invoice"))
-        .unwrap()
-        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
-        .collect();
-    invoices.sort();
-    for name in invoices {
-        cases.push((
-            "progress-invoice",
-            example_request(&format!("progress-invoice/{name}")),
-        ));
-    }
-    cases
+        ("demo", demo_example()),
+        ("demo", demo_layout),
+    ]
 }
 
 /// `render_template` arguments: an HTTP render body plus the template id.
@@ -297,12 +291,7 @@ async fn get_template_returns_the_http_detail() {
     let volume = examples_volume();
     let app = mcp_app(&volume);
 
-    for id in [
-        "sample",
-        "packages-demo",
-        "progress-invoice",
-        "invalid-schema",
-    ] {
+    for id in ["sample", "packages-demo", "demo", "invalid-schema"] {
         let (status, expected) = get_json(&app, &format!("/templates/{id}")).await;
         assert_eq!(status, StatusCode::OK, "{id}");
 

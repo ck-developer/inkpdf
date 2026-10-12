@@ -1,0 +1,61 @@
+meta {
+  name: Unknown version
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/templates/demo/render?version=3
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "data": {
+      "title": "Office supplies",
+      "reference": "DEMO-2026-001",
+      "date": "2026-10-12",
+      "recipient": {
+        "name": "Jane Doe",
+        "address": "1 Example Street\n75001 Paris",
+        "email": "jane.doe@example.com"
+      },
+      "lines": [
+        {
+          "label": "Notebooks",
+          "quantity": 12,
+          "amount": "3.50"
+        },
+        {
+          "label": "Desk lamp",
+          "quantity": 1,
+          "amount": "49.90"
+        },
+        {
+          "label": "Printer paper, 500 sheets",
+          "quantity": 5,
+          "amount": "6.20"
+        }
+      ],
+      "urgent": false,
+      "status": "draft"
+    },
+    "metadata": {
+      "title": "Demo document DEMO-2026-001",
+      "author": "Example Ltd"
+    }
+  }
+}
+
+assert {
+  res.status: eq 404
+}
+
+docs {
+  No version matches `3`: `template-version-not-found`, with `availableVersions`.
+}

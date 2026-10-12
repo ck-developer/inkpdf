@@ -5,11 +5,15 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/templates/progress-invoice
+  url: {{baseUrl}}/templates/demo
   body: none
   auth: none
 }
 
 assert {
   res.status: eq 200
+}
+
+docs {
+  The detail carries the schema, with a description and an `x-role` on every variable, and the template's `example`.
 }

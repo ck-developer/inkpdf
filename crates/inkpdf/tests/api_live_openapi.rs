@@ -15,11 +15,23 @@ fn examples_volume() -> TestVolume {
     for id in ["sample", "packages-demo"] {
         volume.copy_template(&fixture(id), id);
     }
-    volume.copy_template(
-        &repo_root().join("examples/templates/progress-invoice"),
-        "progress-invoice",
-    );
+    volume.copy_template(&repo_root().join("examples/templates/demo"), "demo");
     volume.copy_template(&fixture("invalid-schema"), "invalid-schema");
+    // A template whose `data` uses `$defs`.
+    let schema = serde_json::json!({
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+            "data": {
+                "type": "object",
+                "properties": { "total": { "$ref": "#/$defs/amount" } }
+            }
+        },
+        "$defs": { "amount": { "type": "string", "pattern": "^[0-9]+$" } }
+    });
+    volume
+        .write_file("with-defs/main.typ", "= Definitions")
+        .write_file("with-defs/schema.json", schema.to_string());
     volume
 }
 
@@ -54,11 +66,7 @@ async fn each_valid_template_gets_a_typed_operation() {
     for (id, operation_id, summary) in [
         ("sample", "render_sample", "Sample"),
         ("packages-demo", "render_packages_demo", "Package demo"),
-        (
-            "progress-invoice",
-            "render_progress_invoice",
-            "Construction progress invoice",
-        ),
+        ("demo", "render_demo", "Demo document"),
     ] {
         let op = &doc["paths"][format!("/templates/{id}/render")]["post"];
         assert_eq!(op["operationId"], operation_id, "{id}");
@@ -86,21 +94,21 @@ async fn request_bodies_are_the_template_schemas() {
     let doc = document(&app).await;
     let schemas = &doc["components"]["schemas"];
 
-    let op = &doc["paths"]["/templates/progress-invoice/render"]["post"];
+    let op = &doc["paths"]["/templates/demo/render"]["post"];
     assert_eq!(
         op["requestBody"]["content"]["application/json"]["schema"]["$ref"],
-        "#/components/schemas/ProgressInvoiceRenderRequest"
+        "#/components/schemas/DemoRenderRequest"
     );
-    let request = &schemas["ProgressInvoiceRenderRequest"];
+    let request = &schemas["DemoRenderRequest"];
     assert_eq!(request["required"], serde_json::json!(["data"]));
     assert_eq!(request["additionalProperties"], false);
     assert_eq!(
         request["properties"]["data"]["$ref"],
-        "#/components/schemas/ProgressInvoiceData"
+        "#/components/schemas/DemoData"
     );
     assert_eq!(
         request["properties"]["layout"]["$ref"],
-        "#/components/schemas/ProgressInvoiceLayout"
+        "#/components/schemas/DemoLayout"
     );
     assert_eq!(
         request["properties"]["metadata"]["$ref"],
@@ -109,11 +117,15 @@ async fn request_bodies_are_the_template_schemas() {
 
     // Layout defaults are published, `$defs` are hoisted into prefixed components.
     assert_eq!(
-        schemas["ProgressInvoiceLayout"]["properties"]["primaryColor"]["default"],
-        "#1d3557"
+        schemas["DemoLayout"]["properties"]["accentColor"]["default"],
+        "#1f4e79"
     );
-    assert!(schemas["ProgressInvoice_amount"].is_object());
-    assert!(schemas["ProgressInvoiceData"].get("$schema").is_none());
+    assert!(schemas["WithDefs_amount"].is_object());
+    assert_eq!(
+        schemas["WithDefsData"]["properties"]["total"]["$ref"],
+        "#/components/schemas/WithDefs_amount"
+    );
+    assert!(schemas["DemoData"].get("$schema").is_none());
 
     // A template without `layout` has no layout property.
     assert!(schemas["SampleRenderRequest"]["properties"]["layout"].is_object());
