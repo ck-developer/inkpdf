@@ -29,7 +29,7 @@ During a render, Typst only sees what the service gives it:
 | system fonts | no |
 
 The render never reads the disk: all the template's files were read into memory when it was
-loaded (see [Hot reload](hot-reload.md)). A path that leaves the template folder simply does not
+loaded (see [Loading templates](hot-reload.md)). A path that leaves the template folder simply does not
 exist from Typst's point of view, and the render fails with `500 render-failed`. Symbolic links
 pointing outside the folder are excluded when the template is loaded.
 

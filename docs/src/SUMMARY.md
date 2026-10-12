@@ -13,7 +13,7 @@
 - [The request body](concepts/request-body.md)
 - [Schemas and defaults](concepts/schemas.md)
 - [Bundled packages](concepts/packages.md)
-- [Hot reload](concepts/hot-reload.md)
+- [Loading templates](concepts/hot-reload.md)
 - [Sandbox and determinism](concepts/sandbox.md)
 
 # Guides

@@ -38,7 +38,8 @@ can model any document with any schema.
 
 ## What the service provides
 
-- **Live templates**: templates are discovered from the volume and reloaded without a restart.
+- **Templates on a volume**: templates are discovered from a mounted volume when the service
+  starts, never built into the image; hot reload picks up changes for development.
 - **Validation**: every request is checked against the template's JSON Schema; errors list every
   faulty path.
 - **A sandbox**: a template only reads its own folder; no network, no environment variables, no

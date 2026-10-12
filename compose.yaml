@@ -20,4 +20,6 @@ services:
       INKPDF_RENDER_TIMEOUT_SECS: "${INKPDF_RENDER_TIMEOUT_SECS:-30}"
       INKPDF_MAX_BODY_BYTES: "${INKPDF_MAX_BODY_BYTES:-5242880}"
       INKPDF_MCP_ENABLED: "${INKPDF_MCP_ENABLED:-false}"
+      # Development setup: reload templates when the folder changes (off by default elsewhere).
+      INKPDF_HOT_RELOAD: "${INKPDF_HOT_RELOAD:-true}"
     restart: unless-stopped

@@ -12,8 +12,8 @@ validated against each template's JSON Schema, and get a PDF back in millisecond
 foundation: it knows nothing about invoices or reports — your templates define the documents.
 
 - Typst engine embedded in a Rust binary, in a sandbox (no network, no file outside the template).
-- Templates hot-reloaded from a volume; each template's contract is published live in the
-  OpenAPI document (`/openapi.json`, `/docs`).
+- Templates loaded from a volume, with versions and hot reload for development; each
+  template's contract is published live in the OpenAPI document (`/openapi.json`, `/docs`).
 - 20 bundled Typst packages (QR codes, barcodes, charts, number and date formatting…).
 - Deterministic PDFs, PDF metadata, downloads, RFC 9457 errors.
 - Optional MCP server: AI assistants such as Claude list the templates, ask for the missing

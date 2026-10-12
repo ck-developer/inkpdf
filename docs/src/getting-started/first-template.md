@@ -79,8 +79,9 @@ Without this file, the template is listed under its folder name.
 
 ## 5. Check that it is loaded
 
-If the service is already running with `my-templates` mounted on `/templates`, there is nothing
-to restart: the template is picked up within a few seconds.
+The service loads its templates when it starts: restart it so that it picks up the new
+folder. If it runs with hot reload (`INKPDF_HOT_RELOAD=true`, as with the repository's
+`compose.yaml`), there is nothing to restart: the template is picked up within a few seconds.
 
 ```bash
 curl -s localhost:3000/templates/greeting

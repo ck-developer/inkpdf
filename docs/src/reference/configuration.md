@@ -8,14 +8,15 @@ a restart.
 
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `INKPDF_TEMPLATES_DIR` | `/templates` | Folder that holds the templates, one sub-folder per template. In the Docker image it is the `/templates` volume. |
+| `INKPDF_TEMPLATES_DIR` | `/templates` | Folder that holds the templates, one sub-folder per template. In the Docker image it is the `/templates` volume. The templates are loaded from it at startup. |
 | `INKPDF_LISTEN` | `0.0.0.0:3000` | Address and port the HTTP server listens on (`host:port`). |
 | `INKPDF_MAX_BODY_BYTES` | `5242880` (5 MiB) | Maximum size of a request body, in bytes. A larger body is rejected with `413 payload-too-large`. |
 | `INKPDF_RENDER_TIMEOUT_SECS` | `30` | Maximum duration of a render, in seconds. Beyond it, the caller receives `504 render-timeout`. |
 | `INKPDF_MAX_CONCURRENT_RENDERS` | number of CPUs | Number of renders that may run at the same time (render slots). |
 | `INKPDF_QUEUE_TIMEOUT_SECS` | `10` | Maximum time, in seconds, a render request waits for a free slot. Beyond it, the caller receives `503 overloaded`. |
-| `INKPDF_RESCAN_INTERVAL_SECS` | `2` | Interval, in seconds, of the periodic rescan of the templates folder. It backs up file system events, which some volumes (network file systems, Kubernetes ConfigMaps) do not deliver. |
-| `INKPDF_MAX_TEMPLATE_BYTES` | `52428800` (50 MiB) | Maximum total size of a template folder, in bytes. A template is loaded in memory; a larger one is marked invalid. |
+| `INKPDF_HOT_RELOAD` | `false` | Watches the templates folder and reloads added, changed and removed templates while the service runs, for **development** only. Off, the templates are loaded once, at startup, and a change needs a restart. The repository's `compose.yaml` turns it on. See [Loading templates](../concepts/hot-reload.md). |
+| `INKPDF_RESCAN_INTERVAL_SECS` | `2` | Interval, in seconds, of the periodic rescan of the templates folder, **only with hot reload**. It backs up file system events, which some volumes (network file systems, Kubernetes ConfigMaps) do not deliver. |
+| `INKPDF_MAX_TEMPLATE_BYTES` | `52428800` (50 MiB) | Maximum total size of a template folder, in bytes, applied to each version folder. Every version is loaded in memory; a larger one is marked invalid. |
 | `INKPDF_LOG_FORMAT` | `json` | Log format on stdout: `json` (one JSON object per line) or `pretty` (human-readable, for local use). |
 | `INKPDF_DEFAULT_AUTHOR` | `inkpdf` | PDF author used when neither the request (`metadata.author`) nor the template (`set document(author: …)`) provides one. Surrounding whitespace is trimmed. |
 | `INKPDF_MCP_ENABLED` | `false` | Serves the MCP server at `/mcp`, on the same address and port as the HTTP API, so that AI assistants can list templates and render documents. Off, `/mcp` answers `404`. See [Using inkpdf from an AI assistant](../guides/mcp.md). |
@@ -26,7 +27,7 @@ a restart.
 - Numeric values must be positive integers: `0` is refused for every size, count and duration.
 - `INKPDF_LISTEN` must be a socket address such as `127.0.0.1:8080` or `[::]:3000`.
 - `INKPDF_LOG_FORMAT` accepts only `json` and `pretty`.
-- `INKPDF_MCP_ENABLED` accepts only `true`, `false`, `1` and `0`.
+- `INKPDF_MCP_ENABLED` and `INKPDF_HOT_RELOAD` accept only `true`, `false`, `1` and `0`.
 
 A malformed value prevents startup. The process prints an explicit message naming the variable
 and exits with status `2`, for example:
@@ -37,11 +38,12 @@ configuration error: invalid value for INKPDF_MAX_BODY_BYTES: `lots`: invalid di
 
 ## Examples
 
-Running locally against the example templates, with readable logs:
+Running locally against the example templates, with readable logs and hot reload:
 
 ```sh
 INKPDF_TEMPLATES_DIR=examples/templates \
 INKPDF_LOG_FORMAT=pretty \
+INKPDF_HOT_RELOAD=true \
 cargo run --release -p inkpdf
 ```
 

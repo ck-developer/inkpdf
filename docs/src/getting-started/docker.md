@@ -98,8 +98,10 @@ docker run --rm -p 3000:3000 \
   ghcr.io/ck-developer/inkpdf:latest
 ```
 
-Templates added, changed or removed in that folder are picked up within a few seconds, without
-restarting the container (see [Hot reload](../concepts/hot-reload.md)).
+The templates are loaded when the container starts: restart it after adding, changing or
+removing a template. While you work on templates, add `-e INKPDF_HOT_RELOAD=true` to have
+changes picked up within a few seconds, without a restart (see
+[Loading templates](../concepts/hot-reload.md)).
 
 ## With Docker Compose
 
@@ -112,8 +114,9 @@ INKPDF_TEMPLATES=./my-templates docker compose up --build   # another templates 
 INKPDF_PORT=8080 docker compose up --build                  # another host port
 ```
 
-It mounts `./examples/templates` by default and uses human-readable logs
-(`INKPDF_LOG_FORMAT=pretty`).
+It mounts `./examples/templates` by default, uses human-readable logs
+(`INKPDF_LOG_FORMAT=pretty`) and turns hot reload on (`INKPDF_HOT_RELOAD=true`), so that changes
+to the templates are picked up without a restart.
 
 ## Configuration
 
