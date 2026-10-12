@@ -552,6 +552,47 @@ async fn wrong_metadata_date_is_a_validation_error() {
     assert!(texts(&result)[0].contains("\n- /metadata/date: "));
 }
 
+/// US5 (005): an impossible date in a `format: date` property is a validation error on its
+/// path, with the hint to fix the input, never `render-failed`. The template's Typst code
+/// builds a `datetime` from the date, so it would fail to render with it.
+#[tokio::test]
+async fn impossible_date_is_a_validation_error() {
+    let volume = TestVolume::new();
+    let schema = json!({
+        "type": "object",
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": ["date"],
+                "properties": { "date": { "type": "string", "format": "date" } }
+            }
+        }
+    });
+    let main = "#let (y, m, d) = sys.inputs.data.date.split(\"-\").map(int)\n\
+                #datetime(year: y, month: m, day: d).display()\n";
+    volume
+        .write_file("dated/schema.json", schema.to_string())
+        .write_file("dated/main.typ", main);
+    let app = mcp_app(&volume);
+    let body = json!({ "data": { "date": "2026-02-30" } });
+    let expected = http_problem(&app, "dated", "", &body).await;
+    assert_eq!(expected["code"], "validation-failed", "{expected}");
+    assert_eq!(violation_paths(&expected), ["/data/date"]);
+
+    let result = call_tool(&app, "render_template", render_args("dated", &body)).await;
+
+    assert_tool_error(&result, &expected, FIX_INPUT);
+    assert!(
+        texts(&result)[0]
+            .contains("\n- /data/date: \"2026-02-30\" is not a valid calendar date (YYYY-MM-DD)\n"),
+        "{result}"
+    );
+
+    let leap_day = json!({ "data": { "date": "2024-02-29" } });
+    let result = call_tool(&app, "render_template", render_args("dated", &leap_day)).await;
+    assert_eq!(result["isError"], false, "{result}");
+}
+
 /// A `layout` or `metadata` that is `null` or not an object reaches the shared pipeline as it
 /// came, and is refused with the HTTP API's problem, next to every other faulty field.
 #[tokio::test]

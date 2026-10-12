@@ -1,6 +1,7 @@
 //! A template's `schema.json`: loading, `layout` defaults, validation.
 
-use jsonschema::{Draft, Validator};
+use jsonschema::error::ValidationErrorKind;
+use jsonschema::{Draft, ValidationError, Validator};
 use serde_json::{Map, Value};
 use typst::foundations::Bytes;
 
@@ -58,8 +59,11 @@ impl TemplateSchema {
             root.entry("additionalProperties")
                 .or_insert(Value::Bool(false));
         }
+        // Standard formats are asserted (`date`, `date-time`, `email`, …); unknown format names
+        // stay ignored (research R2 of feature 005).
         let validator = jsonschema::options()
             .with_draft(Draft::Draft202012)
+            .should_validate_formats(true)
             .build(&compiled)
             .map_err(|e| format!("invalid JSON Schema: {e}"))?;
 
@@ -104,7 +108,7 @@ impl TemplateSchema {
             .map(|error| Violation {
                 path: error.instance_path().to_string(),
                 schema_path: error.schema_path().to_string(),
-                message: error.to_string(),
+                message: message(&error),
             })
             .collect();
 
@@ -113,6 +117,18 @@ impl TemplateSchema {
         } else {
             Err(violations)
         }
+    }
+}
+
+/// The validator's message, except for `format: date`, whose message says what is expected
+/// (`"2026-02-30" is not a valid calendar date (YYYY-MM-DD)`).
+fn message(error: &ValidationError<'_>) -> String {
+    match error.kind() {
+        ValidationErrorKind::Format { format } if format == "date" => format!(
+            "{} is not a valid calendar date (YYYY-MM-DD)",
+            error.instance()
+        ),
+        _ => error.to_string(),
     }
 }
 
@@ -558,6 +574,129 @@ mod tests {
         };
         for input in inputs {
             assert_eq!(outcome(&with, &input), outcome(&without, &input), "{input}");
+        }
+    }
+
+    /// A `format: date` property at the root of `data`, in a nested object, in array `items`
+    /// and through `$defs`, next to other formats.
+    fn dated() -> TemplateSchema {
+        schema(json!({
+            "type": "object",
+            "$defs": {
+                "day": { "type": "string", "format": "date" }
+            },
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "date": { "type": "string", "format": "date" },
+                        "period": {
+                            "type": "object",
+                            "properties": {
+                                "start": { "type": "string", "format": "date" }
+                            }
+                        },
+                        "lines": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "on": { "type": "string", "format": "date" }
+                                }
+                            }
+                        },
+                        "due": { "$ref": "#/$defs/day" },
+                        "sentAt": { "type": "string", "format": "date-time" },
+                        "email": { "type": "string", "format": "email" },
+                        "code": { "type": "string", "format": "made-up" },
+                        "count": { "type": "integer" }
+                    }
+                }
+            }
+        }))
+    }
+
+    /// Violations of `data` as `(path, message)`.
+    fn data_violations(data: Value) -> Vec<(String, String)> {
+        match dated().prepare(json!({ "data": data })) {
+            Ok(_) => Vec::new(),
+            Err(violations) => violations
+                .into_iter()
+                .map(|v| (v.path, v.message))
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn impossible_dates_are_refused_at_every_depth() {
+        let impossible = [
+            "2026-02-30",
+            "2026-13-45",
+            "2025-02-29",
+            "2026-04-31",
+            "0000-00-00",
+        ];
+        for date in impossible {
+            let message = format!("\"{date}\" is not a valid calendar date (YYYY-MM-DD)");
+            let cases = [
+                ("/data/date", json!({ "date": date })),
+                ("/data/period/start", json!({ "period": { "start": date } })),
+                ("/data/lines/1/on", json!({ "lines": [{}, { "on": date }] })),
+                ("/data/due", json!({ "due": date })),
+            ];
+            for (path, data) in cases {
+                assert_eq!(
+                    data_violations(data),
+                    [(path.to_owned(), message.clone())],
+                    "{date} at {path}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn real_dates_are_accepted() {
+        let data = json!({
+            "date": "2024-02-29",
+            "period": { "start": "2026-12-31" },
+            "lines": [{ "on": "2026-01-01" }],
+            "due": "2000-02-29"
+        });
+        assert!(data_violations(data).is_empty());
+    }
+
+    #[test]
+    fn other_standard_formats_are_asserted() {
+        assert!(data_violations(json!({ "sentAt": "2024-02-29T10:00:00Z" })).is_empty());
+        let violations = data_violations(json!({ "sentAt": "2026-02-30T10:00:00Z" }));
+        assert_eq!(violations.len(), 1, "{violations:?}");
+        assert_eq!(violations[0].0, "/data/sentAt");
+        // Other formats keep the validator's message.
+        assert!(violations[0].1.contains("date-time"), "{}", violations[0].1);
+
+        assert!(data_violations(json!({ "email": "someone@example.com" })).is_empty());
+        let violations = data_violations(json!({ "email": "not-an-email" }));
+        assert_eq!(violations.len(), 1, "{violations:?}");
+        assert_eq!(violations[0].0, "/data/email");
+        assert!(violations[0].1.contains("email"), "{}", violations[0].1);
+    }
+
+    #[test]
+    fn unknown_formats_are_ignored() {
+        assert!(data_violations(json!({ "code": "anything at all" })).is_empty());
+    }
+
+    #[test]
+    fn date_faults_come_back_with_every_other_fault() {
+        let violations = data_violations(json!({
+            "date": "2026-02-30",
+            "lines": [{ "on": "2026-13-45" }],
+            "count": "three"
+        }));
+        let paths: Vec<&str> = violations.iter().map(|(path, _)| path.as_str()).collect();
+        assert_eq!(violations.len(), 3, "{violations:?}");
+        for path in ["/data/date", "/data/lines/0/on", "/data/count"] {
+            assert!(paths.contains(&path), "{path}: {violations:?}");
         }
     }
 }

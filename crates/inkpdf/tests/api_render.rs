@@ -294,3 +294,81 @@ async fn without_parameters_the_pdf_stays_inline() {
         "inline; filename=\"sample.pdf\"; filename*=UTF-8''sample.pdf"
     );
 }
+
+/// A template with `format: date` properties, whose Typst code builds a `datetime` from each:
+/// an impossible date that reached it would end in a render failure.
+fn dated_volume() -> TestVolume {
+    let volume = TestVolume::new();
+    let schema = json!({
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": ["date"],
+                "additionalProperties": false,
+                "properties": {
+                    "date": { "type": "string", "format": "date" },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": { "on": { "type": "string", "format": "date" } }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    let main = r#"#let data = sys.inputs.data
+#let day(text) = {
+  let (y, m, d) = text.split("-").map(int)
+  datetime(year: y, month: m, day: d)
+}
+= Dated
+#day(data.date).display()
+#for line in data.at("lines", default: ()) [ #day(line.on).display() ]
+"#;
+    volume
+        .write_file("dated/schema.json", schema.to_string())
+        .write_file("dated/main.typ", main);
+    volume
+}
+
+/// US5 (005): an impossible date is a validation error on its path, at any depth, never a
+/// render failure; a real one renders.
+#[tokio::test]
+async fn impossible_date_is_a_validation_error() {
+    let volume = dated_volume();
+    let app = test_app(test_config(&volume));
+
+    let cases = [
+        (json!({ "date": "2026-02-30" }), "/data/date", "2026-02-30"),
+        (
+            json!({ "date": "2024-02-29", "lines": [{ "on": "2026-13-45" }] }),
+            "/data/lines/0/on",
+            "2026-13-45",
+        ),
+    ];
+    for (data, path, date) in cases {
+        let (status, _, body) =
+            post_json(&app, "/templates/dated/render", &json!({ "data": data })).await;
+
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY, "{path}");
+        let problem = problem(&body);
+        assert_eq!(problem["code"], "validation-failed", "{problem}");
+        assert_eq!(
+            problem["violations"],
+            json!([{
+                "path": path,
+                "schemaPath": problem["violations"][0]["schemaPath"],
+                "message": format!("\"{date}\" is not a valid calendar date (YYYY-MM-DD)")
+            }]),
+            "{problem}"
+        );
+    }
+
+    let leap_day = json!({ "data": { "date": "2024-02-29", "lines": [{ "on": "2024-03-01" }] } });
+    let (status, _, body) = post_json(&app, "/templates/dated/render", &leap_day).await;
+    assert_eq!(status, StatusCode::OK, "{}", String::from_utf8_lossy(&body));
+}
