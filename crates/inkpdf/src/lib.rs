@@ -21,6 +21,8 @@ pub use api::{ApiDoc, build_app, openapi};
 pub use config::Config;
 pub use registry::Registry;
 
+use registry::watcher::{self, WatcherHandle};
+
 /// State shared by the handlers.
 #[derive(Clone)]
 pub struct AppState {
@@ -47,4 +49,17 @@ impl AppState {
             config: Arc::new(config),
         }
     }
+}
+
+/// Starts what runs next to the server, once the initial scan is done (research R10 of feature
+/// 005): with hot reload on (`INKPDF_HOT_RELOAD`), the volume watcher and its periodic rescan;
+/// otherwise nothing, and the registry keeps what it loaded at startup.
+///
+/// The returned handle must be kept while the server runs: dropping it stops watching. Must
+/// be called inside a tokio runtime.
+pub fn spawn_background_tasks(state: &AppState) -> Option<WatcherHandle> {
+    state
+        .config
+        .hot_reload
+        .then(|| watcher::spawn(state.registry.clone(), state.config.rescan_interval))
 }

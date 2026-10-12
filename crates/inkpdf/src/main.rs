@@ -7,7 +7,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 
 use inkpdf::config::{Config, LogFormat};
-use inkpdf::{AppState, build_app, registry};
+use inkpdf::{AppState, build_app, spawn_background_tasks};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -64,11 +64,17 @@ async fn run(config: Config) -> std::io::Result<()> {
         durationMs = started.elapsed().as_millis() as u64,
     );
 
-    let _watcher = registry::watcher::spawn(state.registry.clone(), state.config.rescan_interval);
+    // Kept until the server stops: dropping it would stop hot reload.
+    let _watcher = spawn_background_tasks(&state);
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
     let mcp = state.config.mcp_enabled;
-    tracing::info!(event = "server.listening", address = %listen, mcp);
+    tracing::info!(
+        event = "server.listening",
+        address = %listen,
+        mcp,
+        hotReload = state.config.hot_reload,
+    );
     if mcp {
         tracing::info!(event = "mcp.listening", path = "/mcp");
     }

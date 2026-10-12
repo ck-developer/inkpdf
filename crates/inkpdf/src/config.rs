@@ -36,6 +36,7 @@ pub struct Config {
     pub render_timeout: Duration,
     pub max_concurrent_renders: usize,
     pub queue_timeout: Duration,
+    /// Interval of the periodic rescan; only used with [`Config::hot_reload`].
     pub rescan_interval: Duration,
     pub max_template_bytes: u64,
     pub log_format: LogFormat,
@@ -43,6 +44,9 @@ pub struct Config {
     pub default_author: String,
     /// Serves the MCP interface at `/mcp` (off by default).
     pub mcp_enabled: bool,
+    /// Watches the volume and reloads changed templates while running, for development (off
+    /// by default: templates are loaded once, at startup).
+    pub hot_reload: bool,
 }
 
 impl Default for Config {
@@ -59,6 +63,7 @@ impl Default for Config {
             log_format: LogFormat::Json,
             default_author: "inkpdf".to_owned(),
             mcp_enabled: false,
+            hot_reload: false,
         }
     }
 }
@@ -114,6 +119,9 @@ impl Config {
         }
         if let Some(v) = var("INKPDF_MCP_ENABLED") {
             config.mcp_enabled = parse_bool("INKPDF_MCP_ENABLED", &v)?;
+        }
+        if let Some(v) = var("INKPDF_HOT_RELOAD") {
+            config.hot_reload = parse_bool("INKPDF_HOT_RELOAD", &v)?;
         }
         Ok(config)
     }
@@ -236,5 +244,28 @@ mod tests {
         assert_eq!(err.name, "INKPDF_MCP_ENABLED");
         assert!(err.to_string().contains("INKPDF_MCP_ENABLED"));
         assert!(err.to_string().contains("yes"));
+    }
+
+    #[test]
+    fn hot_reload_is_off_by_default() {
+        let config = Config::from_lookup(lookup(&[])).unwrap();
+        assert!(!config.hot_reload);
+        assert!(!Config::default().hot_reload);
+    }
+
+    #[test]
+    fn hot_reload_accepts_boolean_values() {
+        for (value, expected) in [("true", true), ("1", true), ("false", false), ("0", false)] {
+            let config = Config::from_lookup(lookup(&[("INKPDF_HOT_RELOAD", value)])).unwrap();
+            assert_eq!(config.hot_reload, expected, "{value}");
+        }
+    }
+
+    #[test]
+    fn hot_reload_rejects_other_values() {
+        let err = Config::from_lookup(lookup(&[("INKPDF_HOT_RELOAD", "on")])).unwrap_err();
+        assert_eq!(err.name, "INKPDF_HOT_RELOAD");
+        assert!(err.to_string().contains("INKPDF_HOT_RELOAD"));
+        assert!(err.to_string().contains("on"));
     }
 }
