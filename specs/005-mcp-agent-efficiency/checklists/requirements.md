@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Templates that guide AI assistants
+# Specification Quality Checklist: Templates that guide AI assistants, with versions
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-10-12
@@ -34,5 +34,7 @@
 - Re-scoped on 2026-10-12 with the user (see Clarifications in the spec): one demonstration
   template, variable roles, an example per template, impossible dates refused, two generic
   skills. The payment QR question is moot since the invoice template is removed.
+- Extended on 2026-10-12: template versions (US7) and startup loading with hot reload for
+  development (US8), with constitution 2.0.0. Re-validated: all items pass.
 - The MCP and HTTP interfaces and the skills are named on purpose: they are the feature's
   subject, as in specs 001 to 004. No crate or code structure is named.

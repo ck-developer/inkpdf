@@ -1,6 +1,7 @@
 # Contract — The `demo` template
 
-Folder: `examples/templates/demo/` (`template.json`, `schema.json`, `main.typ`, `example.json`).
+Folder: `examples/templates/demo/1.0.0/` (`template.json`, `schema.json`, `main.typ`,
+`example.json`), in the versioned layout of [versions-and-loading.md](./versions-and-loading.md).
 Name "Demo document", version `1.0.0`, description "Neutral demonstration of every template
 possibility: variable roles, kinds of variables, layout settings, metadata, a bundled package and
 an example."

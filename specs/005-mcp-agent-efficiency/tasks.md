@@ -14,8 +14,8 @@ description: "Task list for feature 005: templates that guide AI assistants"
 API-contract tests. SC-002 to SC-006 need automated checks. In each story, tests are written
 first and MUST fail before the implementation.
 
-**Organization**: one phase per user story, in the spec's priority order (US1, US2 P1; US3 to US6
-P2). Moving the test templates to fixtures is foundational. Some stories depend on others: see
+**Organization**: one phase per user story: US1 and US2 (P1) first, then the P2 stories (US3, US4,
+US5, US7, US8, US6), ordered by dependency. Moving the test templates to fixtures is foundational. Some stories depend on others: see
 Dependencies.
 
 **Cross-cutting reminders**:
@@ -99,7 +99,7 @@ Dependencies.
 
 **Goal**: the `generate-document` skill, installable with the plugin.
 
-**Independent Test**: `cargo xtask docs check` validates the skill and plugin files; with the plugin installed, an assistant follows the skill on the `demo` template (manual, T035).
+**Independent Test**: `cargo xtask docs check` validates the skill and plugin files; with the plugin installed, an assistant follows the skill on the `demo` template (manual, T046).
 
 - [ ] T010 [US2] Write `plugins/inkpdf/skills/generate-document/SKILL.md` as in [contracts/plugin-skills.md](./contracts/plugin-skills.md).
   - Frontmatter: `name`, `description`, `license` and `metadata` only.
@@ -128,7 +128,7 @@ Dependencies.
 
 **Goal**: the `write-template` skill and its reference files.
 
-**Independent Test**: `cargo xtask docs check` passes with `packages.md` up to date; with the plugin, an assistant writes a valid template (manual, T035).
+**Independent Test**: `cargo xtask docs check` passes with `packages.md` up to date; with the plugin, an assistant writes a valid template (manual, T046).
 
 - [ ] T014 [US3] Write the `write-template` skill files in `plugins/inkpdf/skills/write-template/`, following [contracts/plugin-skills.md](./contracts/plugin-skills.md):
   - `SKILL.md`: portable frontmatter; the steps, starting by finding the templates folder (ask the
@@ -137,7 +137,7 @@ Dependencies.
   - `template-format.md`: folder, `template.json`, schema rules (closed objects, `description` and `x-role` everywhere, defaults for layout, `format: date`), `example.json`, limits;
   - `typst-basics.md`: reading `sys.inputs`, tables, page setup, fonts, bundled packages only.
 - [ ] T015 [US3] In `xtask/src/docs.rs`, make `cargo xtask docs generate` write `plugins/inkpdf/skills/write-template/packages.md` from `packages/lock.toml`, reusing the package reference logic: each selectable package with its version, import line and one-line purpose. `cargo xtask docs check` MUST fail when the file is stale. Add a unit test.
-- [ ] T016 [P] [US3] Rewrite `docs/src/guides/writing-a-template.md` and `docs/src/guides/best-practices.md` around descriptions, roles, the example and `format`, using `demo` as the worked example. The template content is final after T027, so review these two pages again then.
+- [ ] T016 [P] [US3] Rewrite `docs/src/guides/writing-a-template.md` and `docs/src/guides/best-practices.md` around descriptions, roles, the example and `format`, using `demo` as the worked example. The template content is final after T038, so review these two pages again then.
 
 ---
 
@@ -157,11 +157,11 @@ Dependencies.
   - `crates/inkpdf/tests/api_templates.rs`: `GET /templates/{id}` has `example` when valid and omits it otherwise; the list never carries it;
   - `crates/inkpdf/tests/mcp.rs`: `get_template` `structuredContent.example` is present, and `render_template` with it succeeds;
   - `crates/inkpdf/tests/api_live_openapi.rs`: the template's render operation has the example as its request body `example`, and the copied schemas keep their `x-role` annotations (FR-003);
-  - `crates/inkpdf/tests/hot_reload.rs`: editing `example.json` is picked up.
+  - `crates/inkpdf/tests/hot_reload.rs` (hot reload on): editing `example.json` is picked up.
 
 ### Implementation
 
-- [ ] T019 [US4] Add `example: Option<serde_json::Value>` to `TemplateEntry` in `crates/inkpdf/src/registry/mod.rs`. In `crates/inkpdf/src/registry/loader.rs`, read `example.json` from the loaded files and check a copy:
+- [ ] T019 [US4] Add `example: Option<serde_json::Value>` to `TemplateEntry` in `crates/inkpdf/src/registry/loader.rs`. In the same file, read `example.json` from the loaded files and check a copy:
   1. `render::metadata::extract`;
   2. `TemplateSchema::prepare`.
 
@@ -211,13 +211,94 @@ Dependencies.
 
 ---
 
-## Phase 8: User Story 6 — One demonstration template instead of three (P2)
+## Phase 8: User Story 7 — Choose which version of a template to use (P2)
+
+**Goal**: one sub-folder per version; reads and renders take an optional `version`; the default is the highest valid version; every render states the version used ([contracts/versions-and-loading.md](./contracts/versions-and-loading.md)).
+
+**Independent Test**: with `facture` versions 1.0.0, 1.1.0 and 2.0.0, renders without a version, with `1`, `1.0.0`, `2` and `3` use the expected version or return `template-version-not-found` with the list (SC-007).
+
+### Tests (write first, must fail)
+
+- [ ] T027 [P] [US7] Registry unit tests in `crates/inkpdf/src/registry/loader.rs` and `crates/inkpdf/src/registry/mod.rs`:
+  - **Layouts**: the flat layout gives one version (the manifest's); the versioned layout loads each version folder; the mixed layout makes the template invalid with the reason of the contract.
+  - **Bad folders and manifests**: a non-version sub-folder is skipped and logged; a manifest version that differs from its folder makes that version invalid; an invalid version does not hide the others.
+  - **Selection**: none → highest valid; `1` → highest valid `1.x.y`; an exact version → that version, even invalid; a malformed selector → error.
+  - **Ordering**: numeric (`1.10.0` > `1.9.0`).
+- [ ] T028 [P] [US7] HTTP tests in a new `crates/inkpdf/tests/api_versions.rs`. Build a `TestVolume` with the `sample` fixture copied as `facture/1.0.0`, `facture/1.1.0` and `facture/2.0.0`, setting each `template.json` version and changing a visible title so the PDFs differ.
+  - `GET /templates` shows `versions`, newest first, with their status, and the default `version`.
+  - `GET /templates/facture?version=1.0.0` and `/schema?version=1` describe the right version.
+  - Renders:
+    - without a version → `2.0.0`;
+    - `1` → `1.1.0`;
+    - `1.0.0` → `1.0.0`;
+    - each response has `Inkpdf-Template-Version`.
+  - `version=3` gives 404 `template-version-not-found` with `availableVersions`.
+  - `version=latest` gives 400 `invalid-parameter`.
+  - When `2.0.0` is made invalid, the default is `1.1.0`.
+- [ ] T029 [P] [US7] MCP and live OpenAPI tests:
+  - in `crates/inkpdf/tests/mcp.rs`: `get_template` and `render_template` with `version`; the render text names the version; the `template-version-not-found` tool error carries the contract's hint;
+  - in `crates/inkpdf/tests/api_live_openapi.rs`: the per-template operation describes the default version and documents the `version` parameter;
+  - in `crates/inkpdf/tests/mcp_logs.rs`: `templateVersion` is logged.
+
+### Implementation
+
+- [ ] T030 [US7] In `crates/inkpdf/src/registry/`, implement research R9:
+  - `Version`;
+  - layout detection, and per-version loading and fingerprinting in `loader.rs`, with each version folder as its Typst root;
+  - `TemplateVersions` and selection (`resolve(id, selector)`) in `mod.rs`;
+  - `TemplateEntry.version`;
+  - rescans that still work per version when hot reload is on (`watcher.rs`).
+- [ ] T031 [US7] Add `TemplateVersionNotFound { available }` (404, `template-version-not-found`, with `availableVersions` in the problem object) to `crates/inkpdf/src/error.rs`, and the `version` case of `invalid-parameter`. Regenerate `docs/src/reference/errors.md` with `cargo xtask docs generate`.
+- [ ] T032 [US7] HTTP:
+  - `crates/inkpdf/src/api/templates.rs`: `TemplateSummary.versions`; the default `version`; the `version` query parameter on the detail and the schema;
+  - `crates/inkpdf/src/api/render.rs`: the `version` query parameter, parsed like `download` and `filename`, and the `Inkpdf-Template-Version` response header;
+  - `crates/inkpdf/src/render/mod.rs`: `templateVersion` in the `render` log.
+
+  Then regenerate `openapi/openapi.json` and `docs/src/reference/api.md`.
+- [ ] T033 [US7] MCP and live document:
+  - `crates/inkpdf/src/mcp/tools.rs`: the optional `version` argument on `get_template` and `render_template`, and `templateVersion` in the `mcp.tool` log;
+  - `crates/inkpdf/src/mcp/result.rs`: the render text with the version, and the not-found hint;
+  - `crates/inkpdf/src/api/live.rs`: each template described by its default version, with the `version` parameter documented.
+- [ ] T034 [P] [US7] Document versions:
+  - `docs/src/reference/template-format.md` and `docs/src/concepts/templates.md`: the layouts and their rules;
+  - `docs/src/guides/exploring-the-api.md`: `?version=` and the header;
+  - `docs/src/guides/mcp.md`: the `version` argument;
+  - `plugins/inkpdf/skills/generate-document/SKILL.md`: use the default version unless the user asks for one;
+  - `plugins/inkpdf/skills/write-template/SKILL.md` and `template-format.md`: create `<id>/1.0.0/`, and copy it to a new version folder for a new version.
+
+**Checkpoint**: T027–T029 pass.
+
+---
+
+## Phase 9: User Story 8 — Templates are loaded at startup; hot reload is for development (P2)
+
+**Goal**: no watcher or rescan by default; `INKPDF_HOT_RELOAD=true` turns them on, and `compose.yaml` turns it on for development.
+
+**Independent Test**: with default settings, a template added after startup is not listed until a restart; with hot reload on, it is (SC-008).
+
+- [ ] T035 [P] [US8] Tests:
+  - in `crates/inkpdf/src/config.rs`: unit tests for `INKPDF_HOT_RELOAD` (default `false`; `true`, `false`, `1`, `0`; a refused value);
+  - in `crates/inkpdf/tests/hot_reload.rs`: turn hot reload on in its config;
+  - in `crates/inkpdf/tests/startup.rs`: a test, using the same way of starting the service as the existing startup tests, showing that with the default config a template added after startup is not listed, and that `server.listening` logs `hotReload: false`.
+- [ ] T036 [US8] Add `hot_reload: bool` to `Config` in `crates/inkpdf/src/config.rs`. In `crates/inkpdf/src/main.rs`, spawn `registry::watcher` only when it is on, and add `hotReload` to the `server.listening` log.
+- [ ] T037 [P] [US8] Development setup and documentation:
+  - set `INKPDF_HOT_RELOAD: "${INKPDF_HOT_RELOAD:-true}"` in `compose.yaml`;
+  - document the variable in `docs/src/reference/configuration.md` (checked by `cargo xtask docs check`), and note that `INKPDF_RESCAN_INTERVAL_SECS` only applies with hot reload;
+  - in `docs/src/operations/deployment.md`: publish a template or version by restarting, with a rolling restart to avoid downtime; the Compose example shows the default;
+  - rename `docs/src/concepts/hot-reload.md` to "Loading templates" (title and `SUMMARY.md`): startup loading, and hot reload for development;
+  - in the `write-template` skill: a new template appears at once with hot reload, otherwise after a restart.
+
+**Checkpoint**: T035 passes.
+
+---
+
+## Phase 10: User Story 6 — One demonstration template instead of three (P2)
 
 **Goal**: `demo` is the only example template; nothing refers to the removed ones.
 
 **Independent Test**: the example volume lists only `demo`, valid, with a description and a role on every property; its example and every layout setting render; `cargo xtask docs check` finds no reference to removed templates.
 
-- [ ] T027 [US6] Create `examples/templates/demo/` (`template.json`, `schema.json`, `main.typ`, `example.json`) exactly as in [contracts/demo-template.md](./contracts/demo-template.md):
+- [ ] T038 [US6] Create `examples/templates/demo/1.0.0/` (`template.json` with version `1.0.0`, `schema.json`, `main.typ`, `example.json`) exactly as in [contracts/demo-template.md](./contracts/demo-template.md):
   - every property has a `description` and an `x-role`;
   - every object has `additionalProperties: false`;
   - `date` uses `format: date` and `recipient.email` uses `format: email`;
@@ -226,48 +307,50 @@ Dependencies.
   - no QR code and no legal or payment wording.
 
   Use the `typst-dev` skill for `main.typ`.
-- [ ] T028 [US6] Rewrite `crates/inkpdf/tests/examples.rs` for the example volume. Check that:
+- [ ] T039 [US6] Rewrite `crates/inkpdf/tests/examples.rs` for the example volume. Check that:
   - it contains exactly `demo`, `valid`;
   - every property of its `data` and `layout` (walked at any depth) has a `description` and an `x-role` (SC-002);
   - its detail carries the example, which renders unchanged (SC-003);
   - each layout variant renders: both fonts, both densities, `showTotal: false`, another `accentColor`;
   - impossible dates in `date` are refused with `/data/date` (SC-004).
-- [ ] T029 [US6] Delete:
+- [ ] T040 [US6] Delete:
   - `examples/templates/progress-invoice`;
   - the whole `examples/requests/` folder (after T003 it only holds `progress-invoice/`);
   - `docs/src/guides/progress-invoice.md`, with its `docs/src/SUMMARY.md` entry;
   - `examples/bruno/5 Progress invoice/`.
 
   Switch every test that still uses `progress-invoice` (`grep -rn progress-invoice crates/`) to `demo` or to the `sample` fixture, keeping what it checks. The `unique_prefix` examples in `crates/inkpdf/src/api/live.rs` are plain strings and stay.
-- [ ] T030 [P] [US6] Update the Bruno collection: `examples/bruno/2 Templates/02 Template detail.bru`, `03 Template schema.bru` and the `examples/bruno/4 Render/` requests use `demo` and its example. Delete `examples/bruno/4 Render/04 Package demo.bru`.
-- [ ] T031 [P] [US6] Replace every remaining reference to the removed templates with `demo`, or with a short inline snippet where a package example is needed, in:
+- [ ] T041 [P] [US6] Update the Bruno collection: `examples/bruno/2 Templates/02 Template detail.bru`, `03 Template schema.bru` and the `examples/bruno/4 Render/` requests use `demo` and its example. Delete `examples/bruno/4 Render/04 Package demo.bru`.
+- [ ] T042 [P] [US6] Replace every remaining reference to the removed templates with `demo`, or with a short inline snippet where a package example is needed, in:
   - `docs/src/concepts/packages.md`, `docs/src/guides/packages.md`, `docs/src/guides/exploring-the-api.md`;
   - `docs/src/guides/mcp.md` (the worked conversation uses `demo`);
   - `docs/src/contributing/development.md` (fixtures location);
   - `README.md`, and the `compose.yaml` header comment.
-- [ ] T032 [US6] Extend `cargo xtask docs check` in `xtask/src/docs.rs`: fail when `progress-invoice`, `packages-demo` or `examples/templates/sample` appears in `docs/src/`, `examples/`, `plugins/`, `README.md` or `compose.yaml` (SC-006). Add a unit test.
+- [ ] T043 [US6] Extend `cargo xtask docs check` in `xtask/src/docs.rs`: fail when `progress-invoice`, `packages-demo` or `examples/templates/sample` appears in `docs/src/`, `examples/`, `plugins/`, `README.md` or `compose.yaml` (SC-006). Add a unit test.
 
-**Checkpoint**: T028 passes; `cargo xtask docs check` passes.
+**Checkpoint**: T039 passes; `cargo xtask docs check` passes.
 
 ---
 
-## Phase 9: Polish
+## Phase 11: Polish
 
-- [ ] T033 [P] Describe the role check, `example.json` and format assertion in the loader section of `docs/src/contributing/architecture.md`. Update the user's project memory note `repo-layout-003.md` (outside the repository): `demo` only, fixtures location, `plugins/inkpdf`, `x-role`.
-- [ ] T034 Run [quickstart.md](./quickstart.md) §1–§4:
+- [ ] T044 [P] Describe the role check, `example.json`, format assertion, version folders and startup loading in the loader section of `docs/src/contributing/architecture.md`. Update the user's project memory note `repo-layout-003.md` (outside the repository): `demo/1.0.0` only, fixtures location, `plugins/inkpdf`, `x-role`, version folders, `INKPDF_HOT_RELOAD`.
+- [ ] T045 Run [quickstart.md](./quickstart.md) §1–§5:
   - `cargo fmt --all --check`, clippy with `-D warnings`, `cargo test --workspace`;
   - `cargo xtask docs check`, `mdbook build docs`;
   - `docker compose up --build` with MCP on: the curl checks of §2–§4.
 
   Fix anything stale.
-- [ ] T035 Quickstart §5, with Claude Code: `claude plugin validate plugins/inkpdf`, then install the plugin from the local marketplace. Then:
+- [ ] T046 Quickstart §6, with Claude Code: `claude plugin validate plugins/inkpdf`, then install the plugin from the local marketplace. Then:
   - check SC-001 with a request for a demo document;
   - check SC-005 by asking for a meeting attendance sheet template.
 
   These two conversations need the user. Record what was checked under this task.
-- [ ] T036 Mark `specs/005-mcp-agent-efficiency/spec.md` as implemented once merged. Write the PR description in English, covering:
+- [ ] T047 Mark `specs/005-mcp-agent-efficiency/spec.md` as implemented once merged. Write the PR description in English, covering:
   - what changes for template authors, assistants and HTTP callers;
-  - the behaviour change of asserted formats;
+  - the behaviour changes: asserted formats, and templates loaded at startup (hot reload for
+    development only, constitution 2.0.0);
+  - template versions;
   - the removed templates;
   - how to install the plugin.
 
@@ -281,42 +364,47 @@ Dependencies.
   - T010 needs T001;
   - T011 needs T001 and T002;
   - T013 needs Phase 2 only; it changes `mcp/mod.rs`, like T008, so do them one after the other;
-  - its manual check (T035) needs US1, US4 and US6.
+  - its manual check (T046) needs US1, US4, US6 and US7.
 - **US3 (Phase 5)**:
   - T014 and T015 need T001;
-  - T016 is written early and reviewed after T027.
+  - T016 is written early and reviewed after T038.
 - **US4 (Phase 6)**: after Phase 2; independent of US1. T020 regenerates the OpenAPI contract.
 - **US5 (Phase 7)**: after Phase 2. T025 and T007 both change `template/schema.rs`, so do them one after the other or merge carefully.
-- **US6 (Phase 8)**:
-  - T027 needs US1 (roles), US4 (example) and US5 (formats);
-  - T028 needs T027;
-  - T029 needs T003 and T027;
-  - T032 needs T029, T030 and T031.
+- **US7 (Phase 8)**: after US4, since both change `registry/loader.rs`. T032 regenerates the OpenAPI contract again.
+- **US8 (Phase 9)**: after Phase 2. T036 touches `main.rs` only; T037 and T034 both edit the `write-template` skill, so do them one after the other.
+- **US6 (Phase 10)**:
+  - T038 needs US1 (roles), US4 (example), US5 (formats) and US7 (the versioned layout `demo/1.0.0/`);
+  - T039 needs T038;
+  - T040 needs T003 and T038;
+  - T043 needs T040, T041 and T042.
 - **Polish**: last.
+
+The phases of the P2 stories are ordered by dependency: US7 and US8 come before US6, which uses them.
 
 ### Parallel Opportunities
 
 - Setup: T001 ∥ T002.
-- After Phase 2: US1 (`template/schema.rs`, `mcp/`) ∥ US4 (`registry/`, `api/`) ∥ the skill writing of US2 and US3 (`plugins/`, `xtask/`).
-- Tests within a story: T004 ∥ T005 ∥ T006; T017 ∥ T018; T023 ∥ T024.
-- Docs: T009, T012, T016, T022, T026, T030 and T031 touch different pages, so they can run in parallel.
+- After Phase 2: US1 (`template/schema.rs`, `mcp/`) ∥ US4 (`registry/`, `api/`) ∥ US8 (`config.rs`, `main.rs`) ∥ the skill writing of US2 and US3 (`plugins/`, `xtask/`).
+- Tests within a story: T004 ∥ T005 ∥ T006; T017 ∥ T018; T023 ∥ T024; T027 ∥ T028 ∥ T029.
+- Docs: T009, T012, T016, T022, T026, T034, T037, T041 and T042 touch different pages, so they can run in parallel, apart from the shared skill file noted under US8.
 
 ### Parallel Example: after Phase 2
 
 ```text
 Task: "T004–T008 US1 roles in crates/inkpdf/src/template/schema.rs and crates/inkpdf/src/mcp/"
 Task: "T017–T021 US4 example in crates/inkpdf/src/registry/ and crates/inkpdf/src/api/"
+Task: "T035–T036 US8 loading in crates/inkpdf/src/config.rs and crates/inkpdf/src/main.rs"
 Task: "T010, T014 skills in plugins/inkpdf/skills/"
 ```
 
 ## Implementation Strategy
 
 1. **MVP**: Phases 1 and 2, then US1. Roles and the new instructions already change how an assistant behaves with any template.
-2. Then US4 and US5, the service changes, followed by US6, the `demo` template, which uses all three.
+2. Then US4, US5, US7 and US8, the service changes, followed by US6, the `demo` template, which uses them.
 3. Then US2 and US3, the skills, validated on `demo`.
 4. Commit per phase, with conventional English messages. One PR for the feature, on `005-mcp-agent-efficiency`. It is based on `004-mcp-server`, so open it after 004 is merged, or against `004-mcp-server`.
 
 ## Notes
 
 - T002 may end in "plugin version independent"; T011 then skips the version check.
-- T035 is the only task that needs the user (live conversations with Claude Code).
+- T046 is the only task that needs the user (live conversations with Claude Code).

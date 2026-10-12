@@ -82,7 +82,8 @@ Both `SKILL.md` frontmatters use only `name`, `description`, `license`, `metadat
   user wants a new document template for inkpdf or asks to improve one."
 - **Steps**: ask what the document contains and who provides each piece of information; find the
   templates folder (ask the user, or read the volume mounted in their `compose.yaml`; no MCP tool
-  reveals it) and create the template folder there, where it is picked up without a restart; write `template.json`, `schema.json` (closed objects,
+  reveals it) and create the template folder there, in the versioned layout (`<id>/1.0.0/`); it is
+  picked up at once with hot reload (development), otherwise ask the user to restart the server; write `template.json`, `schema.json` (closed objects,
   descriptions, roles, formats, defaults), `main.typ` (reads `sys.inputs`, uses bundled packages
   only), `example.json`; check through the MCP tools (`list_templates` shows it `valid`,
   `get_template` shows the example, `render_template` with the example succeeds); fix and repeat.

@@ -1,4 +1,4 @@
-# Feature Specification: Templates that guide AI assistants
+# Feature Specification: Templates that guide AI assistants, with versions
 
 **Feature Branch**: `005-mcp-agent-efficiency`
 
@@ -13,7 +13,9 @@ the same day by the user after reading the first draft: "Remove the invoice: it 
 Make one simple template with all the possibilities, and stop there; everyone will develop their
 own template. The recommendation is that the schema defines the role of each variable, so that
 the agent understands what the variable is, and whether it fills it in itself or asks the
-question. In short: the MCP server, plus generic skills for this MCP server."
+question. In short: the MCP server, plus generic skills for this MCP server." Extended the same day:
+"Remove hot reload, keep it for development mode only. Templates have a version that is not used:
+at generation, I want to say which version to use, for example version 1 or version 2."
 
 ## Clarifications
 
@@ -33,6 +35,14 @@ question. In short: the MCP server, plus generic skills for this MCP server."
   errors.
 - Q: What about the payment QR code limits of the invoice template? → A: Moot: the invoice
   template is removed.
+- Q: Template versions: how are they laid out, and which is used? → A: One sub-folder per version,
+  named after its version number (`facture/1.0.0/`, `facture/2.0.0/`); a template laid out as
+  today is a single version. Without a version, the most recent valid version is used; a caller
+  can ask for an exact version (`1.2.0`) or the most recent of a major version (`1`). Part of this
+  feature.
+- Q: Hot reload? → A: Development only, off by default. In production, templates are loaded at
+  startup and a new template or version is published by restarting the service (constitution
+  2.0.0, principle V).
 - Q: How are faults in the tool arguments themselves reported (unknown key, missing `templateId`
   or `data`)? → A: As tool errors the assistant can see and fix, not as protocol errors that some
   clients hide from the model (decided after the analysis of this feature; audit defect 34).
@@ -213,6 +223,64 @@ longer refer to the removed templates and still pass.
 
 ---
 
+### User Story 7 - Choose which version of a template to use (Priority: P2)
+
+A template author keeps several versions of a template side by side: version 1 stays in use while
+version 2 is prepared. A caller (assistant or HTTP integrator) can ask for a given version when it
+reads the template or generates a document; without a version it gets the most recent one, and it
+is always told which version was used.
+
+**Why this priority**: documents evolve; callers that depend on version 1 must keep getting
+exactly version 1 while version 2 is introduced, and the version number templates already carry
+is not used today.
+
+**Independent Test**: put versions 1.0.0, 1.1.0 and 2.0.0 of one template in the volume; render
+without a version, with `1`, with `1.0.0` and with `3`, and check which version is used each time
+and what the error says for `3`.
+
+**Acceptance Scenarios**:
+
+1. **Given** versions 1.0.0, 1.1.0 and 2.0.0 of a template, **When** a caller renders it without a
+   version, **Then** version 2.0.0 is used and the response says so.
+2. **Given** the same template, **When** a caller asks for version `1`, **Then** version 1.1.0 is
+   used; **When** it asks for `1.0.0`, **Then** version 1.0.0 is used.
+3. **Given** the same template, **When** a caller asks for version `3`, **Then** it gets a "version
+   not found" error that lists the available versions, and no rendering is attempted.
+4. **Given** the template list, **When** a caller reads it, **Then** each template shows its
+   available versions and the one used by default.
+5. **Given** version 2.0.0 is invalid and 1.1.0 is valid, **When** a caller renders without a
+   version, **Then** 1.1.0 is used; version 2.0.0 is listed as invalid with its reason.
+6. **Given** a template laid out as today (files at the root of its folder), **When** it is listed
+   and rendered, **Then** it behaves exactly as before, with the version of its `template.json`, if
+   any.
+
+---
+
+### User Story 8 - Templates are loaded at startup; hot reload is for development (Priority: P2)
+
+In production, the service loads its templates when it starts and keeps them unchanged while it
+runs: publishing a new template or version means restarting the service. A developer can turn on
+hot reload with one setting, so that changes in the volume are picked up without restarting.
+
+**Why this priority**: the user does not want hot reload in production; with versions, a template
+that cannot change under a caller's feet is the safer rule.
+
+**Independent Test**: start the service with default settings, add a template to the volume, and
+check it does not appear until a restart; start it with hot reload on and check it appears.
+
+**Acceptance Scenarios**:
+
+1. **Given** default settings, **When** a template or version is added to or changed in the volume
+   while the service runs, **Then** the service keeps serving what it loaded at startup.
+2. **Given** default settings, **When** the service is restarted, **Then** the new template or
+   version is available.
+3. **Given** hot reload turned on, **When** a template is added, changed or removed, **Then** the
+   change is picked up without restart, as today.
+4. **Given** the repository's Docker Compose file, used for local development, **When** it starts
+   the service, **Then** hot reload is on.
+
+---
+
 ### Edge Cases
 
 - A variable inside a list of items: the list and each item variable can carry their own role
@@ -225,6 +293,16 @@ longer refer to the removed templates and still pass.
   every value declared as a date, at any depth.
 - A template written for an earlier version, without roles or example: it loads and renders
   exactly as before.
+- A template folder that holds both files at its root and version sub-folders: the template is
+  reported as invalid, with a reason saying to choose one layout.
+- A sub-folder whose name is not a version number (`draft/`) inside a versioned template: it is
+  ignored and reported in the logs.
+- A `template.json` whose version differs from its version folder's name: that version is invalid,
+  with a reason naming both numbers.
+- Every version of a template is invalid: the template is listed with its invalid versions and
+  rendering it without a version returns the same "template unavailable" error as today.
+- A version selector that is not a version number (`latest`, `v2`): refused with a clear error on
+  the version parameter.
 - The removed templates were used by automated checks and benchmarks: those checks move to the
   demonstration template or to dedicated test fixtures, and keep the same coverage.
 
@@ -287,6 +365,30 @@ longer refer to the removed templates and still pass.
   and say to fix the arguments, so the assistant always sees them. Only an unknown tool name stays a
   protocol error.
 
+**Template versions**
+
+- **FR-015**: A template MUST be able to hold several versions, one sub-folder per version named
+  `MAJOR.MINOR.PATCH`; each version folder is a complete template. A template laid out as today
+  MUST keep working as a single version.
+- **FR-016**: Each version MUST be loaded and checked on its own; an invalid version MUST NOT hide
+  the valid ones, and MUST be listed with its reason.
+- **FR-017**: Reading a template's details or schema, and rendering, MUST accept an optional
+  version: an exact version or a major version number. Without one, the most recent valid version
+  MUST be used. An unknown version MUST return a "version not found" error listing the available
+  versions.
+- **FR-018**: Every render MUST state the version used, through HTTP and MCP, and the logs MUST
+  record it.
+- **FR-019**: The template list MUST show, for each template, its available versions with their
+  status and the version used by default.
+
+**Loading**
+
+- **FR-020**: By default the service MUST load the templates once, at startup, and MUST NOT watch
+  the volume or reload while running.
+- **FR-021**: A single setting MUST turn hot reload on (watching and reloading as today), for
+  development; the repository's Docker Compose file MUST turn it on, and the documentation MUST
+  say it is for development only.
+
 **Documentation**
 
 - **FR-013**: The template format reference, the template writing guide, the MCP guide and the
@@ -301,6 +403,8 @@ longer refer to the removed templates and still pass.
   template details.
 - **Demonstration template**: the single neutral template of the repository, showing every
   possibility.
+- **Template version**: one self-contained folder of a template, named after its version number;
+  selected exactly, by major number, or by default (most recent valid).
 - **Generic skill**: a set of instructions installed in an assistant, independent of any specific
   template: one for generating documents, one for writing templates.
 
@@ -320,6 +424,12 @@ longer refer to the removed templates and still pass.
   has a description and a role for every variable, and its example renders, at the first try.
 - **SC-006**: 0 references to the removed templates remain in the documentation, the examples and
   the automated checks, and all of them pass.
+- **SC-007**: With versions 1.0.0, 1.1.0 and 2.0.0 of a template, 100 % of renders use the version
+  expected for no selector, `1`, `1.0.0` and `2`, and state it; `3` returns "version not found"
+  with the list.
+- **SC-008**: With default settings, 0 changes made to the volume while the service runs are
+  visible before a restart; with hot reload on, a change is visible within the existing rescan
+  delay.
 
 ## Assumptions
 
@@ -335,9 +445,15 @@ longer refer to the removed templates and still pass.
   being printed. This is a correction, stated in the release notes.
 - Removing the three example templates is not a breaking change for users: they were examples in
   the repository, never shipped inside the service image.
+- Version folder names follow `MAJOR.MINOR.PATCH` (numbers only); pre-release suffixes are not
+  supported in this feature.
+- The live OpenAPI document describes the most recent valid version of each template; other
+  versions are reachable through the version parameter and the template details.
+- The `demo` template uses the versioned layout (`demo/1.0.0/`) so that it shows this possibility.
 - Out of scope: a separate check-without-rendering tool, a summary of the rendered document,
   returning a download link instead of the embedded PDF (later storage feature), authentication,
   and the layout and wording defects of the audit, which concerned the removed templates.
-- Constitution 1.1.0: the demonstration template replaces the "neutral demonstration template"
-  that the development workflow asks for; adding roles and an example extends the template format
-  within principles II and III without amendment.
+- Constitution 2.0.0 (amended for this feature): principle V now loads templates at startup and
+  keeps hot reload for development; principle II allows one sub-folder per version; principle VI
+  lets reads and renders take a version. The demonstration template is the "neutral demonstration
+  template" that the development workflow asks for.

@@ -39,7 +39,24 @@ returns `validation-failed` with `/data/date` (SC-004).
 Put a template with `"x-role": "maybe"` in the volume: `GET /templates` lists it as `invalid`, with
 the reason naming the pointer and the value.
 
-## 5. The plugin
+## 5. Versions and loading
+
+With `compose.yaml` (hot reload on), copy `examples/templates/demo/1.0.0` to `/tmp/vol/demo/1.0.0`,
+`/tmp/vol/demo/1.1.0` and `/tmp/vol/demo/2.0.0`, set the `version` of each copy's `template.json`
+to its folder name, and point `INKPDF_TEMPLATES=/tmp/vol`:
+
+```sh
+curl -s localhost:3000/templates | jq '.templates[0].versions'                       # 2.0.0, 1.1.0, 1.0.0
+curl -si -H 'content-type: application/json' --data @/tmp/demo.json \
+  'localhost:3000/templates/demo/render?version=1' | grep -i inkpdf-template-version   # 1.1.0
+curl -s -H 'content-type: application/json' --data @/tmp/demo.json \
+  'localhost:3000/templates/demo/render?version=3' | jq '.code, .availableVersions'    # template-version-not-found
+```
+
+Then start the release binary without `INKPDF_HOT_RELOAD`: the startup log says `hotReload: false`;
+a template added to the volume is not listed until a restart (SC-008).
+
+## 6. The plugin
 
 ```sh
 claude plugin validate plugins/inkpdf

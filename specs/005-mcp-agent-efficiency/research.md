@@ -78,8 +78,8 @@ render body: `{ "data": …, "layout"?: …, "metadata"?: … }`.
   `get_template`). `TemplateSummary` (the list) does not carry it, to keep `list_templates` short.
 - **Live OpenAPI**: each template's render operation gets the example as the request body
   `example`, so `/docs` shows a ready-to-send body.
-- **Hot reload**: `example.json` is a file of the template folder, already covered by the
-  fingerprint; editing it reloads the template.
+- **Hot reload** (development only, R10): `example.json` is a file of the template folder,
+  covered by the fingerprint; with hot reload on, editing it reloads the template.
 
 **Rationale.** A full render body is what an assistant has to produce, so the example is directly
 reusable; checking it at load guarantees SC-003 and keeps a broken example from misleading.
@@ -111,7 +111,8 @@ reusable; checking it at load guarantees SC-003 and keeps a broken example from 
 
 ## R5 — The demonstration template `demo`
 
-**Decision.** One neutral template, `examples/templates/demo/`, called "Demo document", that lays
+**Decision.** One neutral template, `examples/templates/demo/1.0.0/` (versioned layout, R9), called
+"Demo document", that lays
 out a generic document: a title, a reference, a date, a recipient block, a list of lines with
 quantity and amount and a computed total, an optional note and a status. It shows:
 
@@ -191,8 +192,10 @@ plugins/inkpdf/
   needed, render, on validation errors ask about those fields only, report the file. Under 150
   lines. Template-independent.
 - **write-template**: the steps of US3 — find the templates folder (ask the user, or read the
-  volume mounted in their `compose.yaml`, `INKPDF_TEMPLATES`); no MCP tool reveals it, and a new
-  folder there is picked up without a restart. Then create the template folder, `template.json`,
+  volume mounted in their `compose.yaml`, `INKPDF_TEMPLATES`); no MCP tool reveals it. A new folder
+  is picked up right away when the server runs with hot reload (development), otherwise after a
+  restart, which the skill asks the user to do. Then create the template folder (versioned layout,
+  starting at `1.0.0`), `template.json`,
   `schema.json` with `description` and `x-role` on every property and `additionalProperties: false`,
   layout defaults, `format: date` for dates, `example.json`, `main.typ` reading `sys.inputs`, then
   check through the MCP tools (`list_templates` shows it valid, `get_template` shows the example,
@@ -231,3 +234,91 @@ product).
 - `guides/progress-invoice.md` deleted; `SUMMARY.md`, `concepts/packages.md`, `guides/packages.md`,
   `guides/exploring-the-api.md`, `contributing/development.md` and `README.md` updated.
 - `reference/api.md` regenerated (`TemplateDetail.example`).
+
+## R9 — Template versions
+
+**Decision.**
+- **Layout**, decided per template folder `<id>/` (constitution 2.0.0, principle II):
+  - **flat**: `main.typ` and the other files at the root, as today. One version: the `version` of
+    `template.json`, or none.
+  - **versioned**: only sub-folders named `MAJOR.MINOR.PATCH` (numbers only), each a complete
+    template folder. A `template.json` inside a version folder may omit `version`; if it gives one,
+    it must equal the folder name, or that version is invalid
+    (`template.json: version "1.2.0" does not match its folder "1.3.0"`).
+  - **mixed** (template files at the root *and* version sub-folders): the template is invalid,
+    with the reason `put the template files either at the root or in version folders, not both`.
+  - A sub-folder of a versioned template whose name is not a version (`draft/`) is skipped and
+    logged (`template.version_ignored`).
+- **Registry**: `TemplateMap` becomes `BTreeMap<TemplateId, TemplateVersions>`, where
+  `TemplateVersions` holds a `BTreeMap<Version, Arc<TemplateEntry>>` (`Version` = three `u32`,
+  ordered numerically) or the single flat entry. Each version is loaded, fingerprinted and checked
+  on its own; its Typst root is its own folder, so self-containment is per version.
+  `TemplateEntry` gains `version: Option<Version>` for the folder version (the manifest version
+  stays as the flat layout's version).
+- **Selection**, `version` parameter (optional):
+  - absent → the highest **valid** version;
+  - `MAJOR` (`1`) → the highest valid `1.x.y`;
+  - `MAJOR.MINOR.PATCH` (`1.0.0`) → exactly that version, valid or not; if it is invalid, the
+    usual `template-invalid` error;
+  - anything else (`latest`, `v2`, `1.2`) → `invalid-parameter` on `version`;
+  - nothing matches → new error `template-version-not-found` (404). Its `detail` lists the available
+    versions; the problem object also carries an `availableVersions` array.
+  - All versions invalid and no selector → `template-invalid`, as today for a single template.
+- **HTTP**: a `version` query parameter on `GET /templates/{id}`, `GET /templates/{id}/schema` and
+  `POST /templates/{id}/render`, with the same parsing as `download` and `filename`. Every render
+  response carries `Inkpdf-Template-Version: <version>` when the template has a version.
+- **Template list**: `TemplateSummary` keeps `version`, now the default version (highest valid),
+  and gains `versions`: `[{ "version": "2.0.0", "status": "invalid", "reason": "…" }, …]`, newest
+  first. A flat template has one entry, or none if it has no version.
+- **Template detail**: describes the selected version (default: highest valid) and states its
+  `version`.
+- **MCP**: `get_template` and `render_template` gain an optional `version` string argument, with
+  the same rules. The render text becomes
+  `Rendered facture.pdf from template facture 2.0.0 (48.2 KiB).`. The tool error for
+  `template-version-not-found` ends with the hint "Call get_template without a version to see the
+  available versions.".
+- **Live OpenAPI**: each template's typed render operation describes its default version; the
+  `version` query parameter is documented on it and on the generic operations.
+- **Logs**: `render` and `mcp.tool` events gain `templateVersion`.
+- **Errors reference**: `template-version-not-found` comes from `error.rs`, so
+  `docs/src/reference/errors.md` regenerates.
+
+**Rationale.** A folder per version is what the user chose; it keeps each version self-contained
+and lets authors copy `1.0.0/` to `2.0.0/` to start a new version. Choosing by major number gives
+"stay on version 1" without pinning a patch.
+
+**Alternatives.**
+- *`<id>@<version>/` folders next to each other*: offered to the user, not chosen.
+- *Pre-release versions (`2.0.0-beta`)*: out of scope; a pre-release can live in a separate template
+  id until it is ready.
+- *Version in the path (`/templates/{id}/versions/{version}/render`)*: doubles every route; a query
+  parameter matches the existing `download` and `filename` parameters.
+
+## R10 — Loading at startup, hot reload for development
+
+**Decision.**
+- New setting `INKPDF_HOT_RELOAD` (`true`, `false`, `1`, `0`; default `false`).
+- `false`: `main.rs` does the initial `scan_all` and starts neither the file watcher nor the
+  periodic rescan. The registry never changes while the service runs.
+- `true`: today's behaviour (`registry::watcher::spawn` with `INKPDF_RESCAN_INTERVAL_SECS`).
+- The `server.listening` log line gains `hotReload: true|false`.
+- `compose.yaml`, the local development setup, sets `INKPDF_HOT_RELOAD: "${INKPDF_HOT_RELOAD:-true}"`.
+  The image and the deployment example keep the default, `false`.
+- Documentation:
+  - `configuration.md`: the variable, and `INKPDF_RESCAN_INTERVAL_SECS` now only matters with hot
+    reload;
+  - `deployment.md`: publishing a template or version means restarting; a rolling restart avoids
+    downtime;
+  - `concepts/hot-reload.md` becomes "Loading templates": startup loading, hot reload for
+    development.
+- Tests: `hot_reload.rs` turns `hot_reload` on in its config. A new test checks that with the
+  default config a template added after startup is not listed.
+
+**Rationale.** The user wants no hot reload in production; with versions, a frozen set of
+templates means a caller always gets the version it asked for (constitution 2.0.0, principle V).
+
+**Alternatives.**
+- *Reload on a signal (SIGHUP) or an admin route*: a restart is simpler and already handled by
+  orchestrators.
+- *Remove hot reload entirely*: the user wants to keep it for development, and the
+  `write-template` skill relies on it to test a new template.

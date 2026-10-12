@@ -21,6 +21,12 @@ tools an assistant needs to use and write them.
   two move to test fixtures so test coverage stays identical; the invoice is deleted.
 - **Skills.** A Claude Code plugin `inkpdf` in the repository (also a marketplace) bundles the MCP
   connection and two portable skills: `generate-document` and `write-template`.
+- **Argument faults.** Faults in the MCP tool arguments come back as tool errors (FR-014).
+- **Versions.** A template folder may hold one sub-folder per version (`facture/1.0.0/`). Reads and
+  renders take an optional `version` (exact or major); the default is the highest valid version;
+  every render states the version used.
+- **Loading.** Templates are loaded once at startup; `INKPDF_HOT_RELOAD=true` (development, on in
+  `compose.yaml`) brings back the watcher and rescan. Constitution amended to 2.0.0.
 
 Details: [research.md](./research.md).
 
@@ -58,8 +64,9 @@ docs).
 - `openapi/openapi.json` changes only by `TemplateDetail.example`.
 
 **Scale/Scope**:
-- About 5 changed source files: `template/schema.rs`, `registry/loader.rs` + `registry/mod.rs`,
-  `api/templates.rs`, `api/live.rs`, `mcp/mod.rs`.
+- About 12 changed source files: `template/schema.rs`, `registry/{loader,mod,fingerprint}.rs`,
+  `api/{templates,render,live}.rs`, `render/mod.rs`, `mcp/{mod,tools,result}.rs`, `error.rs`,
+  `config.rs`, `main.rs`.
 - 1 new template, 2 moved to fixtures, 1 deleted.
 - 1 plugin with 2 skills, about 8 documentation pages.
 
@@ -72,17 +79,19 @@ No open unknowns: decisions R1–R8 are in [research.md](./research.md).
 | # | Principle | Status | How the design complies |
 |---|-----------|--------|-------------------------|
 | I | Embedded Typst, no browser | ✅ | Unchanged. The plugin only configures the client side. |
-| II | Self-contained template | ✅ | `example.json` is one more file inside the template folder; nothing is read outside it. |
+| II | Self-contained template | ✅ (2.0.0) | `example.json` is one more file inside the template folder. Each version folder is self-contained, and is the Typst root of its version. Nothing is read outside it. |
 | III | Two-dimension input, validated | ✅ (strengthened) | Roles annotate `data` and `layout`; the example is a two-dimension body; `format` assertion validates more before compiling. |
 | IV | Security by construction | ✅ | The example is data, checked like a request. Roles are inert annotations. No new input path. |
-| V | Hot templates, frozen binary | ✅ | `example.json` and role changes are picked up by the existing fingerprint and rescan. An invalid example never hides the template. |
-| VI | Self-describing API (REST and optional MCP) | ✅ | The example is added to the REST detail and the MCP tool alike. OpenAPI and the locked contract are regenerated. The MCP gets no operation that REST lacks. |
+| V | Templates on a volume, frozen binary | ✅ (2.0.0) | Loaded at startup; hot reload only with `INKPDF_HOT_RELOAD=true` (development). An invalid version or example never hides the others. |
+| VI | Self-describing API (REST and optional MCP) | ✅ (2.0.0) | The example, the `version` parameter and the version stated in the response exist in REST and MCP alike. OpenAPI and the locked contract are regenerated. The MCP gets no operation that REST lacks. |
 | VII | Simplicity and scope | ✅ | No new dependency, no state, no new tool. The plugin and skills are repository content, not service code. |
 | Workflow | Neutral demo template; fmt, clippy, tests; docs in the same change | ✅ | `demo` is the neutral template the workflow asks for. Test coverage is kept through fixtures. Docs, API reference and skills ship with the change. |
 
-**Re-check after Phase 1**: ✅. The contracts ([template-format.md](./contracts/template-format.md),
-[demo-template.md](./contracts/demo-template.md), [plugin-skills.md](./contracts/plugin-skills.md))
-add no write operation, no network access and no state.
+**Re-check after Phase 1**: ✅ under constitution 2.0.0. The contracts
+([template-format.md](./contracts/template-format.md), [demo-template.md](./contracts/demo-template.md),
+[plugin-skills.md](./contracts/plugin-skills.md),
+[versions-and-loading.md](./contracts/versions-and-loading.md)) add no write operation, no network
+access and no state.
 
 ## Project Structure
 
@@ -91,7 +100,7 @@ add no write operation, no network access and no state.
 ```text
 specs/005-mcp-agent-efficiency/
 ├── spec.md, plan.md, research.md, data-model.md, quickstart.md
-├── contracts/  template-format.md · demo-template.md · plugin-skills.md
+├── contracts/  template-format.md · demo-template.md · plugin-skills.md · versions-and-loading.md
 ├── checklists/requirements.md
 └── tasks.md            (/speckit-tasks)
 ```
@@ -102,8 +111,11 @@ specs/005-mcp-agent-efficiency/
 crates/inkpdf/
 ├── src/
 │   ├── template/schema.rs      # format assertion, date message, x-role check
-│   ├── registry/loader.rs      # example.json: load, check, log
-│   ├── registry/mod.rs         # TemplateEntry.example
+│   ├── registry/loader.rs      # TemplateEntry.example/version; example.json; version folders
+│   ├── registry/mod.rs         # TemplateVersions, selection
+│   ├── config.rs, main.rs      # INKPDF_HOT_RELOAD; watcher only when on
+│   ├── error.rs                # template-version-not-found
+│   ├── api/render.rs           # version query parameter, Inkpdf-Template-Version header
 │   ├── api/templates.rs        # TemplateDetail.example
 │   ├── api/live.rs             # request body example per template
 │   └── mcp/{mod.rs,tools.rs}   # instructions, get_template description
@@ -113,7 +125,7 @@ crates/inkpdf/
     ├── examples.rs             # checks the demo volume
     └── …                       # common/mod.rs paths updated; new role/example/format tests
 examples/
-├── templates/demo/             # template.json · schema.json · main.typ · example.json
+├── templates/demo/1.0.0/       # template.json · schema.json · main.typ · example.json
 └── bruno/                      # points to demo; progress invoice and package demo removed
 .claude-plugin/marketplace.json
 plugins/inkpdf/
