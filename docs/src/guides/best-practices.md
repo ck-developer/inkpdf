@@ -1,7 +1,8 @@
 # Best practices
 
-These practices keep templates predictable for callers and easy to maintain. The
-[progress invoice walkthrough](progress-invoice.md) shows most of them in a real template.
+These practices keep templates predictable for callers, AI assistants included, and easy to
+maintain. The `demo` template of the repository's example volume follows them;
+[Writing a template](writing-a-template.md) builds it step by step.
 
 ## Design the schema as the API
 
@@ -17,9 +18,11 @@ in the live OpenAPI document and in generated clients. Make it strict and explic
   an amount, a date, an address, a table line. Each `$defs` entry becomes its own named
   component in the live OpenAPI document (`<Template>_<name>`), so generated clients get
   reusable types. Only internal references (starting with `#`) are allowed.
-- **Constrain values** with `pattern`, `enum`, `minimum`/`maximum`, `minLength`, `minItems`.
-  Validation is cheap and runs before Typst, with every violation listed at once.
-- **Document fields** with `description`: it shows up in `/docs` and in generated clients.
+- **Constrain values** with `pattern`, `enum`, `minimum`/`maximum`, `minLength`/`maxLength`,
+  `minItems`/`maxItems`, and standard formats (`"format": "date"`, `"format": "email"`), which
+  are checked. Validation is cheap and runs before Typst, with every violation listed at once.
+- **Bound texts and lists**: a `maxLength` and a `maxItems` keep a render within its time
+  limit and tell callers what fits on the page.
 
 ```json
 "$defs": {
@@ -28,9 +31,57 @@ in the live OpenAPI document and in generated clients. Make it strict and explic
     "pattern": "^-?[0-9]+(\\.[0-9]{1,4})?$",
     "description": "Exact decimal amount as a string, e.g. \"1250.00\"."
   },
-  "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+  "date": {
+    "type": "string",
+    "format": "date",
+    "description": "A calendar date, YYYY-MM-DD."
+  }
 }
 ```
+
+A shared shape does not know what it is used for: give the role, and a precise description,
+where it is used, next to the `$ref`:
+
+```json
+"dueDate": { "$ref": "#/$defs/date", "description": "Payment due date, YYYY-MM-DD.", "x-role": "ask" }
+```
+
+## Describe every variable, and give it a role
+
+The schema is also what an AI assistant reads to fill the template. Two annotations on every
+property of `data` and `layout`, at every depth, let it work without guessing:
+
+- **`description`**: what the value is, its unit and format, and, when the assistant has to
+  compute it, the rule ("Build it as DEMO-YYYY-NNN if the user gives none", "Today's date unless
+  the user says otherwise"). It also shows up in `/docs` and in generated clients.
+- **`x-role`**: who provides the value.
+
+| Role | Give it to | Examples |
+|---|---|---|
+| `ask` | what only the end user knows | names, addresses, the items of a list, amounts, free text |
+| `fill` | what the assistant can work out from the context or a rule | today's date, a reference built from a pattern, a value derived from other answers |
+| `default` | options and optional content, used only when someone mentions them | a note, a flag, a status; everything in `layout` |
+
+```json
+"reference": {
+  "type": "string",
+  "pattern": "^[A-Z0-9-]{3,30}$",
+  "description": "Document reference. Build it as DEMO-YYYY-NNN if the user gives none.",
+  "x-role": "fill"
+}
+```
+
+- A list and the properties of its items each have their own role: the list of lines can be
+  `ask` and an item's position number `fill`.
+- Without a role, an assistant treats a required variable as `ask` and an optional one as
+  `default`. That works, but says nothing about values it could fill in itself: it will ask for
+  them.
+- A role that is not `ask`, `fill` or `default` makes the template invalid, with the location
+  of the mistake in `reason`.
+- Adding descriptions and roles to an existing template never changes what it accepts: callers
+  are not affected.
+
+See [Template format → Roles](../reference/template-format.md#roles-x-role).
 
 ## Keep content in `data`, appearance in `layout`
 
@@ -83,7 +134,8 @@ the schema:
 ```
 
 Required fields and `layout` keys with defaults can be read directly (`data.invoice.number`,
-`opts.primaryColor`): the schema guarantees they exist.
+`opts.primaryColor`): the schema guarantees they exist. A `default` declared inside `data` is
+documentation only, never applied: read such a property with `.at(…, default: …)` too.
 
 ## Exact money: decimal strings and Typst `decimal`
 
@@ -110,11 +162,17 @@ Convert to `float` only at the very last moment, when a package requires it (for
 payment QR code that takes `amount: float(...)`). Typst has no localized number formatting:
 write a small helper or use the [`zero`](packages.md) package.
 
-## Pass dates in `data`
+## Dates: `format: "date"` in the schema, values in `data`
+
+Declare every date as a string with `"format": "date"`. The service then checks that it is a
+real calendar date, written `YYYY-MM-DD`: `2026-02-30` is refused with `422 validation-failed`
+and the path of the field, instead of failing later in Typst without it. A `pattern` alone only
+checks the shape. For a date the assistant can work out, give it the role `fill` and say the
+rule in its description ("Today's date unless the user says otherwise").
 
 Never use `datetime.today()`: the PDF would change from one day to the next for the same
-request, and tests could not compare outputs. Pass every date in the body, as an ISO string
-validated by the schema, and parse it in Typst:
+request, and tests could not compare outputs. Pass every date in the body and parse it in
+Typst:
 
 ```typst
 #let parse-date(s) = {
@@ -202,22 +260,37 @@ The same template and the same body produce byte-identical PDFs. Keep it that wa
 Determinism lets you compare PDFs byte for byte in tests and cache them safely. See
 [Sandbox and determinism](../concepts/sandbox.md).
 
-## Keep example requests next to the template, and test them
+## Ship an example, and test it
 
-For every template, keep a few realistic request bodies under version control, covering the
-main variants (optional blocks on and off, long content that spans several pages, every
-`layout` option). In the inkpdf repository they live in `examples/requests/`, and a test renders every one of
-them.
+Give every template an `example.json`: one complete, realistic request body, with obviously
+fictitious names and addresses. The service checks it when it loads the template and returns it
+as `example` in the template's details, so callers and AI assistants see at once what a valid
+input looks like, and `/docs` offers it as the example request. An example that does not pass
+the schema is dropped and logged (`template.example_invalid`), so a broken example never
+misleads; watch the logs for it.
 
-Make them runnable by hand too: the repository's [Bruno](https://www.usebruno.com) collection
-(`examples/bruno`) has one request per example. A request whose `docs` block contains
-`Source: examples/requests/<file>.json` must have exactly that body; a test checks it, so the
-collection never drifts from the examples. Do the same in your own repository, or at least
-render your examples in CI with `curl` and check for `200`. See
-[Exploring the API](exploring-the-api.md#the-bruno-collection).
+Render the example in CI, and keep a few more request bodies under version control for the
+main variants: optional blocks on and off, long content that spans several pages, every
+`layout` option. Render them all with `curl` and check for `200`, or run them as a
+[Bruno](https://www.usebruno.com) collection, as the repository does in `examples/bruno` (see
+[Exploring the API](exploring-the-api.md#the-bruno-collection)).
+
+## Version templates instead of editing them
+
+Once callers use a template, publish changes as a new version folder rather than editing the
+existing one: copy `1.0.0/` to `1.1.0/` (a compatible change) or `2.0.0/` (an existing request
+would stop being valid or would render differently: a removed or renamed property, a new
+required one, a narrower constraint), and change the copy. Callers that ask for `version=1` keep
+getting version 1; the others get the new default, the highest valid version. Remove the
+versions nobody uses any more: every version stays in memory. See
+[Templates → Versions](../concepts/templates.md#versions).
 
 ## What not to do
 
+- **Do not leave a variable without a `description` and an `x-role`**: assistants then guess,
+  ask too much, or invent values.
+- **Do not declare a `format` you do not mean**: formats are checked, so `"format": "email"`
+  on a free-text field refuses everything that is not an e-mail address.
 - **Do not build Typst source from caller strings.** Data reaches Typst only through
   `sys.inputs`, as values; never `eval` a caller string, never generate a `.typ` file per
   request. Strings in `data` are printed, never executed.
