@@ -19,6 +19,8 @@ use rmcp::transport::streamable_http_server::session::never::NeverSessionManager
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
 use rmcp::{ErrorData, RoleServer, ServerHandler, tool_handler};
 use tokio_util::sync::CancellationToken;
+use tracing::{Level, Metadata};
+use tracing_subscriber::filter::{FilterFn, filter_fn};
 
 use crate::AppState;
 
@@ -92,6 +94,19 @@ impl ServerHandler for InkpdfMcp {
 /// (`result::error_result`).
 fn is_argument_refusal(result: &CallToolResult) -> bool {
     result.is_error == Some(true) && result.structured_content.is_none()
+}
+
+/// Global log filter that keeps only rmcp's `error` events, whatever `RUST_LOG` says, because
+/// the input is never logged (FR-022 of feature 001): its `debug` and `trace` events dump
+/// whole requests and responses (tool arguments, PDFs), and its `warn` events quote every
+/// JSON-RPC error answered, whose message can quote an argument value (`invalid type: string
+/// "…"`). This also drops the three `info` lines it writes for every request.
+pub fn log_cap() -> FilterFn<fn(&Metadata<'_>) -> bool> {
+    filter_fn(|metadata| {
+        let target = metadata.target();
+        let rmcp = target == "rmcp" || target.starts_with("rmcp::");
+        !rmcp || *metadata.level() == Level::ERROR
+    })
 }
 
 /// Tower service mounted at `/mcp`.

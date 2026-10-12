@@ -19,7 +19,7 @@ a restart.
 | `INKPDF_LOG_FORMAT` | `json` | Log format on stdout: `json` (one JSON object per line) or `pretty` (human-readable, for local use). |
 | `INKPDF_DEFAULT_AUTHOR` | `inkpdf` | PDF author used when neither the request (`metadata.author`) nor the template (`set document(author: …)`) provides one. Surrounding whitespace is trimmed. |
 | `INKPDF_MCP_ENABLED` | `false` | Serves the MCP server at `/mcp`, on the same address and port as the HTTP API, so that AI assistants can list templates and render documents. Off, `/mcp` answers `404`. See [Using inkpdf from an AI assistant](../guides/mcp.md). |
-| `RUST_LOG` | `info` | Log filter, in the [`tracing-subscriber` `EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html) syntax, for example `warn` or `info,inkpdf=debug`. |
+| `RUST_LOG` | `info` | Log filter, in the [`tracing-subscriber` `EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html) syntax, for example `warn` or `info,inkpdf=debug`. Whatever it says, the MCP library (`rmcp`) only logs errors, since its other events can quote the input. |
 
 ## Validation
 

@@ -10,6 +10,8 @@ use inkpdf::config::{Config, LogFormat};
 use inkpdf::{AppState, build_app, registry};
 use tokio_util::sync::CancellationToken;
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 fn main() -> ExitCode {
     let command = std::env::args().nth(1);
@@ -105,12 +107,15 @@ async fn shutdown_signal(shutdown: CancellationToken) {
     shutdown.cancel();
 }
 
+/// `RUST_LOG` (default `info`), with rmcp's events below `error` dropped
+/// ([`inkpdf::mcp::log_cap`]).
 fn init_tracing(format: LogFormat) {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let builder = tracing_subscriber::fmt().with_env_filter(filter);
+    let cap = inkpdf::mcp::log_cap();
     match format {
-        LogFormat::Json => builder.json().flatten_event(true).init(),
-        LogFormat::Pretty => builder.pretty().init(),
+        LogFormat::Json => builder.json().flatten_event(true).finish().with(cap).init(),
+        LogFormat::Pretty => builder.pretty().finish().with(cap).init(),
     }
 }
 

@@ -142,7 +142,8 @@ One `render` log event records the template id, the duration, the outcome and th
 `main.rs` reads the configuration (exit code `2` on a malformed value), initialises logging,
 scans the whole volume, marks the registry ready, starts the watcher, then binds the listener.
 `SIGTERM` or `Ctrl-C` triggers a graceful shutdown: HTTP requests in flight are drained, and the
-shutdown token stops the MCP service.
+shutdown token stops the MCP service. Logging uses `RUST_LOG`, with the events of `rmcp` below
+`error` always dropped (`mcp::log_cap`): they can quote the MCP input.
 
 ## Design principles
 

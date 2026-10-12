@@ -12,8 +12,11 @@ use std::sync::{Arc, Mutex};
 use common::mcp::*;
 use common::*;
 use serde_json::{Value, json};
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::layer::SubscriberExt;
 
-/// Log lines written while `scenario` runs, as JSON objects (the production format).
+/// Log lines written while `scenario` runs, as JSON objects (the production format), with
+/// every level on (`RUST_LOG=trace`) and the production cap on rmcp's own events.
 async fn capture_logs<F: std::future::Future<Output = ()>>(scenario: F) -> Vec<Value> {
     #[derive(Clone, Default)]
     struct Capture(Arc<Mutex<Vec<u8>>>);
@@ -29,13 +32,15 @@ async fn capture_logs<F: std::future::Future<Output = ()>>(scenario: F) -> Vec<V
 
     let capture = Capture::default();
     let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::new("trace"))
         .json()
         .flatten_event(true)
         .with_writer({
             let capture = capture.clone();
             move || capture.clone()
         })
-        .finish();
+        .finish()
+        .with(inkpdf::mcp::log_cap());
     // Current-thread runtime: the service's tasks run on this thread, under this subscriber.
     let _guard = tracing::subscriber::set_default(subscriber);
     scenario.await;
@@ -49,7 +54,7 @@ async fn capture_logs<F: std::future::Future<Output = ()>>(scenario: F) -> Vec<V
 
 /// FR-014: one `mcp.tool` event per call, with the tool, the template id, the duration and
 /// the outcome, a call refused for its arguments included; renders say which interface they
-/// came through; no input value is logged.
+/// came through; no input value is logged, at any level, and rmcp adds no line of its own.
 #[tokio::test]
 async fn tool_calls_are_logged_without_their_input() {
     const SECRET: &str = "Confidential title 7f3a";
@@ -71,9 +76,13 @@ async fn tool_calls_are_logged_without_their_input() {
         call_tool(&app, "render_template", render_args("sample")).await;
         call_tool(&app, "render_template", render_args("unknown")).await;
         call_tool(&app, "render_template", render_args("../x")).await;
-        // Refused for its arguments (protocol fault), before the tool runs.
+        // Refused for their arguments (protocol faults), before the tool runs; the second
+        // error message quotes the value.
         let mut args = render_args("sample");
-        args["colour"] = SECRET.into();
+        args["colour"] = "blue".into();
+        let params = tool_params("render_template", args);
+        rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+        let args = json!({ "templateId": "sample", "data": SECRET });
         let params = tool_params("render_template", args);
         rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
         post_json(&app, "/templates/sample/render", &body).await;
@@ -102,6 +111,7 @@ async fn tool_calls_are_logged_without_their_input() {
             // A malformed id is not echoed, as over HTTP.
             ("render_template", None, "template-not-found"),
             ("render_template", None, "invalid-arguments"),
+            ("render_template", None, "invalid-arguments"),
         ]
     );
     let renders: Vec<&str> = logs
@@ -110,6 +120,11 @@ async fn tool_calls_are_logged_without_their_input() {
         .map(|l| l["interface"].as_str().unwrap())
         .collect();
     assert_eq!(renders, ["mcp", "http"]);
+    let rmcp: Vec<&Value> = logs
+        .iter()
+        .filter(|l| l["target"].as_str().is_some_and(|t| t.starts_with("rmcp")))
+        .collect();
+    assert!(rmcp.is_empty(), "rmcp lines: {rmcp:?}");
     for line in &logs {
         let line = line.to_string();
         assert!(!line.contains(SECRET), "input data logged: {line}");

@@ -176,7 +176,8 @@ Notes:
 ## Logs
 
 Logs go to stdout, one JSON object per line by default (`INKPDF_LOG_FORMAT=json`); use
-`pretty` for local reading. The level is set with `RUST_LOG` (default `info`).
+`pretty` for local reading. The level is set with `RUST_LOG` (default `info`). The MCP library
+(`rmcp`) only logs errors, whatever `RUST_LOG` says: its other events can quote the input.
 
 Each event carries an `event` field, for example:
 
