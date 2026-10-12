@@ -25,7 +25,7 @@ pub struct TemplatePath {
     #[param(
         rename = "templateId",
         pattern = "^[a-z0-9][a-z0-9_-]{0,63}$",
-        example = "sample"
+        example = "demo"
     )]
     pub template_id: String,
 }
@@ -108,9 +108,9 @@ pub struct TemplateVersionSummary {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct TemplateLinks {
-    #[schema(example = "/templates/sample/schema")]
+    #[schema(example = "/templates/demo/schema")]
     pub schema: String,
-    #[schema(example = "/templates/sample/render")]
+    #[schema(example = "/templates/demo/render")]
     pub render: String,
 }
 

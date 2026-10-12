@@ -304,11 +304,11 @@
       "TemplateLinks": {
         "properties": {
           "render": {
-            "example": "/templates/sample/render",
+            "example": "/templates/demo/render",
             "type": "string"
           },
           "schema": {
-            "example": "/templates/sample/schema",
+            "example": "/templates/demo/schema",
             "type": "string"
           }
         },
@@ -557,7 +557,7 @@
         "parameters": [
           {
             "description": "Template identifier (its folder name).",
-            "example": "sample",
+            "example": "demo",
             "in": "path",
             "name": "templateId",
             "required": true,
@@ -609,7 +609,7 @@
         "parameters": [
           {
             "description": "Template identifier (its folder name).",
-            "example": "sample",
+            "example": "demo",
             "in": "path",
             "name": "templateId",
             "required": true,
@@ -734,7 +734,7 @@
         "parameters": [
           {
             "description": "Template identifier (its folder name).",
-            "example": "sample",
+            "example": "demo",
             "in": "path",
             "name": "templateId",
             "required": true,
