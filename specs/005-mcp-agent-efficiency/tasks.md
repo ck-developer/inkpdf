@@ -43,7 +43,7 @@ Dependencies.
   - empty `plugins/inkpdf/skills/generate-document/` and `plugins/inkpdf/skills/write-template/` folders.
 
   Run `claude plugin validate plugins/inkpdf` if Claude Code is available.
-- [ ] T002 [P] Add `plugins/inkpdf/.claude-plugin/plugin.json` (JSON path `$.version`) to release-please's `extra-files` in `release-please-config.json`. Release-please resolves those paths relative to the package path `crates/inkpdf` (research R7).
+- [X] T002 [P] Add `plugins/inkpdf/.claude-plugin/plugin.json` (JSON path `$.version`) to release-please's `extra-files` in `release-please-config.json`. Release-please resolves those paths relative to the package path `crates/inkpdf` (research R7).
   - Check from release-please's documentation and source which path form reaches a file outside the package.
   - If none does, drop the change, keep the plugin version independent, and record the decision in `specs/005-mcp-agent-efficiency/research.md` (R7, "Version").
 

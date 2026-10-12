@@ -204,10 +204,13 @@ plugins/inkpdf/
   `render_template` with the example succeeds). Uses `demo` as the worked example. Reference files
   are loaded only when needed.
 - **Version**: `plugin.json` carries the crate version, bumped by release-please through
-  `extra-files`. Release-please resolves `extra-files` relative to the package path
-  (`crates/inkpdf`); check during implementation that it can reach
-  `plugins/inkpdf/.claude-plugin/plugin.json` (a `../../` path or the root-relative form). If it
-  cannot, the plugin keeps its own version and the xtask version check is dropped.
+  `extra-files` (`{ "type": "json", "path": "/plugins/inkpdf/.claude-plugin/plugin.json",
+  "jsonpath": "$.version" }` on the `crates/inkpdf` package). Release-please resolves
+  `extra-files` relative to the package path, except a path with a leading `/`, which is relative
+  to the repository root; a path containing `..` is refused ("illegal pathing characters").
+  Checked in the source of release-please 17.6.1 (`release-please-action@v5` depends on
+  `^17.6.1`) and of its main branch: `addPath` in `src/strategies/base.ts`, and its tests. The
+  `cargo-workspace` plugin keeps these updates. The xtask version check stays.
 - **One MCP connection, not two**: the plugin's `.mcp.json` declares a server named `inkpdf`, the
   same name the 004 guide uses with `claude mcp add`. The documentation says to use one or the
   other, never both.

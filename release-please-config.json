@@ -44,7 +44,14 @@
   "packages": {
     "crates/inkpdf": {
       "package-name": "inkpdf",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "/plugins/inkpdf/.claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   },
   "plugins": [
