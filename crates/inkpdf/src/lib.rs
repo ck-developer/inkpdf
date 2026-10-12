@@ -30,7 +30,8 @@ pub struct AppState {
     pub render_slots: Arc<Semaphore>,
     /// Cached live OpenAPI document.
     pub live_doc: Arc<api::live::LiveDoc>,
-    /// Cancelled when the server shuts down; stops the MCP service.
+    /// Cancelled once the server has shut down and drained its requests; stops the MCP
+    /// service.
     pub shutdown: CancellationToken,
 }
 

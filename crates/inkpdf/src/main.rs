@@ -8,7 +8,6 @@ use std::time::Duration;
 
 use inkpdf::config::{Config, LogFormat};
 use inkpdf::{AppState, build_app, registry};
-use tokio_util::sync::CancellationToken;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -74,16 +73,17 @@ async fn run(config: Config) -> std::io::Result<()> {
         tracing::info!(event = "mcp.listening", path = "/mcp");
     }
     let shutdown = state.shutdown.clone();
-    axum::serve(listener, build_app(state))
-        .with_graceful_shutdown(shutdown_signal(shutdown))
-        .await
+    let served = axum::serve(listener, build_app(state))
+        .with_graceful_shutdown(shutdown_signal())
+        .await;
+    // Only once every request in flight, MCP calls included, has been answered: rmcp answers
+    // a call still running when the token is cancelled with a `500`.
+    shutdown.cancel();
+    served
 }
 
-/// Resolves on Ctrl-C or SIGTERM, then cancels `shutdown`, which stops the MCP service.
-///
-/// In-flight HTTP requests are drained; an MCP call still running at that point is answered
-/// with a `500` by rmcp, which stops waiting for its handler once the token is cancelled.
-async fn shutdown_signal(shutdown: CancellationToken) {
+/// Resolves on Ctrl-C or SIGTERM; requests in flight are then drained.
+async fn shutdown_signal() {
     let ctrl_c = async {
         let _ = tokio::signal::ctrl_c().await;
     };
@@ -104,7 +104,6 @@ async fn shutdown_signal(shutdown: CancellationToken) {
         () = terminate => {},
     }
     tracing::info!(event = "server.shutdown");
-    shutdown.cancel();
 }
 
 /// `RUST_LOG` (default `info`), with rmcp's events below `error` dropped

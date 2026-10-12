@@ -169,9 +169,8 @@ Notes:
   `INKPDF_MAX_TEMPLATE_BYTES`), plus one compilation per render slot.
 - ConfigMaps and network volumes may not deliver file system events. The periodic rescan
   (`INKPDF_RESCAN_INTERVAL_SECS`) picks up their changes anyway.
-- On `SIGTERM`, the server stops accepting connections and finishes the requests in flight. An
-  MCP tool call still running at that moment is cut short with an error instead; the assistant
-  can call again once the service is back.
+- On `SIGTERM`, the server stops accepting connections and finishes the requests in flight, MCP
+  tool calls included.
 
 ## Logs
 
