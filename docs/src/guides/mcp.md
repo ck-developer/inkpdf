@@ -340,7 +340,7 @@ faulty argument and ends with "Fix the arguments and call the tool again.":
 
 ```text
 Invalid arguments for render_template
-- unknown argument `colour`; render_template takes data, filename, layout, metadata, templateId
+- unknown argument `colour`; render_template takes data, filename, layout, metadata, templateId, version
 - argument `data` must be an object, not an array
 Fix the arguments and call the tool again.
 ```
