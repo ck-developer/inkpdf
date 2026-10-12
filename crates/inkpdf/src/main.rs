@@ -66,7 +66,11 @@ async fn run(config: Config) -> std::io::Result<()> {
     let _watcher = registry::watcher::spawn(state.registry.clone(), state.config.rescan_interval);
 
     let listener = tokio::net::TcpListener::bind(listen).await?;
-    tracing::info!(event = "server.listening", address = %listen);
+    let mcp = state.config.mcp_enabled;
+    tracing::info!(event = "server.listening", address = %listen, mcp);
+    if mcp {
+        tracing::info!(event = "mcp.listening", path = "/mcp");
+    }
     let shutdown = state.shutdown.clone();
     axum::serve(listener, build_app(state))
         .with_graceful_shutdown(shutdown_signal(shutdown))

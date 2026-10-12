@@ -7,11 +7,13 @@ use std::fs;
 use std::time::{Duration, Instant};
 
 use axum::Router;
-use axum::http::StatusCode;
+use axum::body::Body;
+use axum::http::{HeaderValue, Request, StatusCode, header};
 use common::mcp::*;
 use common::*;
-use inkpdf::Config;
 use inkpdf::error::ApiError;
+use inkpdf::registry::watcher;
+use inkpdf::{Config, build_app};
 use serde_json::{Value, json};
 
 /// The example templates, plus a template whose schema does not load.
@@ -728,4 +730,148 @@ async fn sandbox_holds_through_mcp() {
         text.contains("#import") && text.contains("/etc/passwd"),
         "{text}"
     );
+}
+
+// --- User story 3: turning MCP on -----------------------------------------------------------
+
+/// SC-006: off by default, `/mcp` answers like any unknown path.
+#[tokio::test]
+async fn mcp_is_off_by_default() {
+    let volume = TestVolume::new();
+    let app = test_app(test_config(&volume));
+    let initialize = || {
+        let params = initialize_params(HANDSHAKE_PROTOCOL);
+        rpc_request(1, "initialize", params, HANDSHAKE_PROTOCOL)
+    };
+
+    let (status, headers, body) = send(&app, initialize()).await;
+    let (unknown_status, unknown_headers, unknown_body) =
+        post_json(&app, "/does-not-exist", &json!({})).await;
+
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(
+        (status, headers.get(header::CONTENT_TYPE), body),
+        (
+            unknown_status,
+            unknown_headers.get(header::CONTENT_TYPE),
+            unknown_body
+        )
+    );
+}
+
+/// FR-012 and research R6: a request from a web page (any `Origin`) is refused; the `Host`
+/// of a private network is accepted.
+#[tokio::test]
+async fn browser_origins_are_refused_and_private_hosts_accepted() {
+    let volume = TestVolume::new();
+    volume.copy_template(&sample_template(), "sample");
+    let app = mcp_app(&volume);
+    let initialize = || {
+        let params = initialize_params(HANDSHAKE_PROTOCOL);
+        rpc_request(1, "initialize", params, HANDSHAKE_PROTOCOL)
+    };
+
+    let mut request = initialize();
+    request.headers_mut().insert(
+        header::ORIGIN,
+        HeaderValue::from_static("https://evil.example"),
+    );
+    let (status, body) = send_rpc(&app, request).await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+
+    // A Compose service name, without `Origin`, on both protocol paths.
+    let mut request = initialize();
+    request
+        .headers_mut()
+        .insert(header::HOST, HeaderValue::from_static("inkpdf:3000"));
+    let (status, body) = send_rpc(&app, request).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["result"]["serverInfo"]["name"], "inkpdf");
+
+    let params = tool_params("list_templates", json!({}));
+    let mut request = rpc_request(2, "tools/call", params, STATELESS_PROTOCOL);
+    request
+        .headers_mut()
+        .insert(header::HOST, HeaderValue::from_static("inkpdf:3000"));
+    let (status, body) = send_rpc(&app, request).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(
+        body["result"]["structuredContent"]["templates"][0]["id"],
+        "sample"
+    );
+}
+
+/// Stateless with JSON responses: no stream for server-initiated messages.
+#[tokio::test]
+async fn get_on_mcp_is_not_allowed() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+    let request = Request::get("/mcp")
+        .header(header::HOST, "localhost:3000")
+        .header(header::ACCEPT, "text/event-stream")
+        .header("mcp-protocol-version", HANDSHAKE_PROTOCOL)
+        .body(Body::empty())
+        .unwrap();
+
+    let (status, headers, _) = send(&app, request).await;
+
+    assert_eq!(status, StatusCode::METHOD_NOT_ALLOWED);
+    let allow = headers.get(header::ALLOW).and_then(|v| v.to_str().ok());
+    assert!(allow.is_some_and(|v| v.contains("POST")), "{headers:?}");
+}
+
+/// FR-003 and FR-016: with MCP on, the OpenAPI document is still the committed contract
+/// (same comparison as `tests/contract_openapi.rs`).
+#[tokio::test]
+async fn openapi_document_is_unchanged_with_mcp_on() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+
+    let (status, mut generated) = get_json(&app, "/openapi.json").await;
+
+    assert_eq!(status, StatusCode::OK);
+    let versioned = fs::read_to_string(repo_root().join("openapi/openapi.json")).unwrap();
+    let mut versioned: Value = serde_json::from_str(&versioned).unwrap();
+    generated["info"]["version"] = "0.0.0".into();
+    versioned["info"]["version"] = "0.0.0".into();
+    assert!(
+        versioned == generated,
+        "the OpenAPI document changed with MCP on"
+    );
+}
+
+/// US3 scenario 4: a template added to the volume is listed without a restart (rescan as in
+/// `tests/hot_reload.rs`).
+#[tokio::test(flavor = "multi_thread")]
+async fn added_template_is_listed_without_restart() {
+    const DEADLINE: Duration = Duration::from_secs(5);
+    let volume = TestVolume::new();
+    volume.copy_template(&sample_template(), "sample");
+    let state = test_state(Config {
+        rescan_interval: Duration::from_secs(1),
+        ..mcp_config(&volume)
+    });
+    let _watcher = watcher::spawn(state.registry.clone(), state.config.rescan_interval);
+    let app = build_app(state);
+    let listed = || async {
+        let result = call_tool(&app, "list_templates", json!({})).await;
+        result["structuredContent"]["templates"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|t| t["id"].as_str().unwrap().to_owned())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(listed().await, ["sample"]);
+
+    volume.copy_template(&sample_template(), "sample-copy");
+
+    let started = Instant::now();
+    while listed().await != ["sample", "sample-copy"] {
+        assert!(
+            started.elapsed() < DEADLINE,
+            "sample-copy not listed within {DEADLINE:?}"
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
 }
