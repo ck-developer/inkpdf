@@ -1,9 +1,78 @@
 # Exploring the API
 
-A running inkpdf instance describes itself: its OpenAPI document includes one typed operation
-per template currently loaded, and an interactive page renders it. This guide shows how to
-browse it, generate a typed client from it, and use the Bruno collection shipped with the
-repository.
+A running inkpdf instance describes itself: each template's details carry its schema and an
+example input, its OpenAPI document includes one typed operation per template currently loaded,
+and an interactive page renders it. This guide shows how to read a template, choose its version,
+browse the OpenAPI document, generate a typed client from it, and use the Bruno collection
+shipped with the repository.
+
+## A template's details and example
+
+`GET /templates/{templateId}` returns a template's details: its id, name, description,
+version, status and load time, its JSON Schema (`data` and `layout`, with each variable's
+`description` and `x-role`), and links to its schema and render routes. When the template ships
+a valid `example.json`, the details also carry an `example`: a complete request body, as the
+author wrote it.
+
+```sh
+curl -s localhost:3000/templates/demo | jq '.example | keys'
+```
+
+```json
+["data", "metadata"]
+```
+
+The example can be sent as is, which makes it a good starting point for your own requests:
+
+```sh
+curl -s localhost:3000/templates/demo | jq '.example' \
+  | curl -s -H 'content-type: application/json' --data @- -o demo.pdf \
+      localhost:3000/templates/demo/render
+```
+
+`example` is absent when the template has no `example.json`, or when its example does not pass
+the template's own schema (the service then logs `template.example_invalid`). The list
+`GET /templates` never carries it. See
+[Template format → `example.json`](../reference/template-format.md#examplejson).
+
+## Versions
+
+A template can hold several versions (see [Templates → Versions](../concepts/templates.md#versions)).
+`GET /templates` shows, for each template, its default `version` (the highest valid one) and
+all its `versions`, newest first, with their status:
+
+```json
+{ "id": "facture", "name": "Facture", "version": "1.1.0", "status": "valid",
+  "versions": [ { "version": "2.0.0", "status": "invalid", "reason": "schema.json: …" },
+                { "version": "1.1.0", "status": "valid" },
+                { "version": "1.0.0", "status": "valid" } ] }
+```
+
+The detail, the schema and the render routes take an optional `version` query parameter: a
+major version (`1`, the highest valid `1.x.y`) or an exact one (`1.0.0`). Without it, they use
+the default version.
+
+```sh
+curl -s 'localhost:3000/templates/facture?version=1.0.0' | jq '.version'
+curl -s 'localhost:3000/templates/facture/schema?version=1'
+curl -si -H 'content-type: application/json' --data @facture.json \
+  'localhost:3000/templates/facture/render?version=1' | grep -i inkpdf-template-version
+```
+
+```text
+inkpdf-template-version: 1.1.0
+```
+
+Every render response of a template that has a version carries the version used in the
+`Inkpdf-Template-Version` header, with or without the parameter. A version that is not a
+version number (`latest`, `v2`, `1.2`) gives `400 invalid-parameter`; a version that does not
+exist gives `404 template-version-not-found`, whose problem object lists the available versions:
+
+```json
+{ "code": "template-version-not-found", "status": 404,
+  "detail": "template facture has no version matching \"3\"; available: 2.0.0, 1.1.0, 1.0.0",
+  "templateId": "facture", "availableVersions": ["2.0.0", "1.1.0", "1.0.0"] }
+```
 
 ## The live OpenAPI document
 
@@ -44,19 +113,22 @@ For a template with id `<id>`, the document adds:
 | Path | `POST /templates/<id>/render` |
 | `operationId` | `render_<id>`, with `-` replaced by `_` (`render_progress_invoice`) |
 | `summary` | the template's `name` |
-| `description` | its `description`, followed by `(version <version>)` |
-| Parameters | `download` and `filename`, as on the generic operation |
-| Request body | `<P>RenderRequest`, where `<P>` is the id in PascalCase (`ProgressInvoice`) |
+| `description` | its `description`, followed by `(version <version>)`, both from the default version |
+| Parameters | `download`, `filename` and `version`, as on the generic operation |
+| Request body | `<P>RenderRequest`, where `<P>` is the id in PascalCase (`ProgressInvoice`), with the template's `example`, when it has one, as its example |
 | Components | `<P>RenderRequest`, `<P>Data`, `<P>Layout` (if the template declares `layout`), `<P>_<name>` for each `$defs` entry, and the shared `DocumentMetadata` |
 
 `<P>RenderRequest` is closed (`additionalProperties: false`), and its `required` list is the
-one of your schema root. Copied schemas lose their `$schema` and `$id`, and internal `$ref`s
-are rewritten to point at the new components, so every reference resolves. If two ids map to
+one of your schema root. The components describe the template's default version. Copied
+schemas lose their `$schema` and `$id` but keep their `description` and `x-role` annotations,
+and internal `$ref`s are rewritten to point at the new components, so every reference
+resolves. If two ids map to
 the same prefix (`a-b` and `a_b`), the second one gets a numeric suffix (`AB2`).
 
-The document follows hot reload: add, change or fix a template, and the next request to
-`/openapi.json` reflects it, once the template has been reloaded. Invalid templates add
-nothing to it (they stay visible in `GET /templates` with their `reason`). Operations are
+The document describes the templates the service has loaded: those found at startup, or, with
+hot reload on (development), the current ones, so that the next request to `/openapi.json`
+reflects a template once it has been reloaded. Invalid templates add nothing to it (they stay
+visible in `GET /templates` with their `reason`). Operations are
 sorted by template id, and the output is deterministic for a given set of templates.
 
 ## The interactive documentation: `/docs`

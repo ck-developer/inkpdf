@@ -7,7 +7,7 @@ documentation.
 
 ## A complete example
 
-This is the schema of the `sample` example template:
+A schema for a document with a title and a table of labels and values:
 
 ```json
 {
@@ -62,9 +62,28 @@ predefined fields.
 4. Only internal references are resolved: `$ref` values starting with `#` (for example
    `#/$defs/address`). An external reference (a URL or another file) makes the template invalid.
 5. The schema must itself be a valid JSON Schema.
+6. Every `x-role` annotation must be `"ask"`, `"fill"` or `"default"`.
 
 A schema that breaks one of these rules makes the template invalid, with the reason shown in
 `GET /templates`.
+
+## Descriptions and roles
+
+Next to its constraints, each property can say what it is and who provides it:
+
+```json
+"date": {
+  "type": "string",
+  "format": "date",
+  "description": "Document date, YYYY-MM-DD; today's date unless the user says otherwise.",
+  "x-role": "fill"
+}
+```
+
+`description` documents the value for every caller. `x-role` tells an AI assistant whether to
+ask the user for the value (`ask`), to fill it in itself (`fill`), or to leave its default
+(`default`). Neither changes what a request may contain. See
+[Template format](../reference/template-format.md#roles-x-role).
 
 ## `layout` defaults
 
@@ -118,6 +137,28 @@ collected, not just the first one, and returned in a `422 validation-failed` res
 
 Violations of `metadata` are returned in the same list, with paths starting with `/metadata`.
 See [Error codes](../reference/errors.md).
+
+## Formats are checked
+
+`format` is **asserted**: a value whose property declares a standard format must match it, at
+any depth. The checked formats are `date`, `date-time`, `time`, `duration`, `email`,
+`hostname`, `ipv4`, `ipv6`, `uri`, `uri-reference`, `iri`, `iri-reference`, `uri-template`,
+`uuid`, `regex`, `json-pointer` and `relative-json-pointer`; other format names are ignored.
+
+Declare dates with `"format": "date"`: the value must then be a real calendar date written
+`YYYY-MM-DD`. `2026-02-30` is refused before Typst runs, with the path of the field:
+
+```json
+{ "path": "/data/date", "schemaPath": "/properties/data/properties/date/format", "message": "\"2026-02-30\" is not a valid calendar date (YYYY-MM-DD)" }
+```
+
+A `pattern` such as `^[0-9]{4}-[0-9]{2}-[0-9]{2}$` only checks the shape: the impossible date
+would reach Typst and fail there, without the field's name.
+
+Earlier versions of inkpdf treated `format` as a hint. A template that declared a format loosely,
+for example `"format": "email"` on a free-text field, now gets `422 validation-failed` for the
+values that do not match. See
+[Template format → Formats](../reference/template-format.md#formats).
 
 ## The schema in the API
 
