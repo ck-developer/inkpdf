@@ -38,7 +38,8 @@ impl LiveDoc {
             return bytes.clone();
         }
         let base = serde_json::to_value(super::openapi()).expect("serializable OpenAPI document");
-        let document = build(&base, snapshot.values().map(Arc::as_ref));
+        // Each template as its default version describes it (research R9 of feature 005).
+        let document = build(&base, snapshot.values().map(|t| t.default_entry().as_ref()));
         let bytes = Bytes::from(serde_json::to_vec(&document).expect("serializable document"));
         *cache = Some((Arc::downgrade(&snapshot), bytes.clone()));
         bytes

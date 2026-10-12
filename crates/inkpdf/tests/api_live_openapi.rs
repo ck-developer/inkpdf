@@ -180,6 +180,56 @@ async fn request_body_example_is_the_template_example_and_roles_are_kept() {
 }
 
 #[tokio::test]
+async fn typed_operation_describes_the_default_version() {
+    let volume = TestVolume::new();
+    for (version, title) in [
+        ("1.0.0", "Old title"),
+        ("2.0.0", "New title"),
+        ("3.0.0", ""),
+    ] {
+        let folder = format!("facture/{version}");
+        volume.copy_template(&fixture("sample"), &folder);
+        let manifest = serde_json::json!({ "name": "Facture", "version": version });
+        volume.write_file(&format!("{folder}/template.json"), manifest.to_string());
+        let path = volume.path().join(&folder).join("schema.json");
+        let mut schema: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        schema["properties"]["data"]["properties"]["title"]["description"] = title.into();
+        std::fs::write(&path, schema.to_string()).unwrap();
+    }
+    // The newest version is invalid: the default is 2.0.0.
+    volume.remove("facture/3.0.0/main.typ");
+    let app = test_app(test_config(&volume));
+    let doc = document(&app).await;
+
+    let operation = &doc["paths"]["/templates/facture/render"]["post"];
+    assert_eq!(operation["description"], "(version 2.0.0)");
+    let title = &doc["components"]["schemas"]["FactureData"]["properties"]["title"];
+    assert_eq!(title["description"], "New title");
+
+    // The `version` parameter, on the typed operation and the generic ones.
+    let version_parameter = |operation: &Value| -> Value {
+        operation["parameters"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["name"] == "version")
+            .cloned()
+            .unwrap_or_else(|| panic!("no version parameter: {operation}"))
+    };
+    for operation in [
+        operation,
+        &doc["paths"]["/templates/{templateId}"]["get"],
+        &doc["paths"]["/templates/{templateId}/schema"]["get"],
+        &doc["paths"]["/templates/{templateId}/render"]["post"],
+    ] {
+        let parameter = version_parameter(operation);
+        assert_eq!(parameter["in"], "query", "{parameter}");
+        assert_eq!(parameter["required"], false, "{parameter}");
+        assert_eq!(parameter["schema"]["type"], "string", "{parameter}");
+    }
+}
+
+#[tokio::test]
 async fn every_reference_resolves() {
     let volume = examples_volume();
     let app = test_app(test_config(&volume));

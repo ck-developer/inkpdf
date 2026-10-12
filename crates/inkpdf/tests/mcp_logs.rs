@@ -114,12 +114,26 @@ async fn tool_calls_are_logged_without_their_input() {
             ("render_template", None, "invalid-arguments"),
         ]
     );
-    let renders: Vec<&str> = logs
+    // The version used, once the template is found (feature 005): `sample` is 1.0.0.
+    let versions: Vec<Option<&str>> = tools
+        .iter()
+        .map(|l| l["templateVersion"].as_str())
+        .collect();
+    assert_eq!(
+        versions,
+        [None, Some("1.0.0"), Some("1.0.0"), None, None, None, None]
+    );
+    let renders: Vec<(&str, &str)> = logs
         .iter()
         .filter(|l| l["event"] == "render")
-        .map(|l| l["interface"].as_str().unwrap())
+        .map(|l| {
+            (
+                l["interface"].as_str().unwrap(),
+                l["templateVersion"].as_str().unwrap(),
+            )
+        })
         .collect();
-    assert_eq!(renders, ["mcp", "http"]);
+    assert_eq!(renders, [("mcp", "1.0.0"), ("http", "1.0.0")]);
     let rmcp: Vec<&Value> = logs
         .iter()
         .filter(|l| l["target"].as_str().is_some_and(|t| t.starts_with("rmcp")))

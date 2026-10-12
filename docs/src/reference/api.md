@@ -63,10 +63,12 @@ cannot be imported.
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `templateId` | path | yes | Template identifier (its folder name). |
+| `version` | query | no | Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version (`2.0.0`). Default: the highest valid version. |
 
 | Status | Description |
 |---|---|
-| 200 | Template detail. |
+| 200 | Template detail, of the version selected. |
+| 400 | Problem (Problem) |
 | 404 | Problem (Problem) |
 
 ## `POST /templates/{templateId}/render`
@@ -81,6 +83,7 @@ Validates the body against the template's schema (after applying the `default` v
 | `templateId` | path | yes | Template identifier (its folder name). |
 | `download` | query | no | `true`: respond as a download (`Content-Disposition: attachment`) instead of inline display. Values: `true`, `false`, `1`, `0`. |
 | `filename` | query | no | File name (no path; `.pdf` appended). Default: `<templateId>.pdf`. |
+| `version` | query | no | Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version (`2.0.0`). Default: the highest valid version. |
 
 Request body: `application/json`, schema `RenderRequest`.
 
@@ -106,9 +109,11 @@ Usable directly by a validator or a form generator.
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `templateId` | path | yes | Template identifier (its folder name). |
+| `version` | query | no | Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version (`2.0.0`). Default: the highest valid version. |
 
 | Status | Description |
 |---|---|
 | 200 | JSON Schema (draft 2020-12). |
+| 400 | Problem (Problem) |
 | 404 | Problem (Problem) |
 | 409 | Problem (Problem) |

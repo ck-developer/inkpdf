@@ -87,7 +87,7 @@ impl ServerHandler for InkpdfMcp {
         match response {
             CallToolResponse::Complete(result) if is_argument_refusal(&result) => {
                 // The router only gets here for one of the three tools: the name is ours.
-                tools::log_call(&tool, None, started, "invalid-arguments");
+                tools::log_call(&tool, None, None, started, "invalid-arguments");
                 let input_schema = router.get(&tool).map(|tool| tool.input_schema.as_ref());
                 let result = arguments::error_result(&tool, input_schema, &outline, &result);
                 Ok(CallToolResponse::Complete(result))

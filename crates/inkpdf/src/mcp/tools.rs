@@ -2,6 +2,7 @@
 //! (contracts/mcp-tools.md). Each one reuses the HTTP API's code for the same operation.
 
 use std::io;
+use std::sync::Arc;
 use std::time::Instant;
 
 use rmcp::handler::server::wrapper::Parameters;
@@ -14,8 +15,9 @@ use serde_json::{Map, Value};
 use super::InkpdfMcp;
 use super::result::{error_result, pdf_result};
 use crate::api::render::{check_filename, pdf_file_name};
-use crate::api::templates::{self, TemplateDetail};
+use crate::api::templates::{self, TemplateDetail, parse_version};
 use crate::error::{ApiError, TemplateError};
+use crate::registry::{TemplateEntry, TemplateVersions};
 use crate::render::{self, Interface};
 
 /// Arguments of `list_templates`: none.
@@ -31,6 +33,10 @@ pub struct ListTemplatesArgs {}
 pub struct GetTemplateArgs {
     /// Template id, from list_templates.
     pub template_id: String,
+    /// Template version, `2` or `2.0.0`; defaults to the highest valid version.
+    #[serde(default)]
+    #[schemars(with = "String", skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
 }
 
 /// Arguments of `render_template`: the HTTP render body (`data`, `layout`, `metadata`), the
@@ -66,6 +72,10 @@ pub struct RenderTemplateArgs {
     #[serde(default)]
     #[schemars(with = "String", skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
+    /// Template version, `2` or `2.0.0`; defaults to the highest valid version.
+    #[serde(default)]
+    #[schemars(with = "String", skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
 }
 
 /// A key that is present, `null` included; a missing key stays `None` (`#[serde(default)]`).
@@ -83,9 +93,24 @@ fn metadata_schema(_: &mut SchemaGenerator) -> Schema {
     Schema::try_from(render::metadata::schema()).expect("the metadata schema is an object")
 }
 
-/// Outcome of a tool: its result with the id of the template it concerns, or a pipeline
-/// error.
-type Outcome = Result<(Option<String>, CallToolResult), TemplateError>;
+/// Outcome of a tool: its result with the template (id and version) it concerns, or a
+/// pipeline error.
+type Outcome = Result<(Option<Concerned>, CallToolResult), TemplateError>;
+
+/// The template a tool call concerns, as logged.
+struct Concerned {
+    id: String,
+    version: Option<String>,
+}
+
+impl From<&TemplateEntry> for Concerned {
+    fn from(entry: &TemplateEntry) -> Self {
+        Self {
+            id: entry.id.to_string(),
+            version: entry.version.clone(),
+        }
+    }
+}
 
 #[tool_router(vis = "pub(super)")]
 impl InkpdfMcp {
@@ -117,13 +142,15 @@ impl InkpdfMcp {
     )]
     async fn get_template(&self, Parameters(args): Parameters<GetTemplateArgs>) -> CallToolResult {
         let started = Instant::now();
-        let outcome = templates::find(&self.state, &args.template_id).map(|entry| {
-            let detail = TemplateDetail::from(entry.as_ref());
-            (
-                Some(entry.id.to_string()),
-                CallToolResult::structured(to_json(&detail)),
-            )
-        });
+        let outcome =
+            self.find(&args.template_id, args.version.as_deref())
+                .map(|(template, entry)| {
+                    let detail = TemplateDetail::new(&template, &entry);
+                    (
+                        Some(Concerned::from(entry.as_ref())),
+                        CallToolResult::structured(to_json(&detail)),
+                    )
+                });
         finish("get_template", started, outcome)
     }
 
@@ -143,16 +170,40 @@ impl InkpdfMcp {
 }
 
 impl InkpdfMcp {
+    /// The template `template_id` and the version of it asked for, as over HTTP: an unknown
+    /// template first, then a malformed `version`, then a version that does not exist.
+    fn find(
+        &self,
+        template_id: &str,
+        version: Option<&str>,
+    ) -> Result<(Arc<TemplateVersions>, Arc<TemplateEntry>), TemplateError> {
+        let template = templates::find(&self.state, template_id)?;
+        let selector = version
+            .map(parse_version)
+            .transpose()
+            .map_err(|e| e.for_template(template.default_entry().id.as_str()))?;
+        let entry = templates::select(&template, selector)?;
+        Ok((template, entry))
+    }
+
     /// Same steps as `POST /templates/{templateId}/render`, in the same order: template
-    /// lookup, `filename`, body size, then the shared pipeline. The template id is attached to
-    /// every error after the lookup, as over HTTP.
+    /// lookup, `filename` and `version`, body size, then the shared pipeline. The template id
+    /// is attached to every error after the lookup, as over HTTP.
     async fn render(&self, args: RenderTemplateArgs) -> Outcome {
-        let entry = templates::find(&self.state, &args.template_id)?;
-        let id = entry.id.to_string();
+        let template = templates::find(&self.state, &args.template_id)?;
+        let id = template.default_entry().id.to_string();
         let fail = |error: ApiError| error.for_template(&id);
         if let Some(filename) = &args.filename {
             check_filename(filename).map_err(fail)?;
         }
+        let selector = args
+            .version
+            .as_deref()
+            .map(parse_version)
+            .transpose()
+            .map_err(fail)?;
+        let entry = templates::select(&template, selector)?;
+        let concerned = Concerned::from(entry.as_ref());
 
         let mut body = Map::new();
         body.insert("data".into(), Value::Object(args.data));
@@ -173,31 +224,48 @@ impl InkpdfMcp {
             .await
             .map_err(fail)?;
         let file_name = pdf_file_name(&id, args.filename.as_deref());
-        let result = pdf_result(&id, &file_name, &pdf);
-        Ok((Some(id), result))
+        let result = pdf_result(&id, concerned.version.as_deref(), &file_name, &pdf);
+        Ok((Some(concerned), result))
     }
 }
 
 /// Turns a tool's outcome into its result and logs the call (FR-014). No argument value is
-/// logged; the template id only once it is known to be well-formed.
+/// logged; the template id only once it is known to be well-formed, and the template version
+/// only once it is selected.
 fn finish(tool: &str, started: Instant, outcome: Outcome) -> CallToolResult {
-    let (template_id, result, outcome) = match outcome {
-        Ok((template_id, result)) => (template_id, result, "ok"),
+    let (template_id, version, result, outcome) = match outcome {
+        Ok((concerned, result)) => {
+            let (id, version) = concerned.map_or((None, None), |c| (Some(c.id), c.version));
+            (id, version, result, "ok")
+        }
         Err(error) => {
             let code = error.error.code().as_str();
-            (error.template_id.clone(), error_result(error), code)
+            (error.template_id.clone(), None, error_result(error), code)
         }
     };
-    log_call(tool, template_id.as_deref(), started, outcome);
+    log_call(
+        tool,
+        template_id.as_deref(),
+        version.as_deref(),
+        started,
+        outcome,
+    );
     result
 }
 
-/// The `mcp.tool` log event of one call (FR-014).
-pub(super) fn log_call(tool: &str, template_id: Option<&str>, started: Instant, outcome: &str) {
+/// The `mcp.tool` log event of one call (FR-014), with `templateVersion` (feature 005).
+pub(super) fn log_call(
+    tool: &str,
+    template_id: Option<&str>,
+    template_version: Option<&str>,
+    started: Instant,
+    outcome: &str,
+) {
     tracing::info!(
         event = "mcp.tool",
         tool,
         templateId = template_id,
+        templateVersion = template_version,
         durationMs = started.elapsed().as_millis() as u64,
         outcome,
     );

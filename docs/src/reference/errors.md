@@ -12,6 +12,7 @@ inside a bundled package are shown as `@preview/<name>:<version>/<path>`.
 | 400 | `invalid-json` | Invalid JSON |
 | 400 | `invalid-parameter` | Invalid parameter |
 | 404 | `template-not-found` | Template not found |
+| 404 | `template-version-not-found` | Template version not found |
 | 409 | `template-invalid` | Template invalid |
 | 413 | `payload-too-large` | Payload too large |
 | 415 | `unsupported-media-type` | Unsupported media type |

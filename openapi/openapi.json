@@ -94,6 +94,7 @@
         "description": "Machine-readable error code (FR-019).",
         "enum": [
           "template-not-found",
+          "template-version-not-found",
           "invalid-json",
           "invalid-parameter",
           "unsupported-media-type",
@@ -190,6 +191,13 @@
       "Problem": {
         "description": "RFC 9457 error body.",
         "properties": {
+          "availableVersions": {
+            "description": "The template's versions, newest first (`template-version-not-found`).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "code": {
             "$ref": "#/components/schemas/ErrorCode"
           },
@@ -350,12 +358,43 @@
             "$ref": "#/components/schemas/TemplateStatus"
           },
           "version": {
+            "description": "The version described: in the list, the default version (the highest valid one); in a\ntemplate's detail, the version selected. Absent when the template has no version.",
+            "example": "2.0.0",
             "type": "string"
+          },
+          "versions": {
+            "description": "Every version of the template, newest first, valid or not. Empty when the template has\nno version.",
+            "items": {
+              "$ref": "#/components/schemas/TemplateVersionSummary"
+            },
+            "type": "array"
           }
         },
         "required": [
           "id",
           "name",
+          "status",
+          "versions"
+        ],
+        "type": "object"
+      },
+      "TemplateVersionSummary": {
+        "description": "One version of a template.",
+        "properties": {
+          "reason": {
+            "description": "Present when `status` is `invalid`.",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TemplateStatus"
+          },
+          "version": {
+            "example": "2.0.0",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
           "status"
         ],
         "type": "object"
@@ -391,7 +430,7 @@
       "name": "MIT OR Apache-2.0"
     },
     "title": "inkpdf",
-    "version": "0.1.0"
+    "version": "0.0.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -525,6 +564,17 @@
               "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
               "type": "string"
             }
+          },
+          {
+            "description": "Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version\n(`2.0.0`). Default: the highest valid version.",
+            "example": "2.0.0",
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "pattern": "^(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*))?$",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -536,7 +586,10 @@
                 }
               }
             },
-            "description": "Template detail."
+            "description": "Template detail, of the version selected."
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
           },
           "404": {
             "$ref": "#/components/responses/Problem"
@@ -583,6 +636,17 @@
               "maxLength": 200,
               "type": "string"
             }
+          },
+          {
+            "description": "Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version\n(`2.0.0`). Default: the highest valid version.",
+            "example": "2.0.0",
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "pattern": "^(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*))?$",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -609,6 +673,12 @@
             "headers": {
               "Content-Disposition": {
                 "description": "`inline` (display) or `attachment` (download, `download=true`), with `filename` and `filename*` (UTF-8).",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Inkpdf-Template-Version": {
+                "description": "Version of the template that rendered the document; absent when the template has no version.",
                 "schema": {
                   "type": "string"
                 }
@@ -671,6 +741,17 @@
               "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
               "type": "string"
             }
+          },
+          {
+            "description": "Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version\n(`2.0.0`). Default: the highest valid version.",
+            "example": "2.0.0",
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "pattern": "^(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*))?$",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -683,6 +764,9 @@
               }
             },
             "description": "JSON Schema (draft 2020-12)."
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
           },
           "404": {
             "$ref": "#/components/responses/Problem"

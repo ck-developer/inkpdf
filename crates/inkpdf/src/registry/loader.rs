@@ -3,21 +3,28 @@
 //! This is the only place where a template's files are read: rendering then only uses the
 //! in-memory snapshot.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use time::OffsetDateTime;
 use typst::foundations::Bytes;
 
 use super::fingerprint::{self, Fingerprint};
+use super::version::Version;
+use super::{Layout, TemplateVersions};
 use crate::render::fonts::{self, FontSet};
 use crate::render::metadata;
 use crate::template::{Manifest, TemplateId, TemplateSchema, imports};
 
 /// Name of the optional example request body of a template (research R3 of feature 005).
 const EXAMPLE_FILE: &str = "example.json";
+
+/// Reason given to a template with files both at its root and in version folders (research R9
+/// of feature 005).
+pub const MIXED_LAYOUT: &str =
+    "put the template files either at the root or in version folders, not both";
 
 /// Status of a template after loading.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,7 +38,12 @@ pub struct TemplateEntry {
     pub id: TemplateId,
     pub name: String,
     pub description: Option<String>,
+    /// The version shown to callers: the version folder's name, or in the flat layout the
+    /// `version` of `template.json`, as written.
     pub version: Option<String>,
+    /// `version` parsed as `MAJOR.MINOR.PATCH`, used for ordering and selection; `None` when
+    /// there is no version, or when a flat template's manifest version does not parse.
+    pub semver: Option<Version>,
     pub status: TemplateStatus,
     /// Present if the template is valid.
     pub schema: Option<TemplateSchema>,
@@ -50,6 +62,7 @@ impl std::fmt::Debug for TemplateEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TemplateEntry")
             .field("id", &self.id)
+            .field("version", &self.version)
             .field("status", &self.status)
             .field("fingerprint", &self.fingerprint)
             .finish_non_exhaustive()
@@ -77,8 +90,163 @@ pub enum LoadOutcome {
     Unstable,
 }
 
-/// Loads the directory `dir` of template `id`.
+/// Loads every version of the template folder `dir` (research R9 of feature 005): the flat
+/// layout gives one entry, the versioned layout one per `MAJOR.MINOR.PATCH` sub-folder, each
+/// loaded, fingerprinted and checked on its own, with its own size limit.
+///
+/// The versions of `previous` whose folder is unchanged are kept as they are. `None` when the
+/// folder changed during the load: try again later.
+pub fn load_template(
+    dir: &Path,
+    id: TemplateId,
+    max_template_bytes: u64,
+    previous: Option<&TemplateVersions>,
+) -> Option<TemplateVersions> {
+    let broken = |fingerprint, reason| {
+        Some(TemplateVersions {
+            fingerprint,
+            layout: Layout::Broken(Arc::new(invalid(id.clone(), None, fingerprint, reason))),
+        })
+    };
+    let fingerprint = match Fingerprint::of(dir) {
+        Ok(fingerprint) => fingerprint,
+        Err(e) => {
+            return broken(
+                Fingerprint::default(),
+                format!("template directory is unreadable: {e}"),
+            );
+        }
+    };
+    let folders = match version_folders(dir) {
+        Ok(folders) => folders,
+        Err(e) => {
+            return broken(
+                fingerprint,
+                format!("template directory is unreadable: {e}"),
+            );
+        }
+    };
+
+    let layout = if folders.versions.is_empty() {
+        match load(dir, id.clone(), max_template_bytes) {
+            LoadOutcome::Loaded(entry) => Layout::Single(Arc::from(entry)),
+            LoadOutcome::Unstable => return None,
+        }
+    } else if folders.root_files {
+        return broken(fingerprint, MIXED_LAYOUT.to_owned());
+    } else {
+        for folder in &folders.ignored {
+            tracing::warn!(
+                event = "template.version_ignored",
+                templateId = %id,
+                folder = %folder,
+                "sub-folder of a versioned template is not a MAJOR.MINOR.PATCH version"
+            );
+        }
+        let mut versions = BTreeMap::new();
+        for (version, path) in folders.versions {
+            let kept = previous.and_then(|p| p.get(version)).filter(|entry| {
+                Fingerprint::of(&path).is_ok_and(|current| current == entry.fingerprint)
+            });
+            let entry = match kept {
+                Some(entry) => entry.clone(),
+                None => match load_dir(&path, id.clone(), max_template_bytes, Some(version)) {
+                    LoadOutcome::Loaded(entry) => Arc::from(entry),
+                    LoadOutcome::Unstable => return None,
+                },
+            };
+            versions.insert(version, entry);
+        }
+        Layout::Versioned(versions)
+    };
+
+    // A version folder added or removed during the load.
+    match Fingerprint::of(dir) {
+        Ok(after) if after == fingerprint => Some(TemplateVersions {
+            fingerprint,
+            layout,
+        }),
+        _ => None,
+    }
+}
+
+/// The direct children of a template folder, hidden ones ignored.
+#[derive(Default)]
+struct VersionFolders {
+    /// Sub-folders named `MAJOR.MINOR.PATCH`.
+    versions: Vec<(Version, PathBuf)>,
+    /// Other sub-folders, by name.
+    ignored: Vec<String>,
+    /// Whether there is any file at the root.
+    root_files: bool,
+}
+
+fn version_folders(dir: &Path) -> std::io::Result<VersionFolders> {
+    let root = fs::canonicalize(dir)?;
+    let mut folders = VersionFolders::default();
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+            continue;
+        };
+        if name.starts_with('.') {
+            continue;
+        }
+        let path = entry.path();
+        // Links are followed as in the fingerprint's walk: a target outside the template
+        // folder is not part of it.
+        let Ok(target) = fs::canonicalize(&path) else {
+            continue;
+        };
+        if !target.starts_with(&root) {
+            continue;
+        }
+        if !target.is_dir() {
+            folders.root_files = true;
+        } else if let Ok(version) = name.parse::<Version>() {
+            folders.versions.push((version, path));
+        } else {
+            folders.ignored.push(name);
+        }
+    }
+    folders.ignored.sort();
+    Ok(folders)
+}
+
+/// Loads the directory `dir` of template `id` as a single version (the flat layout).
 pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome {
+    load_dir(dir, id, max_template_bytes, None)
+}
+
+/// Loads one template root: the template folder itself in the flat layout, or the version
+/// folder of `folder`.
+fn load_dir(
+    dir: &Path,
+    id: TemplateId,
+    max_template_bytes: u64,
+    folder: Option<Version>,
+) -> LoadOutcome {
+    match load_root(dir, id, max_template_bytes, folder) {
+        LoadOutcome::Loaded(mut entry) => {
+            match folder {
+                Some(version) => {
+                    entry.version = Some(version.to_string());
+                    entry.semver = Some(version);
+                }
+                None => entry.semver = entry.version.as_deref().and_then(|v| v.parse().ok()),
+            }
+            LoadOutcome::Loaded(entry)
+        }
+        LoadOutcome::Unstable => LoadOutcome::Unstable,
+    }
+}
+
+fn load_root(
+    dir: &Path,
+    id: TemplateId,
+    max_template_bytes: u64,
+    folder: Option<Version>,
+) -> LoadOutcome {
     let before = match fingerprint::scan(dir) {
         Ok(scan) => scan,
         Err(e) => {
@@ -130,14 +298,16 @@ pub fn load(dir: &Path, id: TemplateId, max_template_bytes: u64) -> LoadOutcome 
         return LoadOutcome::Loaded(Box::new(invalid(id, None, before.fingerprint, reason)));
     }
 
-    LoadOutcome::Loaded(Box::new(validate(id, files, before.fingerprint)))
+    LoadOutcome::Loaded(Box::new(validate(id, files, before.fingerprint, folder)))
 }
 
-/// Applies the data-model validity rules to a snapshot.
+/// Applies the data-model validity rules to a snapshot; `folder` is the version of a version
+/// folder, which the manifest's `version`, when given, must equal.
 fn validate(
     id: TemplateId,
     mut files: HashMap<String, Bytes>,
     fingerprint: Fingerprint,
+    folder: Option<Version>,
 ) -> TemplateEntry {
     let manifest = match files.get("template.json") {
         None => Manifest::default(),
@@ -146,6 +316,13 @@ fn validate(
             Err(e) => return invalid(id, None, fingerprint, format!("template.json: {e}")),
         },
     };
+    if let (Some(folder), Some(version)) = (folder, manifest.version.as_deref())
+        && version != folder.to_string()
+    {
+        let reason =
+            format!("template.json: version \"{version}\" does not match its folder \"{folder}\"");
+        return invalid(id, Some(manifest), fingerprint, reason);
+    }
 
     if let Err(reason) = resolve_package_imports(&mut files) {
         return invalid(id, Some(manifest), fingerprint, reason);
@@ -176,6 +353,7 @@ fn validate(
             name: manifest.name.unwrap_or_else(|| id.to_string()),
             description: manifest.description,
             version: manifest.version,
+            semver: None,
             id,
             status: TemplateStatus::Valid,
             schema: Some(schema),
@@ -283,6 +461,7 @@ fn invalid(
         name: manifest.name.unwrap_or_else(|| id.to_string()),
         description: manifest.description,
         version: manifest.version,
+        semver: None,
         id,
         status: TemplateStatus::Invalid { reason },
         schema: None,
@@ -614,5 +793,223 @@ mod tests {
         }
         writer.join().unwrap();
         assert!(saw_unstable);
+    }
+
+    // --- Versions (research R9 of feature 005) -------------------------------------------
+
+    /// An empty template folder `tpl`, to lay out flat or with version folders.
+    fn template_folder() -> Fixture {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().join("tpl");
+        fs::create_dir(&dir).unwrap();
+        Fixture { _tmp: tmp, dir }
+    }
+
+    impl Fixture {
+        /// A valid template in `folder` (relative to the template folder; `""` for the root),
+        /// with `template.json` holding `version` when given.
+        fn template(&self, folder: &str, version: Option<&str>) -> &Self {
+            let prefix = if folder.is_empty() {
+                String::new()
+            } else {
+                format!("{folder}/")
+            };
+            self.write(&format!("{prefix}main.typ"), "= Hello");
+            self.write(&format!("{prefix}schema.json"), SCHEMA);
+            if let Some(version) = version {
+                self.write(
+                    &format!("{prefix}template.json"),
+                    format!(r#"{{"version":"{version}"}}"#),
+                );
+            }
+            self
+        }
+
+        fn load_template(&self) -> TemplateVersions {
+            load_template(&self.dir, "tpl".parse().unwrap(), u64::MAX, None)
+                .expect("unexpected unstable load")
+        }
+    }
+
+    /// The versions of a template, newest first, as `(version, valid)`.
+    fn versions(template: &TemplateVersions) -> Vec<(String, bool)> {
+        template
+            .versions()
+            .iter()
+            .map(|e| (e.version.clone().unwrap(), e.is_valid()))
+            .collect()
+    }
+
+    fn version(text: &str) -> Version {
+        text.parse().unwrap()
+    }
+
+    #[test]
+    fn flat_layout_is_one_version_from_the_manifest() {
+        let f = template_folder();
+        f.template("", Some("1.2.0"));
+        let template = f.load_template();
+        assert_eq!(versions(&template), [("1.2.0".to_owned(), true)]);
+        let entry = template.default_entry();
+        assert_eq!(entry.version.as_deref(), Some("1.2.0"));
+        assert_eq!(entry.semver, Some(version("1.2.0")));
+
+        // Without a manifest version: no version at all.
+        let f = template_folder();
+        f.template("", None);
+        let template = f.load_template();
+        assert!(template.versions().is_empty());
+        assert!(template.default_entry().is_valid());
+        assert_eq!(template.default_entry().version, None);
+        assert_eq!(template.default_entry().semver, None);
+    }
+
+    #[test]
+    fn versioned_layout_loads_each_version_folder() {
+        let f = template_folder();
+        f.template("1.0.0", None)
+            .template("1.1.0", Some("1.1.0"))
+            .template("2.0.0", None);
+        f.write("2.0.0/parts/footer.typ", "footer");
+        let template = f.load_template();
+        assert_eq!(
+            versions(&template),
+            [
+                ("2.0.0".to_owned(), true),
+                ("1.1.0".to_owned(), true),
+                ("1.0.0".to_owned(), true),
+            ]
+        );
+        for entry in template.versions() {
+            assert_eq!(entry.id.as_str(), "tpl");
+            assert_eq!(
+                entry.semver.map(|v| v.to_string()).as_deref(),
+                entry.version.as_deref()
+            );
+        }
+        // Each version folder is its own root, with its own fingerprint.
+        let newest = template.default_entry();
+        assert_eq!(newest.version.as_deref(), Some("2.0.0"));
+        assert!(newest.files.contains_key("parts/footer.typ"));
+        assert!(newest.files.contains_key("main.typ"));
+        assert_ne!(
+            newest.fingerprint,
+            template.versions()[1].fingerprint,
+            "versions share a fingerprint"
+        );
+    }
+
+    #[test]
+    fn mixed_layout_makes_the_template_invalid() {
+        let f = template_folder();
+        f.template("", Some("1.0.0")).template("2.0.0", None);
+        let template = f.load_template();
+        assert_eq!(
+            template.default_entry().invalid_reason(),
+            Some("put the template files either at the root or in version folders, not both")
+        );
+        assert!(template.versions().is_empty());
+        // Any file at the root counts, not only `main.typ`.
+        let f = template_folder();
+        f.template("1.0.0", None);
+        f.write("notes.txt", "x");
+        assert_eq!(
+            f.load_template().default_entry().invalid_reason(),
+            Some(MIXED_LAYOUT)
+        );
+    }
+
+    #[test]
+    fn non_version_folders_are_skipped() {
+        let f = template_folder();
+        f.template("1.0.0", None)
+            .template("draft", None)
+            .template("1.2", None)
+            .template("v2.0.0", None)
+            .template("01.0.0", None);
+        f.write(".hidden/main.typ", "x");
+        let template = f.load_template();
+        assert_eq!(versions(&template), [("1.0.0".to_owned(), true)]);
+    }
+
+    #[test]
+    fn manifest_version_must_match_its_folder() {
+        let f = template_folder();
+        f.template("1.0.0", Some("1.0.0"))
+            .template("1.3.0", Some("1.2.0"));
+        let template = f.load_template();
+        assert_eq!(
+            versions(&template),
+            [("1.3.0".to_owned(), false), ("1.0.0".to_owned(), true)]
+        );
+        assert_eq!(
+            template.versions()[0].invalid_reason(),
+            Some(r#"template.json: version "1.2.0" does not match its folder "1.3.0""#)
+        );
+        // The invalid version does not hide the valid one.
+        assert_eq!(template.default_entry().version.as_deref(), Some("1.0.0"));
+    }
+
+    #[test]
+    fn invalid_version_keeps_its_folder_version() {
+        let f = template_folder();
+        f.template("1.0.0", None).template("2.0.0", None);
+        f.write("2.0.0/schema.json", "{");
+        let template = f.load_template();
+        let invalid = template.versions()[0];
+        assert_eq!(invalid.version.as_deref(), Some("2.0.0"));
+        assert_eq!(invalid.semver, Some(version("2.0.0")));
+        assert!(invalid.invalid_reason().unwrap().contains("schema.json"));
+    }
+
+    #[test]
+    fn size_limit_applies_to_each_version_folder() {
+        let f = template_folder();
+        f.template("1.0.0", None).template("2.0.0", None);
+        f.write("1.0.0/assets/a.bin", vec![0u8; 600]);
+        f.write("2.0.0/assets/b.bin", vec![0u8; 600]);
+        let template = load_template(&f.dir, "tpl".parse().unwrap(), 1024, None).unwrap();
+        // 1200 bytes in all, but each version is under the limit.
+        assert_eq!(
+            versions(&template),
+            [("2.0.0".to_owned(), true), ("1.0.0".to_owned(), true)]
+        );
+    }
+
+    #[test]
+    fn flat_manifest_version_that_does_not_parse_is_shown_as_is() {
+        for written in ["1.0", "v1"] {
+            let f = template_folder();
+            f.template("", Some(written));
+            let template = f.load_template();
+            assert_eq!(versions(&template), [(written.to_owned(), true)]);
+            assert_eq!(template.default_entry().semver, None);
+        }
+    }
+
+    #[test]
+    fn versions_are_ordered_numerically() {
+        let f = template_folder();
+        f.template("1.9.0", None)
+            .template("1.10.0", None)
+            .template("1.2.0", None);
+        let listed: Vec<_> = versions(&f.load_template())
+            .into_iter()
+            .map(|(v, _)| v)
+            .collect();
+        assert_eq!(listed, ["1.10.0", "1.9.0", "1.2.0"]);
+    }
+
+    #[test]
+    fn unchanged_versions_are_kept_on_reload() {
+        let f = template_folder();
+        f.template("1.0.0", None).template("2.0.0", None);
+        let first = f.load_template();
+        f.write("2.0.0/main.typ", "= Changed");
+        let id: TemplateId = "tpl".parse().unwrap();
+        let second = load_template(&f.dir, id, u64::MAX, Some(&first)).unwrap();
+        assert!(Arc::ptr_eq(first.versions()[1], second.versions()[1]));
+        assert!(!Arc::ptr_eq(first.versions()[0], second.versions()[0]));
+        assert_ne!(first.fingerprint(), second.fingerprint());
     }
 }

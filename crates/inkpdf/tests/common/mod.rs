@@ -185,6 +185,7 @@ pub fn entry_with_main(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry:
         name: id.to_owned(),
         description: None,
         version: None,
+        semver: None,
         status: TemplateStatus::Valid,
         schema: None,
         example: None,

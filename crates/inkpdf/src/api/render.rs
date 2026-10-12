@@ -12,9 +12,13 @@ use utoipa::openapi::RefOr;
 use utoipa::openapi::schema::{ObjectBuilder, Schema, Type};
 
 use crate::AppState;
-use crate::api::templates::{self, TemplatePath};
+use crate::api::templates::{self, TemplatePath, parse_version};
 use crate::error::{ApiError, Problem};
+use crate::registry::VersionSelector;
 use crate::render::{self, Interface};
+
+/// Response header naming the version of the template that rendered the document.
+pub const TEMPLATE_VERSION_HEADER: &str = "inkpdf-template-version";
 
 /// Generic shape; the exact shape of `data` and `layout` is given by the template's schema
 /// (`GET /templates/{templateId}/schema`).
@@ -85,7 +89,10 @@ impl ToSchema for PdfDocument {}
     responses(
         (status = 200, description = "Generated document.", content_type = "application/pdf",
             body = inline(PdfDocument),
-            headers(("Content-Disposition" = String, description = "`inline` (display) or `attachment` (download, `download=true`), with `filename` and `filename*` (UTF-8)."))),
+            headers(
+                ("Content-Disposition" = String, description = "`inline` (display) or `attachment` (download, `download=true`), with `filename` and `filename*` (UTF-8)."),
+                ("Inkpdf-Template-Version" = String, description = "Version of the template that rendered the document; absent when the template has no version."),
+            )),
         (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
         (status = 409, response = crate::api::ProblemResponse),
@@ -105,17 +112,23 @@ pub async fn render_template(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    // An unknown template is reported before any query or body error.
-    let entry = match templates::find(&state, &template_id) {
-        Ok(entry) => entry,
+    // An unknown template is reported before any query or body error, an unknown version
+    // after the query's errors.
+    let template = match templates::find(&state, &template_id) {
+        Ok(template) => template,
         Err(error) => return error.into_response(),
     };
-    let id = entry.id.clone();
+    let id = template.default_entry().id.clone();
     let fail = |error: ApiError| error.for_template(id.as_str()).into_response();
     let query = match RenderQuery::parse(query.as_deref()) {
         Ok(query) => query,
         Err(error) => return fail(error),
     };
+    let entry = match templates::select(&template, query.version) {
+        Ok(entry) => entry,
+        Err(error) => return error.into_response(),
+    };
+    let version = entry.version.clone();
 
     if !is_json(&headers) {
         return fail(ApiError::UnsupportedMediaType);
@@ -160,6 +173,10 @@ pub async fn render_template(
             if let Ok(value) = HeaderValue::from_str(&disposition) {
                 headers.insert(header::CONTENT_DISPOSITION, value);
             }
+            // A manifest version that is not a valid header value is left out.
+            if let Some(value) = version.and_then(|v| HeaderValue::from_str(&v).ok()) {
+                headers.insert(TEMPLATE_VERSION_HEADER, value);
+            }
             response
         }
         Err(error) => fail(error),
@@ -186,6 +203,10 @@ pub struct RenderQuery {
     /// File name (no path; `.pdf` appended). Default: `<templateId>.pdf`.
     #[param(max_length = 200)]
     filename: Option<String>,
+    /// Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version
+    /// (`2.0.0`). Default: the highest valid version.
+    #[param(value_type = Option<String>, pattern = r"^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))?$", example = "2.0.0")]
+    version: Option<VersionSelector>,
 }
 
 impl RenderQuery {
@@ -210,6 +231,7 @@ impl RenderQuery {
                     check_filename(&value)?;
                     parsed.filename = Some(value);
                 }
+                "version" => parsed.version = Some(parse_version(&value)?),
                 _ => {}
             }
         }
@@ -229,7 +251,7 @@ pub(crate) fn check_filename(value: &str) -> Result<(), ApiError> {
 }
 
 /// Decodes `a=b&c=d` (`application/x-www-form-urlencoded`).
-fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
+pub(crate) fn form_urlencoded_pairs(query: &str) -> Vec<(String, String)> {
     fn decode(raw: &str) -> String {
         let bytes = raw.as_bytes();
         let mut out = Vec::with_capacity(bytes.len());
@@ -329,6 +351,32 @@ mod tests {
         assert!(query.download);
         assert_eq!(query.filename.as_deref(), Some("a b c"));
         assert!(RenderQuery::parse(Some("download=yes")).is_err());
+    }
+
+    #[test]
+    fn version_is_a_major_or_an_exact_version() {
+        let version = |query: &str| RenderQuery::parse(Some(query)).map(|q| q.version);
+        assert_eq!(
+            version("version=2").unwrap(),
+            Some(VersionSelector::Major(2))
+        );
+        assert_eq!(
+            version("version=1.0.0").unwrap(),
+            Some(VersionSelector::Exact("1.0.0".parse().unwrap()))
+        );
+        for bad in ["latest", "v2", "1.2", "", "..%2F1.0.0", "1.0.0%2F.."] {
+            let error = version(&format!("version={bad}")).unwrap_err();
+            assert!(
+                matches!(
+                    error,
+                    ApiError::InvalidParameter {
+                        name: "version",
+                        ..
+                    }
+                ),
+                "{bad}: {error:?}"
+            );
+        }
     }
 
     #[test]

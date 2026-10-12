@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, RawQuery, State};
 use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
@@ -11,8 +11,9 @@ use time::format_description::well_known::Rfc3339;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AppState;
+use crate::api::render::form_urlencoded_pairs;
 use crate::error::{ApiError, TemplateError};
-use crate::registry::{TemplateEntry, TemplateStatus};
+use crate::registry::{TemplateEntry, TemplateStatus, TemplateVersions, VersionSelector};
 use crate::template::TemplateId;
 
 /// `templateId` path parameter; a malformed identifier is treated as unknown.
@@ -27,6 +28,39 @@ pub struct TemplatePath {
         example = "sample"
     )]
     pub template_id: String,
+}
+
+/// `version` query parameter of the template operations (research R9 of feature 005).
+#[derive(Debug, Default, PartialEq, Eq, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct VersionQuery {
+    /// Template version: a major version (`2`, the highest valid `2.x.y`) or an exact version
+    /// (`2.0.0`). Default: the highest valid version.
+    #[param(value_type = Option<String>, pattern = r"^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))?$", example = "2.0.0")]
+    pub version: Option<VersionSelector>,
+}
+
+impl VersionQuery {
+    fn parse(query: Option<&str>) -> Result<Self, ApiError> {
+        let mut parsed = Self::default();
+        for (key, value) in query.map(form_urlencoded_pairs).unwrap_or_default() {
+            if key == "version" {
+                parsed.version = Some(parse_version(&value)?);
+            }
+        }
+        Ok(parsed)
+    }
+}
+
+/// Rule of the `version` parameter, shared with the MCP tools: a major version or an exact
+/// version.
+pub(crate) fn parse_version(value: &str) -> Result<VersionSelector, ApiError> {
+    value.parse().map_err(
+        |e: crate::registry::version::NotASelector| ApiError::InvalidParameter {
+            name: "version",
+            message: format!("{e}, got `{value}`"),
+        },
+    )
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
@@ -44,9 +78,26 @@ pub struct TemplateSummary {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub description: Option<String>,
+    /// The version described: in the list, the default version (the highest valid one); in a
+    /// template's detail, the version selected. Absent when the template has no version.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false, example = "2.0.0")]
+    pub version: Option<String>,
+    pub status: TemplateStatusDto,
+    /// Present when `status` is `invalid`.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    pub version: Option<String>,
+    pub reason: Option<String>,
+    /// Every version of the template, newest first, valid or not. Empty when the template has
+    /// no version.
+    pub versions: Vec<TemplateVersionSummary>,
+}
+
+/// One version of a template.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TemplateVersionSummary {
+    #[schema(example = "2.0.0")]
+    pub version: String,
     pub status: TemplateStatusDto,
     /// Present when `status` is `invalid`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -87,14 +138,29 @@ pub struct TemplateList {
     pub templates: Vec<TemplateSummary>,
 }
 
-impl From<&TemplateEntry> for TemplateSummary {
-    fn from(entry: &TemplateEntry) -> Self {
-        let (status, reason) = match &entry.status {
-            TemplateStatus::Valid => (TemplateStatusDto::Valid, None),
-            TemplateStatus::Invalid { reason } => {
-                (TemplateStatusDto::Invalid, Some(reason.clone()))
-            }
-        };
+fn status(entry: &TemplateEntry) -> (TemplateStatusDto, Option<String>) {
+    match &entry.status {
+        TemplateStatus::Valid => (TemplateStatusDto::Valid, None),
+        TemplateStatus::Invalid { reason } => (TemplateStatusDto::Invalid, Some(reason.clone())),
+    }
+}
+
+impl TemplateSummary {
+    /// The summary of `entry`, one of `template`'s versions.
+    pub fn new(template: &TemplateVersions, entry: &TemplateEntry) -> Self {
+        let (status, reason) = status(entry);
+        let versions = template
+            .versions()
+            .into_iter()
+            .filter_map(|version| {
+                let (status, reason) = self::status(version);
+                Some(TemplateVersionSummary {
+                    version: version.version.clone()?,
+                    status,
+                    reason,
+                })
+            })
+            .collect();
         Self {
             id: entry.id.to_string(),
             name: entry.name.clone(),
@@ -102,14 +168,16 @@ impl From<&TemplateEntry> for TemplateSummary {
             version: entry.version.clone(),
             status,
             reason,
+            versions,
         }
     }
 }
 
-impl From<&TemplateEntry> for TemplateDetail {
-    fn from(entry: &TemplateEntry) -> Self {
+impl TemplateDetail {
+    /// The detail of `entry`, one of `template`'s versions.
+    pub fn new(template: &TemplateVersions, entry: &TemplateEntry) -> Self {
         Self {
-            summary: entry.into(),
+            summary: TemplateSummary::new(template, entry),
             loaded_at: entry.loaded_at.format(&Rfc3339).unwrap_or_default(),
             schema: entry.schema.as_ref().map(|s| s.value().clone()),
             example: entry.example.clone(),
@@ -125,7 +193,7 @@ impl From<&TemplateEntry> for TemplateDetail {
 pub(crate) fn find(
     state: &AppState,
     template_id: &str,
-) -> Result<Arc<TemplateEntry>, TemplateError> {
+) -> Result<Arc<TemplateVersions>, TemplateError> {
     let Ok(id) = template_id.parse::<TemplateId>() else {
         return Err(ApiError::TemplateNotFound.into());
     };
@@ -133,6 +201,37 @@ pub(crate) fn find(
         .registry
         .get(&id)
         .ok_or_else(|| ApiError::TemplateNotFound.for_template(id.as_str()))
+}
+
+/// The version of `template` a caller asks for (research R9 of feature 005); `None` gives the
+/// default version.
+pub(crate) fn select(
+    template: &TemplateVersions,
+    selector: Option<VersionSelector>,
+) -> Result<Arc<TemplateEntry>, TemplateError> {
+    template.resolve(selector).cloned().map_err(|not_found| {
+        let id = template.default_entry().id.to_string();
+        ApiError::TemplateVersionNotFound {
+            template_id: id.clone(),
+            selector: selector.map(|s| s.to_string()).unwrap_or_default(),
+            available: not_found.available,
+        }
+        .for_template(id)
+    })
+}
+
+/// [`find`] then [`select`], with the `version` query parameter parsed in between: an unknown
+/// template is reported before a malformed `version`.
+fn find_version(
+    state: &AppState,
+    template_id: &str,
+    query: Option<&str>,
+) -> Result<(Arc<TemplateVersions>, Arc<TemplateEntry>), TemplateError> {
+    let template = find(state, template_id)?;
+    let query = VersionQuery::parse(query)
+        .map_err(|e| e.for_template(template.default_entry().id.as_str()))?;
+    let entry = select(&template, query.version)?;
+    Ok((template, entry))
 }
 
 /// List the templates in the volume
@@ -153,7 +252,7 @@ pub(crate) fn template_list(state: &AppState) -> TemplateList {
         .registry
         .list()
         .iter()
-        .map(|entry| TemplateSummary::from(entry.as_ref()))
+        .map(|template| TemplateSummary::new(template, template.default_entry()))
         .collect();
     TemplateList { templates }
 }
@@ -164,18 +263,20 @@ pub(crate) fn template_list(state: &AppState) -> TemplateList {
     path = "/templates/{templateId}",
     tag = "templates",
     operation_id = "getTemplate",
-    params(TemplatePath),
+    params(TemplatePath, VersionQuery),
     responses(
-        (status = 200, description = "Template detail.", body = TemplateDetail),
+        (status = 200, description = "Template detail, of the version selected.", body = TemplateDetail),
+        (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
     ),
 )]
 pub async fn get_template(
     State(state): State<AppState>,
     Path(TemplatePath { template_id }): Path<TemplatePath>,
+    RawQuery(query): RawQuery,
 ) -> Response {
-    match find(&state, &template_id) {
-        Ok(entry) => Json(TemplateDetail::from(entry.as_ref())).into_response(),
+    match find_version(&state, &template_id, query.as_deref()) {
+        Ok((template, entry)) => Json(TemplateDetail::new(&template, &entry)).into_response(),
         Err(error) => error.into_response(),
     }
 }
@@ -188,10 +289,11 @@ pub async fn get_template(
     path = "/templates/{templateId}/schema",
     tag = "templates",
     operation_id = "getTemplateSchema",
-    params(TemplatePath),
+    params(TemplatePath, VersionQuery),
     responses(
         (status = 200, description = "JSON Schema (draft 2020-12).",
             content_type = "application/schema+json", body = Object),
+        (status = 400, response = crate::api::ProblemResponse),
         (status = 404, response = crate::api::ProblemResponse),
         (status = 409, response = crate::api::ProblemResponse),
     ),
@@ -199,9 +301,10 @@ pub async fn get_template(
 pub async fn get_template_schema(
     State(state): State<AppState>,
     Path(TemplatePath { template_id }): Path<TemplatePath>,
+    RawQuery(query): RawQuery,
 ) -> Response {
-    let entry = match find(&state, &template_id) {
-        Ok(entry) => entry,
+    let entry = match find_version(&state, &template_id, query.as_deref()) {
+        Ok((_, entry)) => entry,
         Err(error) => return error.into_response(),
     };
     match (&entry.status, &entry.schema) {

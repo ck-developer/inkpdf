@@ -74,6 +74,7 @@ pub async fn run(
         tracing::info!(
             event = "render",
             templateId = %entry.id,
+            templateVersion = entry.version.as_deref(),
             interface = interface.as_str(),
             durationMs = started.elapsed().as_millis() as u64,
             outcome,

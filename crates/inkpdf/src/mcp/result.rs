@@ -8,10 +8,20 @@ use rmcp::model::{CallToolResult, ContentBlock, ResourceContents};
 
 use crate::error::{ErrorCode, TemplateError};
 
-/// Result of a render: a one-line summary, then the PDF as an embedded resource (research R4).
-pub(super) fn pdf_result(template_id: &str, file_name: &str, pdf: &[u8]) -> CallToolResult {
+/// Result of a render: a one-line summary naming the template's version when it has one,
+/// then the PDF as an embedded resource (research R4).
+pub(super) fn pdf_result(
+    template_id: &str,
+    version: Option<&str>,
+    file_name: &str,
+    pdf: &[u8],
+) -> CallToolResult {
+    let template = match version {
+        Some(version) => format!("{template_id} {version}"),
+        None => template_id.to_owned(),
+    };
     let summary = format!(
-        "Rendered {file_name} from template {template_id} ({:.1} KiB).",
+        "Rendered {file_name} from template {template} ({:.1} KiB).",
         pdf.len() as f64 / 1024.0
     );
     let uri = format!(
@@ -83,6 +93,9 @@ fn hint(code: ErrorCode) -> &'static str {
         | ErrorCode::InvalidJson
         | ErrorCode::UnsupportedMediaType => "Fix the input and call render_template again.",
         ErrorCode::TemplateNotFound => "Call list_templates to see the available templates.",
+        ErrorCode::TemplateVersionNotFound => {
+            "Call get_template without a version to see the available versions."
+        }
         ErrorCode::TemplateInvalid => "This template cannot be used until the operator fixes it.",
         ErrorCode::Overloaded | ErrorCode::RenderTimeout => "Try again in a moment.",
         ErrorCode::RenderFailed => "Tell the operator; the template failed to render.",

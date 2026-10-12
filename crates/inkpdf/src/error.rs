@@ -13,6 +13,7 @@ pub const ERROR_TYPE_BASE: &str = "https://github.com/ck-developer/inkpdf/errors
 #[serde(rename_all = "kebab-case")]
 pub enum ErrorCode {
     TemplateNotFound,
+    TemplateVersionNotFound,
     InvalidJson,
     InvalidParameter,
     UnsupportedMediaType,
@@ -28,6 +29,7 @@ impl ErrorCode {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::TemplateNotFound => "template-not-found",
+            Self::TemplateVersionNotFound => "template-version-not-found",
             Self::InvalidJson => "invalid-json",
             Self::InvalidParameter => "invalid-parameter",
             Self::UnsupportedMediaType => "unsupported-media-type",
@@ -42,7 +44,7 @@ impl ErrorCode {
 
     pub fn status(self) -> StatusCode {
         match self {
-            Self::TemplateNotFound => StatusCode::NOT_FOUND,
+            Self::TemplateNotFound | Self::TemplateVersionNotFound => StatusCode::NOT_FOUND,
             Self::InvalidJson | Self::InvalidParameter => StatusCode::BAD_REQUEST,
             Self::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
             Self::ValidationFailed => StatusCode::UNPROCESSABLE_ENTITY,
@@ -57,6 +59,7 @@ impl ErrorCode {
     pub fn title(self) -> &'static str {
         match self {
             Self::TemplateNotFound => "Template not found",
+            Self::TemplateVersionNotFound => "Template version not found",
             Self::InvalidJson => "Invalid JSON",
             Self::InvalidParameter => "Invalid parameter",
             Self::UnsupportedMediaType => "Unsupported media type",
@@ -115,6 +118,10 @@ pub struct Problem {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub template_id: Option<String>,
+    /// The template's versions, newest first (`template-version-not-found`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub available_versions: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub violations: Option<Vec<Violation>>,
@@ -128,6 +135,16 @@ pub struct Problem {
 pub enum ApiError {
     #[error("template not found")]
     TemplateNotFound,
+    #[error(
+        "template {template_id} has no version matching \"{selector}\"; available: {}",
+        list_or_none(available)
+    )]
+    TemplateVersionNotFound {
+        template_id: String,
+        selector: String,
+        /// The template's versions, newest first.
+        available: Vec<String>,
+    },
     #[error("{message}")]
     InvalidJson { message: String },
     #[error("invalid query parameter `{name}`: {message}")]
@@ -152,6 +169,7 @@ impl ApiError {
     pub fn code(&self) -> ErrorCode {
         match self {
             Self::TemplateNotFound => ErrorCode::TemplateNotFound,
+            Self::TemplateVersionNotFound { .. } => ErrorCode::TemplateVersionNotFound,
             Self::InvalidJson { .. } => ErrorCode::InvalidJson,
             Self::InvalidParameter { .. } => ErrorCode::InvalidParameter,
             Self::UnsupportedMediaType => ErrorCode::UnsupportedMediaType,
@@ -175,11 +193,13 @@ impl ApiError {
     pub fn into_problem(self, template_id: Option<String>) -> Problem {
         let code = self.code();
         let detail = Some(self.to_string());
-        let (violations, diagnostics) = match self {
-            Self::ValidationFailed { violations } => (Some(violations), None),
-            Self::RenderFailed { diagnostics } => (None, Some(diagnostics)),
-            _ => (None, None),
-        };
+        let (mut available_versions, mut violations, mut diagnostics) = (None, None, None);
+        match self {
+            Self::TemplateVersionNotFound { available, .. } => available_versions = Some(available),
+            Self::ValidationFailed { violations: v } => violations = Some(v),
+            Self::RenderFailed { diagnostics: d } => diagnostics = Some(d),
+            _ => {}
+        }
         Problem {
             type_: format!("{ERROR_TYPE_BASE}{}", code.as_str()),
             title: code.title().to_string(),
@@ -187,9 +207,19 @@ impl ApiError {
             detail,
             code,
             template_id,
+            available_versions,
             violations,
             diagnostics,
         }
+    }
+}
+
+/// `a, b, c`, or `none` for an empty list.
+fn list_or_none(items: &[String]) -> String {
+    if items.is_empty() {
+        "none".to_owned()
+    } else {
+        items.join(", ")
     }
 }
 
@@ -241,6 +271,14 @@ mod tests {
     fn all() -> Vec<(ApiError, u16)> {
         vec![
             (ApiError::TemplateNotFound, 404),
+            (
+                ApiError::TemplateVersionNotFound {
+                    template_id: "t".into(),
+                    selector: "3".into(),
+                    available: vec![],
+                },
+                404,
+            ),
             (
                 ApiError::InvalidJson {
                     message: "x".into(),
@@ -298,5 +336,38 @@ mod tests {
             "/properties/data/required"
         );
         assert!(json.get("diagnostics").is_none());
+        assert!(json.get("availableVersions").is_none());
+    }
+
+    #[test]
+    fn version_not_found_lists_the_available_versions() {
+        let problem = ApiError::TemplateVersionNotFound {
+            template_id: "facture".into(),
+            selector: "3".into(),
+            available: vec!["2.0.0".into(), "1.1.0".into(), "1.0.0".into()],
+        }
+        .into_problem(Some("facture".into()));
+        let json = serde_json::to_value(&problem).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({
+                "type": "https://github.com/ck-developer/inkpdf/errors/template-version-not-found",
+                "code": "template-version-not-found",
+                "title": "Template version not found",
+                "status": 404,
+                "detail": "template facture has no version matching \"3\"; available: 2.0.0, 1.1.0, 1.0.0",
+                "templateId": "facture",
+                "availableVersions": ["2.0.0", "1.1.0", "1.0.0"],
+            })
+        );
+        let none = ApiError::TemplateVersionNotFound {
+            template_id: "flat".into(),
+            selector: "1".into(),
+            available: vec![],
+        };
+        assert_eq!(
+            none.to_string(),
+            "template flat has no version matching \"1\"; available: none"
+        );
     }
 }

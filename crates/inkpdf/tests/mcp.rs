@@ -234,20 +234,30 @@ async fn tools_list_offers_the_three_tools() {
     assert!(strings(&list["required"]).is_empty(), "{list}");
 
     let get = input_schema(tools, "get_template");
-    assert_eq!(keys(&get["properties"]), ["templateId"], "{get}");
+    assert_eq!(keys(&get["properties"]), ["templateId", "version"], "{get}");
     assert_eq!(strings(&get["required"]), ["templateId"], "{get}");
     assert_eq!(get["properties"]["templateId"]["type"], "string", "{get}");
     assert!(get["properties"]["templateId"]["description"].is_string());
+    assert_eq!(get["properties"]["version"]["type"], "string", "{get}");
+    assert!(get["properties"]["version"]["description"].is_string());
 
     let render = input_schema(tools, "render_template");
     let properties = &render["properties"];
     assert_eq!(
         keys(properties),
-        ["data", "filename", "layout", "metadata", "templateId"],
+        [
+            "data",
+            "filename",
+            "layout",
+            "metadata",
+            "templateId",
+            "version"
+        ],
         "{render}"
     );
     assert_eq!(strings(&render["required"]), ["data", "templateId"]);
     assert_eq!(properties["templateId"]["type"], "string");
+    assert_eq!(properties["version"]["type"], "string");
     assert_eq!(properties["data"]["type"], "object");
     assert_eq!(properties["layout"]["type"], "object");
     assert_eq!(properties["filename"]["type"], "string");
@@ -416,7 +426,8 @@ async fn render_result_carries_a_summary_and_the_pdf() {
     assert_eq!(content[0]["type"], "text");
     let summary = content[0]["text"].as_str().unwrap();
     assert!(
-        summary.starts_with("Rendered sample.pdf from template sample (")
+        // The `sample` fixture's manifest gives version 1.0.0.
+        summary.starts_with("Rendered sample.pdf from template sample 1.0.0 (")
             && summary.ends_with(" KiB)."),
         "{summary}"
     );
@@ -681,7 +692,8 @@ async fn malformed_arguments_are_tool_errors() {
     let volume = examples_volume();
     let app = mcp_app(&volume);
     let data = sample_request()["data"].clone();
-    let render_arguments = "render_template takes data, filename, layout, metadata, templateId";
+    let render_arguments =
+        "render_template takes data, filename, layout, metadata, templateId, version";
     let cases = [
         (
             "render_template",
@@ -805,6 +817,93 @@ async fn unknown_template_invites_to_list_the_templates() {
         let result = call_tool(&app, "get_template", json!({ "templateId": id })).await;
         assert_tool_error(&result, &expected, LIST_TEMPLATES);
     }
+}
+
+/// The `sample` fixture copied as `facture/1.0.0/` and `facture/2.0.0/`, each naming its
+/// version in the document.
+fn versions_volume() -> TestVolume {
+    let volume = TestVolume::new();
+    for version in ["1.0.0", "2.0.0"] {
+        let folder = format!("facture/{version}");
+        volume.copy_template(&sample_template(), &folder);
+        let manifest = json!({ "name": "Facture", "version": version });
+        volume.write_file(&format!("{folder}/template.json"), manifest.to_string());
+        let main = volume.path().join(&folder).join("main.typ");
+        let text = fs::read_to_string(&main).unwrap();
+        fs::write(main, format!("{text}\nTemplate version {version}\n")).unwrap();
+    }
+    volume
+}
+
+const NO_VERSION_HINT: &str = "Call get_template without a version to see the available versions.";
+
+#[tokio::test]
+async fn tools_take_an_optional_version() {
+    let volume = versions_volume();
+    let app = mcp_app(&volume);
+
+    for (version, expected) in [
+        (None, "2.0.0"),
+        (Some("1"), "1.0.0"),
+        (Some("2.0.0"), "2.0.0"),
+    ] {
+        let mut args = json!({ "templateId": "facture" });
+        if let Some(version) = version {
+            args["version"] = version.into();
+        }
+        let result = call_tool(&app, "get_template", args.clone()).await;
+        assert_eq!(result["isError"], false, "{result}");
+        let detail = &result["structuredContent"];
+        assert_eq!(detail["version"], expected, "{version:?}");
+        assert_eq!(detail["versions"].as_array().unwrap().len(), 2);
+
+        let mut args = render_args("facture", &sample_request());
+        if let Some(version) = version {
+            args["version"] = version.into();
+        }
+        let result = call_tool(&app, "render_template", args).await;
+        assert_eq!(result["isError"], false, "{result}");
+        let summary = texts(&result)[0];
+        assert!(
+            summary.starts_with(&format!(
+                "Rendered facture.pdf from template facture {expected} ("
+            )),
+            "{summary}"
+        );
+        let pdf = base64_decode(result["content"][1]["resource"]["blob"].as_str().unwrap());
+        let text = pdf_text(&pdf);
+        assert!(
+            text.contains(&format!("Template version {expected}")),
+            "{text}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn unknown_version_invites_to_read_the_versions() {
+    let volume = versions_volume();
+    let app = mcp_app(&volume);
+
+    let expected = http_problem(&app, "facture", "?version=3", &sample_request()).await;
+    assert_eq!(expected["code"], "template-version-not-found");
+    assert_eq!(expected["availableVersions"], json!(["2.0.0", "1.0.0"]));
+    let mut args = render_args("facture", &sample_request());
+    args["version"] = "3".into();
+    let result = call_tool(&app, "render_template", args).await;
+    assert_tool_error(&result, &expected, NO_VERSION_HINT);
+
+    let (_, expected) = get_json(&app, "/templates/facture?version=3").await;
+    let args = json!({ "templateId": "facture", "version": "3" });
+    let result = call_tool(&app, "get_template", args).await;
+    assert_tool_error(&result, &expected, NO_VERSION_HINT);
+
+    // A malformed version is an invalid parameter, as over HTTP.
+    let expected = http_problem(&app, "facture", "?version=latest", &sample_request()).await;
+    assert_eq!(expected["code"], "invalid-parameter");
+    let mut args = render_args("facture", &sample_request());
+    args["version"] = "latest".into();
+    let result = call_tool(&app, "render_template", args).await;
+    assert_tool_error(&result, &expected, FIX_INPUT);
 }
 
 #[tokio::test]
