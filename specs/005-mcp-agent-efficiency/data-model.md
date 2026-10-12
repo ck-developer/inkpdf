@@ -25,15 +25,21 @@ field.
 | Field | Change |
 |---|---|
 | `example: Option<serde_json::Value>` | **new**: the example as written, present only if it passed the load-time check |
-| `version: Option<Version>` | **new**: the version folder's number (versioned layout); the flat layout keeps the manifest's version |
+| `version: Option<String>` | existing; now the version shown to callers: the folder name (versioned layout) or the manifest's `version` (flat layout) |
+| `semver: Option<Version>` | **new**: `version` parsed as `MAJOR.MINOR.PATCH`, used for ordering and selection; `None` when there is no version or, in the flat layout, when the manifest's version does not parse (`1.0`, `v1`) |
 
 ## Template versions (registry)
 
 - `Version`: `MAJOR.MINOR.PATCH`, three integers, ordered numerically.
+- Flat layout: a manifest version that parses is selectable like any version; one that does not is
+  shown as is and used when no version is asked for, and any explicit selector gives
+  `template-version-not-found`.
 - `TemplateMap`: `BTreeMap<TemplateId, TemplateVersions>`; `TemplateVersions` is either the single
   flat entry or a `BTreeMap<Version, Arc<TemplateEntry>>`, plus the reason when the layout is mixed.
 - Selection: absent → highest valid; `MAJOR` → highest valid of that major; exact → that version.
 - Each version is loaded, fingerprinted and checked independently.
+- `INKPDF_MAX_TEMPLATE_BYTES` applies per version folder. Every version stays loaded, so memory
+  grows with the number of loaded versions (noted in the deployment documentation).
 
 ## Configuration
 

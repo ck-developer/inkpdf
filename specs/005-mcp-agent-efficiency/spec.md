@@ -303,6 +303,10 @@ check it does not appear until a restart; start it with hot reload on and check 
   rendering it without a version returns the same "template unavailable" error as today.
 - A version selector that is not a version number (`latest`, `v2`): refused with a clear error on
   the version parameter.
+- A template laid out as today whose `template.json` version is not a `MAJOR.MINOR.PATCH` number
+  (`1.0`, `v1`): the version is shown as written and used when no version is asked for; asking for
+  any version returns "version not found". A version that is such a number can be asked for like
+  any other.
 - The removed templates were used by automated checks and benchmarks: those checks move to the
   demonstration template or to dedicated test fixtures, and keep the same coverage.
 
@@ -376,8 +380,8 @@ check it does not appear until a restart; start it with hot reload on and check 
   version: an exact version or a major version number. Without one, the most recent valid version
   MUST be used. An unknown version MUST return a "version not found" error listing the available
   versions.
-- **FR-018**: Every render MUST state the version used, through HTTP and MCP, and the logs MUST
-  record it.
+- **FR-018**: Every render of a template that has a version MUST state it, through HTTP and MCP,
+  and the logs MUST record it.
 - **FR-019**: The template list MUST show, for each template, its available versions with their
   status and the version used by default.
 

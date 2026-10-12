@@ -104,7 +104,9 @@ reusable; checking it at load guarantees SC-003 and keeps a broken example from 
   > the default unless the user mentions it, or leave the variable out if it has none. Without a role, treat a required variable as `ask`
   > and an optional one with a default as `default`. Never invent a value you should have asked
   > for. Start from the example's structure. Then call `render_template`; if it returns validation
-  > errors, ask the user about those fields only and call it again.
+  > errors, ask the user about those fields only and call it again. Use a template's default
+  > version unless the user asks for a specific one; `get_template` and `render_template` take an
+  > optional `version`.
 
 - **`get_template` description**: mentions the `example` and the `x-role` annotations.
 - No change to the tool list or to the render result.
@@ -240,7 +242,9 @@ product).
 **Decision.**
 - **Layout**, decided per template folder `<id>/` (constitution 2.0.0, principle II):
   - **flat**: `main.typ` and the other files at the root, as today. One version: the `version` of
-    `template.json`, or none.
+    `template.json`, or none. A manifest version that parses as `MAJOR.MINOR.PATCH` is selectable
+    like any version. One that does not (`1.0`, `v1`) is shown as is and used when no version is
+    asked for; any explicit selector then gives `template-version-not-found`.
   - **versioned**: only sub-folders named `MAJOR.MINOR.PATCH` (numbers only), each a complete
     template folder. A `template.json` inside a version folder may omit `version`; if it gives one,
     it must equal the folder name, or that version is invalid
@@ -253,8 +257,13 @@ product).
   `TemplateVersions` holds a `BTreeMap<Version, Arc<TemplateEntry>>` (`Version` = three `u32`,
   ordered numerically) or the single flat entry. Each version is loaded, fingerprinted and checked
   on its own; its Typst root is its own folder, so self-containment is per version.
-  `TemplateEntry` gains `version: Option<Version>` for the folder version (the manifest version
-  stays as the flat layout's version).
+  `TemplateEntry.version: Option<String>` stays the version shown to callers: the folder name in
+  the versioned layout, the manifest version in the flat layout. `TemplateEntry` gains
+  `semver: Option<Version>`, that version parsed as `MAJOR.MINOR.PATCH`, used for ordering and
+  selection (`None` for a flat template without a version or whose version does not parse).
+- **Size and memory**: `INKPDF_MAX_TEMPLATE_BYTES` applies per version folder, not per template.
+  Every version stays loaded, so memory grows with the number of loaded versions; the deployment
+  documentation says so.
 - **Selection**, `version` parameter (optional):
   - absent → the highest **valid** version;
   - `MAJOR` (`1`) → the highest valid `1.x.y`;
@@ -262,7 +271,8 @@ product).
     usual `template-invalid` error;
   - anything else (`latest`, `v2`, `1.2`) → `invalid-parameter` on `version`;
   - nothing matches → new error `template-version-not-found` (404). Its `detail` lists the available
-    versions; the problem object also carries an `availableVersions` array.
+    versions; the problem object also carries an `availableVersions` array. A flat template whose
+    manifest version does not parse never matches a selector.
   - All versions invalid and no selector → `template-invalid`, as today for a single template.
 - **HTTP**: a `version` query parameter on `GET /templates/{id}`, `GET /templates/{id}/schema` and
   `POST /templates/{id}/render`, with the same parsing as `download` and `filename`. Every render
@@ -298,8 +308,12 @@ and lets authors copy `1.0.0/` to `2.0.0/` to start a new version. Choosing by m
 
 **Decision.**
 - New setting `INKPDF_HOT_RELOAD` (`true`, `false`, `1`, `0`; default `false`).
-- `false`: `main.rs` does the initial `scan_all` and starts neither the file watcher nor the
-  periodic rescan. The registry never changes while the service runs.
+- The decision to start the watcher moves into a library function,
+  `inkpdf::spawn_background_tasks(&state)`, which `main.rs` calls after the initial `scan_all`. It
+  returns the watcher handle only when `hot_reload` is on, so the choice can be tested without
+  starting the binary.
+- `false`: `spawn_background_tasks` starts neither the file watcher nor the periodic rescan and
+  returns no handle. The registry never changes while the service runs.
 - `true`: today's behaviour (`registry::watcher::spawn` with `INKPDF_RESCAN_INTERVAL_SECS`).
 - The `server.listening` log line gains `hotReload: true|false`.
 - `compose.yaml`, the local development setup, sets `INKPDF_HOT_RELOAD: "${INKPDF_HOT_RELOAD:-true}"`.
@@ -311,8 +325,9 @@ and lets authors copy `1.0.0/` to `2.0.0/` to start a new version. Choosing by m
     downtime;
   - `concepts/hot-reload.md` becomes "Loading templates": startup loading, hot reload for
     development.
-- Tests: `hot_reload.rs` turns `hot_reload` on in its config. A new test checks that with the
-  default config a template added after startup is not listed.
+- Tests: `spawn_background_tasks` starts no watcher with the default config, so a template added
+  after startup is not listed, and starts one with `hot_reload: true`. `hot_reload.rs` keeps
+  spawning its watcher directly, so it needs no config change.
 
 **Rationale.** The user wants no hot reload in production; with versions, a frozen set of
 templates means a caller always gets the version it asked for (constitution 2.0.0, principle V).

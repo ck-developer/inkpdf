@@ -86,7 +86,7 @@ Dependencies.
 ### Implementation
 
 - [ ] T007 [US1] In `TemplateSchema::load` (`crates/inkpdf/src/template/schema.rs`), walk the schema and check every `x-role` value. Cover `properties`, `items`, `prefixItems`, `additionalProperties`, `$defs`, `allOf`, `anyOf`, `oneOf`, `if`, `then`, `else`, `not`. Report the first invalid role with its JSON pointer (research R1).
-- [ ] T008 [US1] Replace the server instructions in `crates/inkpdf/src/mcp/mod.rs` with the text of research R4. Update the `get_template` description in `crates/inkpdf/src/mcp/tools.rs` as in [contracts/template-format.md](./contracts/template-format.md).
+- [ ] T008 [US1] Replace the server instructions in `crates/inkpdf/src/mcp/mod.rs` with the text of research R4, including its last sentence: "Use a template's default version unless the user asks for a specific one; `get_template` and `render_template` take an optional `version`." Update the `get_template` description in `crates/inkpdf/src/mcp/tools.rs` as in [contracts/template-format.md](./contracts/template-format.md).
 - [ ] T009 [P] [US1] Document `x-role`:
   - in `docs/src/reference/template-format.md`: values, meaning, where allowed, fallback, load-time error;
   - in `docs/src/guides/mcp.md`: the new instructions and how assistants use roles.
@@ -221,8 +221,9 @@ Dependencies.
 
 - [ ] T027 [P] [US7] Registry unit tests in `crates/inkpdf/src/registry/loader.rs` and `crates/inkpdf/src/registry/mod.rs`:
   - **Layouts**: the flat layout gives one version (the manifest's); the versioned layout loads each version folder; the mixed layout makes the template invalid with the reason of the contract.
+  - **Flat manifest versions**: `1.2.0` is selectable by `1` and `1.2.0`; `1.0` and `v1` are shown as is and used without a selector, and any explicit selector gives `template-version-not-found`.
   - **Bad folders and manifests**: a non-version sub-folder is skipped and logged; a manifest version that differs from its folder makes that version invalid; an invalid version does not hide the others.
-  - **Selection**: none → highest valid; `1` → highest valid `1.x.y`; an exact version → that version, even invalid; a malformed selector → error.
+  - **Selection**: none → highest valid; `1` → highest valid `1.x.y`; an exact version → that version, even invalid; a malformed selector (`latest`, `1.2`, `../1.0.0`, `1.0.0/..`) → error.
   - **Ordering**: numeric (`1.10.0` > `1.9.0`).
 - [ ] T028 [P] [US7] HTTP tests in a new `crates/inkpdf/tests/api_versions.rs`. Build a `TestVolume` with the `sample` fixture copied as `facture/1.0.0`, `facture/1.1.0` and `facture/2.0.0`, setting each `template.json` version and changing a visible title so the PDFs differ.
   - `GET /templates` shows `versions`, newest first, with their status, and the default `version`.
@@ -231,9 +232,10 @@ Dependencies.
     - without a version → `2.0.0`;
     - `1` → `1.1.0`;
     - `1.0.0` → `1.0.0`;
+    - `2` → `2.0.0`;
     - each response has `Inkpdf-Template-Version`.
   - `version=3` gives 404 `template-version-not-found` with `availableVersions`.
-  - `version=latest` gives 400 `invalid-parameter`.
+  - `version=latest`, `version=../1.0.0` and `version=1.0.0/..` give 400 `invalid-parameter`.
   - When `2.0.0` is made invalid, the default is `1.1.0`.
 - [ ] T029 [P] [US7] MCP and live OpenAPI tests:
   - in `crates/inkpdf/tests/mcp.rs`: `get_template` and `render_template` with `version`; the render text names the version; the `template-version-not-found` tool error carries the contract's hint;
@@ -246,7 +248,7 @@ Dependencies.
   - `Version`;
   - layout detection, and per-version loading and fingerprinting in `loader.rs`, with each version folder as its Typst root;
   - `TemplateVersions` and selection (`resolve(id, selector)`) in `mod.rs`;
-  - `TemplateEntry.version`;
+  - `TemplateEntry.version` (kept as the version shown to callers: the folder name, or the manifest version in the flat layout) and the new `TemplateEntry.semver: Option<Version>` (the parsed version, used for ordering and selection);
   - rescans that still work per version when hot reload is on (`watcher.rs`).
 - [ ] T031 [US7] Add `TemplateVersionNotFound { available }` (404, `template-version-not-found`, with `availableVersions` in the problem object) to `crates/inkpdf/src/error.rs`, and the `version` case of `invalid-parameter`. Regenerate `docs/src/reference/errors.md` with `cargo xtask docs generate`.
 - [ ] T032 [US7] HTTP:
@@ -278,13 +280,16 @@ Dependencies.
 
 - [ ] T035 [P] [US8] Tests:
   - in `crates/inkpdf/src/config.rs`: unit tests for `INKPDF_HOT_RELOAD` (default `false`; `true`, `false`, `1`, `0`; a refused value);
-  - in `crates/inkpdf/tests/hot_reload.rs`: turn hot reload on in its config;
-  - in `crates/inkpdf/tests/startup.rs`: a test, using the same way of starting the service as the existing startup tests, showing that with the default config a template added after startup is not listed, and that `server.listening` logs `hotReload: false`.
-- [ ] T036 [US8] Add `hot_reload: bool` to `Config` in `crates/inkpdf/src/config.rs`. In `crates/inkpdf/src/main.rs`, spawn `registry::watcher` only when it is on, and add `hotReload` to the `server.listening` log.
+  - in `crates/inkpdf/tests/startup.rs`: tests of `inkpdf::spawn_background_tasks(&state)`, after the initial scan as in the existing startup tests:
+    - with the default config, it returns no watcher, and a template added after startup is still not listed once the rescan interval has passed;
+    - with `hot_reload: true`, it returns a watcher, and the added template is listed.
+
+  `crates/inkpdf/tests/hot_reload.rs` spawns its watcher directly and needs no change.
+- [ ] T036 [US8] Add `hot_reload: bool` to `Config` in `crates/inkpdf/src/config.rs`. In `crates/inkpdf/src/lib.rs`, add `spawn_background_tasks(&AppState) -> Option<WatcherHandle>`, which spawns `registry::watcher` only when `hot_reload` is on (research R10). In `crates/inkpdf/src/main.rs`, call it after the initial scan instead of spawning the watcher, and add `hotReload` to the `server.listening` log.
 - [ ] T037 [P] [US8] Development setup and documentation:
   - set `INKPDF_HOT_RELOAD: "${INKPDF_HOT_RELOAD:-true}"` in `compose.yaml`;
   - document the variable in `docs/src/reference/configuration.md` (checked by `cargo xtask docs check`), and note that `INKPDF_RESCAN_INTERVAL_SECS` only applies with hot reload;
-  - in `docs/src/operations/deployment.md`: publish a template or version by restarting, with a rolling restart to avoid downtime; the Compose example shows the default;
+  - in `docs/src/operations/deployment.md`: publish a template or version by restarting, with a rolling restart to avoid downtime; `INKPDF_MAX_TEMPLATE_BYTES` applies per version folder, and memory grows with the number of loaded versions; the Compose example shows the default;
   - rename `docs/src/concepts/hot-reload.md` to "Loading templates" (title and `SUMMARY.md`): startup loading, and hot reload for development;
   - in the `write-template` skill: a new template appears at once with hot reload, otherwise after a restart.
 
@@ -371,7 +376,7 @@ Dependencies.
 - **US4 (Phase 6)**: after Phase 2; independent of US1. T020 regenerates the OpenAPI contract.
 - **US5 (Phase 7)**: after Phase 2. T025 and T007 both change `template/schema.rs`, so do them one after the other or merge carefully.
 - **US7 (Phase 8)**: after US4, since both change `registry/loader.rs`. T032 regenerates the OpenAPI contract again.
-- **US8 (Phase 9)**: after Phase 2. T036 touches `main.rs` only; T037 and T034 both edit the `write-template` skill, so do them one after the other.
+- **US8 (Phase 9)**: after Phase 2. T036 touches `config.rs`, `lib.rs` and `main.rs`; T037 and T034 both edit the `write-template` skill, so do them one after the other.
 - **US6 (Phase 10)**:
   - T038 needs US1 (roles), US4 (example), US5 (formats) and US7 (the versioned layout `demo/1.0.0/`);
   - T039 needs T038;
@@ -384,7 +389,7 @@ The phases of the P2 stories are ordered by dependency: US7 and US8 come before 
 ### Parallel Opportunities
 
 - Setup: T001 ∥ T002.
-- After Phase 2: US1 (`template/schema.rs`, `mcp/`) ∥ US4 (`registry/`, `api/`) ∥ US8 (`config.rs`, `main.rs`) ∥ the skill writing of US2 and US3 (`plugins/`, `xtask/`).
+- After Phase 2: US1 (`template/schema.rs`, `mcp/`) ∥ US4 (`registry/`, `api/`) ∥ US8 (`config.rs`, `lib.rs`, `main.rs`) ∥ the skill writing of US2 and US3 (`plugins/`, `xtask/`).
 - Tests within a story: T004 ∥ T005 ∥ T006; T017 ∥ T018; T023 ∥ T024; T027 ∥ T028 ∥ T029.
 - Docs: T009, T012, T016, T022, T026, T034, T037, T041 and T042 touch different pages, so they can run in parallel, apart from the shared skill file noted under US8.
 
@@ -393,7 +398,7 @@ The phases of the P2 stories are ordered by dependency: US7 and US8 come before 
 ```text
 Task: "T004–T008 US1 roles in crates/inkpdf/src/template/schema.rs and crates/inkpdf/src/mcp/"
 Task: "T017–T021 US4 example in crates/inkpdf/src/registry/ and crates/inkpdf/src/api/"
-Task: "T035–T036 US8 loading in crates/inkpdf/src/config.rs and crates/inkpdf/src/main.rs"
+Task: "T035–T036 US8 loading in crates/inkpdf/src/config.rs, crates/inkpdf/src/lib.rs and crates/inkpdf/src/main.rs"
 Task: "T010, T014 skills in plugins/inkpdf/skills/"
 ```
 
