@@ -75,5 +75,5 @@ plugin call cannot be interrupted before it finishes; see
 - [Using bundled packages](../guides/packages.md): QR codes, charts, amounts and dates in practice.
 - [Adding or updating a package](../contributing/packages.md): for maintainers.
 
-The repository's `examples/templates/packages-demo` template uses a QR code, a formatted amount
-and a chart.
+The repository's `demo` template (`examples/templates/demo`) formats its total with the `zero`
+package.

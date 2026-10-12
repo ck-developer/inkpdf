@@ -257,42 +257,48 @@ the structure and the formats right at the first attempt. The
 
 ## A worked conversation
 
-With the example templates loaded and Claude connected, the user writes:
+With the example volume loaded and Claude connected, the user writes:
 
-> Make me a one-page summary titled "Q3 expenses": rent 1,200, software 340, travel 515.
+> Make a document for Jane Doe, 1 Example Street, 75001 Paris: 12 notebooks at 3.50 and a desk
+> lamp at 49.90.
 
-1. The assistant calls `list_templates`. Among `packages-demo`, `progress-invoice` and
-   `sample`, it picks `sample`: "A title and a table of labels and values".
-2. It calls `get_template` with `{ "templateId": "sample" }`. The schema says that
-   `data.title` and `data.items` are required, each item having a `label` and a `value` (a
-   number, 0 or more). `layout` has `primaryColor`, `align` and `showFooter`, all with
-   defaults.
-3. It already knows every required field, so it does not ask. It calls `render_template`:
+1. The assistant calls `list_templates` and picks `demo`, "Demo document".
+2. It calls `get_template` with `{ "templateId": "demo" }`. The schema says that `title`,
+   `recipient` and `lines` are `ask`, that `reference` and `date` are `fill` (build
+   `DEMO-YYYY-NNN`; today's date), and that `urgent`, `status`, `note` and every `layout`
+   setting are `default`. The `example` shows a complete input, with amounts as strings such
+   as `"3.50"`.
+3. The user gave the recipient and the lines, but no title, which is `ask`: the assistant asks
+   for it, and only for it. The user answers "Office supplies".
+4. It fills in the reference and the date itself, leaves the defaults out, and calls
+   `render_template`:
 
    ```json
    {
-     "templateId": "sample",
+     "templateId": "demo",
      "data": {
-       "title": "Q3 expenses",
-       "items": [
-         { "label": "Rent", "value": 1200 },
-         { "label": "Software", "value": 340 },
-         { "label": "Travel", "value": 515 }
+       "title": "Office supplies",
+       "reference": "DEMO-2026-001",
+       "date": "2026-10-12",
+       "recipient": { "name": "Jane Doe", "address": "1 Example Street\n75001 Paris" },
+       "lines": [
+         { "label": "Notebooks", "quantity": 12, "amount": "3.50" },
+         { "label": "Desk lamp", "quantity": 1, "amount": "49.90" }
        ]
      },
-     "filename": "q3-expenses"
+     "filename": "office-supplies"
    }
    ```
 
-4. The tool answers `Rendered q3-expenses.pdf from template sample (14.4 KiB).` with the PDF,
-   which the assistant hands to the user.
+5. The tool answers `Rendered office-supplies.pdf from template demo 1.0.0 (20.1 KiB).` with the
+   PDF, which the assistant hands to the user.
 
 The user then asks for the same document "in pink". The assistant sends
-`"layout": { "primaryColor": "pink" }`, and the tool answers with an error:
+`"layout": { "accentColor": "pink" }`, and the tool answers with an error:
 
 ```text
 Validation failed: 1 violation(s)
-- /layout/primaryColor: "pink" does not match "^#[0-9a-fA-F]{6}$"
+- /layout/accentColor: "pink" does not match "^#[0-9a-fA-F]{6}$"
 Fix the input and call render_template again.
 ```
 

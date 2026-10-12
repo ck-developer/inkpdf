@@ -25,8 +25,8 @@ foundation: it knows nothing about invoices or reports — your templates define
 git clone https://github.com/ck-developer/inkpdf && cd inkpdf
 docker run --rm -p 3000:3000 -v "$PWD/examples/templates:/templates:ro" ghcr.io/ck-developer/inkpdf:dev
 
-curl -s -H 'content-type: application/json' -d @examples/requests/sample.json \
-  -o sample.pdf localhost:3000/templates/sample/render
+curl -s -H 'content-type: application/json' -d @examples/templates/demo/1.0.0/example.json \
+  -o demo.pdf localhost:3000/templates/demo/render
 ```
 
 Then open <http://localhost:3000/docs> to explore the API, one typed operation per template.
@@ -35,8 +35,8 @@ Then open <http://localhost:3000/docs> to explore the API, one typed operation p
 
 - **Documentation**: <https://ck-developer.github.io/inkpdf/> — getting started, concepts,
   writing templates, best practices, reference, operations.
-- **Examples**: [`examples/templates`](examples/templates) (from a minimal sample to a
-  multi-page construction progress invoice) and a [Bruno](https://www.usebruno.com) collection
+- **Examples**: [`examples/templates`](examples/templates) (`demo`, a neutral document that
+  uses every template possibility) and a [Bruno](https://www.usebruno.com) collection
   in [`examples/bruno`](examples/bruno).
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
   · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md).

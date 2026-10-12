@@ -97,9 +97,7 @@ curl -s localhost:3000/openapi.json | jq '.paths | keys'
   "/packages",
   "/ready",
   "/templates",
-  "/templates/packages-demo/render",
-  "/templates/progress-invoice/render",
-  "/templates/sample/render",
+  "/templates/demo/render",
   "/templates/{templateId}",
   "/templates/{templateId}/render",
   "/templates/{templateId}/schema"
@@ -111,11 +109,11 @@ For a template with id `<id>`, the document adds:
 | Element | Value |
 |---|---|
 | Path | `POST /templates/<id>/render` |
-| `operationId` | `render_<id>`, with `-` replaced by `_` (`render_progress_invoice`) |
+| `operationId` | `render_<id>`, with `-` replaced by `_` (`render_demo`; `render_my_report` for `my-report`) |
 | `summary` | the template's `name` |
 | `description` | its `description`, followed by `(version <version>)`, both from the default version |
 | Parameters | `download`, `filename` and `version`, as on the generic operation |
-| Request body | `<P>RenderRequest`, where `<P>` is the id in PascalCase (`ProgressInvoice`), with the template's `example`, when it has one, as its example |
+| Request body | `<P>RenderRequest`, where `<P>` is the id in PascalCase (`Demo`; `MyReport` for `my-report`), with the template's `example`, when it has one, as its example |
 | Components | `<P>RenderRequest`, `<P>Data`, `<P>Layout` (if the template declares `layout`), `<P>_<name>` for each `$defs` entry, and the shared `DocumentMetadata` |
 
 `<P>RenderRequest` is closed (`additionalProperties: false`), and its `required` list is the
@@ -175,15 +173,14 @@ The result exposes, for instance, `renderProgressInvoice(...)` taking a
 ## The Bruno collection
 
 The repository ships a [Bruno](https://www.usebruno.com) collection in `examples/bruno` that
-covers every route against the example templates:
+covers every route against the example volume, which holds the `demo` template:
 
 | Folder | Requests |
 |---|---|
 | `1 Operations` | health, readiness, OpenAPI document |
-| `2 Templates` | list, detail, raw schema |
+| `2 Templates` | list, detail, raw schema, detail of a selected version (`?version=1`) |
 | `3 Packages` | list of bundled packages |
-| `4 Render` | sample inline and as a download, sample with `metadata`, package demo, and a deliberate `422` (a body using the old `design` key instead of `layout`) |
-| `5 Progress invoice` | the four example invoices, plus one as a download |
+| `4 Render` | the `demo` example inline and as a download, every `layout` setting changed, a selected version (`?version=1`), and three deliberate errors: a body using the old `design` key instead of `layout` (`422`), an impossible date (`422`) and an unknown version (`404`) |
 
 To use it:
 
@@ -198,8 +195,8 @@ To use it:
    another instance);
 4. run a request, a folder or the whole collection. Each request asserts its expected status.
 
-The render bodies are copies of the files in `examples/requests`. A request whose `docs` block
-says `Source: examples/requests/<file>.json` must contain exactly that body, and a test in the
+Most render bodies are copies of the template's `example.json`. A request whose `docs` block
+says `Source: <file>.json` must contain exactly that file's body, and a test in the
 repository fails if they drift apart or if a request targets a route that does not exist. You
 can apply the same approach to your own templates; see
 [Best practices](best-practices.md).

@@ -32,9 +32,8 @@ A render request is therefore always shaped like this:
 The body is validated against the template's schema before Typst runs. A valid body is passed to
 Typst as data (`sys.inputs`), never as code, and compiled to PDF.
 
-The templates in the repository's `examples/templates` folder (a neutral sample, a package demo,
-a multi-page progress invoice) are illustrations. They are not a required structure: a template
-can model any document with any schema.
+The `demo` template in the repository's `examples/templates` folder, a neutral document, is an
+illustration, not a required structure: a template can model any document with any schema.
 
 ## What the service provides
 

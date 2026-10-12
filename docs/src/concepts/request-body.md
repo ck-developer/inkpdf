@@ -77,10 +77,10 @@ once, from the three sections together:
   "title": "…",
   "status": 422,
   "code": "validation-failed",
-  "templateId": "sample",
+  "templateId": "demo",
   "violations": [
     { "path": "/data/title", "schemaPath": "/properties/data/properties/title/minLength", "message": "…" },
-    { "path": "/layout/align", "schemaPath": "/properties/layout/properties/align/enum", "message": "…" },
+    { "path": "/layout/density", "schemaPath": "/properties/layout/properties/density/enum", "message": "…" },
     { "path": "/metadata/date", "schemaPath": "/properties/date", "message": "\"2026-02-30\" is not a valid calendar date" }
   ]
 }
@@ -126,8 +126,8 @@ The render URL accepts two optional parameters that only change the response hea
 
 ```bash
 curl -s -OJ -H 'Content-Type: application/json' \
-  -d @examples/requests/sample.json \
-  'localhost:3000/templates/sample/render?download=true&filename=report-2026-10'
+  -d @examples/templates/demo/1.0.0/example.json \
+  'localhost:3000/templates/demo/render?download=true&filename=report-2026-10'
 ```
 
 ## Finding the shape of a template's body

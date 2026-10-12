@@ -49,27 +49,33 @@ Each template is reported with a `status` of `valid` or `invalid`; an invalid te
 
 ## Render a first PDF
 
-The `sample` template takes a title and a list of labels and values. Send the example request
-from `examples/requests`:
+The `demo` template is a neutral document: a title, a reference, a date, a recipient and a
+table of lines with a total. Send the example it ships with:
 
 ```bash
 curl -s -H 'Content-Type: application/json' \
-  -d @examples/requests/sample.json \
-  -o sample.pdf \
-  localhost:3000/templates/sample/render
+  -d @examples/templates/demo/1.0.0/example.json \
+  -o demo.pdf \
+  localhost:3000/templates/demo/render
 ```
 
-Open `sample.pdf`. The request only contains `data`: every `layout` parameter took its default
-value from the template's schema. Change the appearance by adding a `layout` section:
+Open `demo.pdf`. The request has no `layout` section: every `layout` parameter took its default
+value from the template's schema. Change the appearance by adding one:
 
 ```bash
 curl -s -H 'Content-Type: application/json' \
   -d '{
-        "data": { "title": "Hello", "items": [{ "label": "A", "value": 1 }] },
-        "layout": { "primaryColor": "#8b0000", "align": "center", "showFooter": false }
+        "data": {
+          "title": "Hello",
+          "reference": "DEMO-2026-002",
+          "date": "2026-10-12",
+          "recipient": { "name": "Jane Doe", "address": "1 Example Street" },
+          "lines": [{ "label": "Notebooks", "quantity": 2, "amount": "3.50" }]
+        },
+        "layout": { "accentColor": "#8b0000", "density": "compact", "showTotal": false }
       }' \
   -o hello.pdf \
-  localhost:3000/templates/sample/render
+  localhost:3000/templates/demo/render
 ```
 
 By default the PDF is returned inline (`Content-Disposition: inline`). Add `?download=true` to
@@ -77,8 +83,8 @@ get an attachment, and `filename` to name it:
 
 ```bash
 curl -s -OJ -H 'Content-Type: application/json' \
-  -d @examples/requests/sample.json \
-  'localhost:3000/templates/sample/render?download=true&filename=my-report'
+  -d @examples/templates/demo/1.0.0/example.json \
+  'localhost:3000/templates/demo/render?download=true&filename=my-document'
 ```
 
 ## Explore the API

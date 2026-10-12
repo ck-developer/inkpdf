@@ -17,12 +17,12 @@ Add `?download=true` to ask browsers to save the file instead, and `filename` to
 
 ```sh
 curl -s -OJ -H 'Content-Type: application/json' \
-  -d @examples/requests/sample.json \
-  'localhost:3000/templates/sample/render?download=true&filename=sample-report'
+  -d @examples/templates/demo/1.0.0/example.json \
+  'localhost:3000/templates/demo/render?download=true&filename=demo-document'
 ```
 
 ```text
-Content-Disposition: attachment; filename="sample-report.pdf"; filename*=UTF-8''sample-report.pdf
+Content-Disposition: attachment; filename="demo-document.pdf"; filename*=UTF-8''demo-document.pdf
 ```
 
 (`curl -OJ` saves the file under the name given by the header.)
@@ -68,7 +68,7 @@ viewers and indexed by search tools:
   "metadata": {
     "title": "Invoice FA-2026-0142",
     "author": ["Example Ltd", "Accounts department"],
-    "subject": "Construction progress invoice",
+    "subject": "Office supplies",
     "keywords": ["invoice", "FA-2026-0142"],
     "date": "2026-10-10"
   }

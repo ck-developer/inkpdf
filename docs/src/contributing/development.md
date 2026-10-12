@@ -53,12 +53,12 @@ need no network.
 | `render_limits.rs` | Render timeout, concurrency and queue. |
 | `sandbox.rs` | Reads outside the template folder, outgoing links, packages, injection. |
 | `bundled_packages.rs` | Every bundled package imports and works; the set is closed under imports; lock file, archives and docs agree. |
-| `examples.rs` | Every example request renders; the progress invoice totals are exact. |
+| `examples.rs` | The example volume holds `demo` only: a description and a role on every variable, its example and every `layout` setting render, impossible dates are refused; the Bruno collection matches the API. |
 | `startup.rs` | Startup with many templates, many concurrent renders. |
 | `perf.rs` | Latency guard (ignored by default, see below). |
 
-Template fixtures are in `tests/fixtures/templates/` (one folder per scenario, such as `slow`
-or `evil-parent`), and the per-package smoke templates in `tests/fixtures/package-smoke/`.
+Template fixtures are in `tests/fixtures/templates/` (one folder per scenario, such as `sample`,
+`slow` or `evil-parent`), with their request bodies in `tests/fixtures/requests/`, and the per-package smoke templates in `tests/fixtures/package-smoke/`.
 Unit tests sit next to the code, in `#[cfg(test)]` modules.
 
 ### OpenAPI contract
@@ -80,8 +80,8 @@ INKPDF_UPDATE_OPENAPI=1 cargo test -p inkpdf --test contract_openapi
 cargo test --release -p inkpdf --test perf -- --ignored
 ```
 
-It fails if the p95 render time exceeds 200 ms for the simple `sample` template, or 1 s for
-`packages-demo`. For finer, comparable measurements, use the Criterion benchmark:
+It fails if the p95 render time exceeds 200 ms for the simple `sample` fixture, or 1 s for the
+fixture that uses several bundled packages. For finer, comparable measurements, use the Criterion benchmark:
 
 ```sh
 cargo bench -p inkpdf --bench render

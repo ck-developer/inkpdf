@@ -116,9 +116,8 @@ Date in another language:
 #custom-date-format(datetime(year: 2026, month: 10, day: 10), pattern: "long", lang: "fr")
 ```
 
-SEPA payment QR code, French amount in words and more are used in the
-[progress invoice](progress-invoice.md). The `packages-demo` example template in the repository
-combines a QR code, a formatted amount and a chart.
+The `demo` template of the repository's example volume formats its total with `zero`; see
+[Writing a template](writing-a-template.md).
 
 ## WASM packages
 
