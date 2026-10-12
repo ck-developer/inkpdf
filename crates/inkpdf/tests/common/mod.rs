@@ -187,6 +187,7 @@ pub fn entry_with_main(id: &str, main: &str) -> std::sync::Arc<inkpdf::registry:
         version: None,
         status: TemplateStatus::Valid,
         schema: None,
+        example: None,
         files,
         fonts: None,
         fingerprint: Fingerprint::default(),

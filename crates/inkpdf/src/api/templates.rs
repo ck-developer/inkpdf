@@ -73,6 +73,12 @@ pub struct TemplateDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<Object>, nullable = false)]
     pub schema: Option<serde_json::Value>,
+    /// A complete, valid request body to start from (`data`, and optionally `layout` and
+    /// `metadata`), as the template's `example.json` gives it. Absent when the template ships
+    /// none, or when it does not pass the template's schema.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>, nullable = false)]
+    pub example: Option<serde_json::Value>,
     pub links: TemplateLinks,
 }
 
@@ -106,6 +112,7 @@ impl From<&TemplateEntry> for TemplateDetail {
             summary: entry.into(),
             loaded_at: entry.loaded_at.format(&Rfc3339).unwrap_or_default(),
             schema: entry.schema.as_ref().map(|s| s.value().clone()),
+            example: entry.example.clone(),
             links: TemplateLinks {
                 schema: format!("/templates/{}/schema", entry.id),
                 render: format!("/templates/{}/render", entry.id),

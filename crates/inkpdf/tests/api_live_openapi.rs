@@ -119,6 +119,66 @@ async fn request_bodies_are_the_template_schemas() {
     assert!(schemas["SampleRenderRequest"]["properties"]["layout"].is_object());
 }
 
+/// US4 (005): a template's example is the example of its render request body; US1 (005,
+/// FR-003): the copied schemas keep their `x-role` annotations.
+#[tokio::test]
+async fn request_body_example_is_the_template_example_and_roles_are_kept() {
+    let volume = TestVolume::new();
+    let schema = serde_json::json!({
+        "type": "object",
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                    "title": { "type": "string", "description": "Title.", "x-role": "ask" },
+                    "items": {
+                        "type": "array",
+                        "items": { "$ref": "#/$defs/item" }
+                    }
+                }
+            },
+            "layout": {
+                "type": "object",
+                "properties": {
+                    "dense": { "type": "boolean", "default": false, "x-role": "default" }
+                }
+            }
+        },
+        "$defs": {
+            "item": {
+                "type": "object",
+                "properties": { "label": { "type": "string", "x-role": "fill" } }
+            }
+        }
+    });
+    let example = serde_json::json!({ "data": { "title": "Hello", "items": [{ "label": "A" }] } });
+    volume
+        .write_file("roles/main.typ", "= Roles")
+        .write_file("roles/schema.json", schema.to_string())
+        .write_file("roles/example.json", example.to_string())
+        .copy_template(&sample_template(), "sample");
+    let app = test_app(test_config(&volume));
+    let doc = document(&app).await;
+
+    let content = &doc["paths"]["/templates/roles/render"]["post"]["requestBody"]["content"]["application/json"];
+    assert_eq!(content["example"], example);
+    // Without `example.json`, no example.
+    let sample = &doc["paths"]["/templates/sample/render"]["post"]["requestBody"]["content"]["application/json"];
+    assert!(sample.get("example").is_none(), "{sample}");
+
+    let schemas = &doc["components"]["schemas"];
+    assert_eq!(schemas["RolesData"]["properties"]["title"]["x-role"], "ask");
+    assert_eq!(
+        schemas["RolesLayout"]["properties"]["dense"]["x-role"],
+        "default"
+    );
+    assert_eq!(
+        schemas["Roles_item"]["properties"]["label"]["x-role"],
+        "fill"
+    );
+}
+
 #[tokio::test]
 async fn every_reference_resolves() {
     let volume = examples_volume();

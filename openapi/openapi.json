@@ -269,6 +269,10 @@
           },
           {
             "properties": {
+              "example": {
+                "description": "A complete, valid request body to start from (`data`, and optionally `layout` and\n`metadata`), as the template's `example.json` gives it. Absent when the template ships\nnone, or when it does not pass the template's schema.",
+                "type": "object"
+              },
               "links": {
                 "$ref": "#/components/schemas/TemplateLinks"
               },

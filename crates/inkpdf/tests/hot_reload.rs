@@ -101,6 +101,26 @@ async fn modified_main_typ_is_used_by_later_renders() {
     .await;
 }
 
+/// US4 (005): `example.json` is a template file; editing it reloads the template.
+#[tokio::test(flavor = "multi_thread")]
+async fn edited_example_is_picked_up() {
+    let example = |title: &str| serde_json::json!({ "data": { "title": title, "items": [{ "label": "A", "value": 1 }] } });
+    let volume = TestVolume::new();
+    volume
+        .copy_template(&sample_template(), "sample")
+        .write_file("sample/example.json", example("First").to_string());
+    let live = live_app(&volume);
+    let (_, body) = get_json(&live.app, "/templates/sample").await;
+    assert_eq!(body["example"], example("First"));
+
+    volume.write_file("sample/example.json", example("Second").to_string());
+    eventually("new example served", || async {
+        let (_, body) = get_json(&live.app, "/templates/sample").await;
+        body["example"] == example("Second")
+    })
+    .await;
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn corrupted_schema_marks_only_that_template_invalid() {
     let volume = TestVolume::new();

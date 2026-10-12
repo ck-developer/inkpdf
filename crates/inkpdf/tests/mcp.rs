@@ -306,6 +306,32 @@ async fn get_template_returns_the_http_detail() {
     }
 }
 
+/// US4 (005): `get_template` gives the template's example, which `render_template` accepts as
+/// is.
+#[tokio::test]
+async fn get_template_gives_an_example_that_renders() {
+    let volume = TestVolume::new();
+    let example = json!({
+        "data": { "title": "Example", "items": [{ "label": "Alpha", "value": 1.5 }] },
+        "layout": { "align": "center" },
+        "metadata": { "title": "Example document" }
+    });
+    volume
+        .copy_template(&sample_template(), "sample")
+        .write_file("sample/example.json", example.to_string());
+    let app = mcp_app(&volume);
+
+    let result = call_tool(&app, "get_template", json!({ "templateId": "sample" })).await;
+
+    assert_eq!(result["isError"], false, "{result}");
+    assert_eq!(result["structuredContent"]["example"], example);
+    let result = call_tool(&app, "render_template", render_args("sample", &example)).await;
+    assert_eq!(result["isError"], false, "{result}");
+    let (status, _, expected) = post_json(&app, "/templates/sample/render", &example).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(decode_pdf(&result) == expected, "the PDF differs");
+}
+
 #[tokio::test]
 async fn empty_volume_lists_no_template() {
     let volume = TestVolume::new();

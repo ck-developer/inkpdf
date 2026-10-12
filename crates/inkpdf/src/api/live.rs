@@ -114,12 +114,15 @@ pub fn build<'a>(base: &Value, templates: impl IntoIterator<Item = &'a TemplateE
         if let Some(Value::Array(parameters)) = operation.get_mut("parameters") {
             parameters.retain(|p| p["in"] != "path");
         }
+        // The template's example, when it ships a valid one, is a ready-to-send body
+        // (research R3 of feature 005).
+        let mut content = json!({ "schema": { "$ref": schema_ref(&request) } });
+        if let Some(example) = &entry.example {
+            content["example"] = example.clone();
+        }
         operation.insert(
             "requestBody".into(),
-            json!({
-                "required": true,
-                "content": { "application/json": { "schema": { "$ref": schema_ref(&request) } } },
-            }),
+            json!({ "required": true, "content": { "application/json": content } }),
         );
 
         document["paths"][format!("/templates/{id}/render")] = json!({ "post": operation });

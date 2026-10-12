@@ -211,3 +211,49 @@ async fn invalid_role_makes_the_template_invalid() {
     assert_eq!(good["status"], "valid", "{good}");
     assert!(good.get("reason").is_none());
 }
+
+/// A valid example of the `sample` fixture, with metadata.
+fn sample_example() -> serde_json::Value {
+    serde_json::json!({
+        "data": { "title": "Example", "items": [{ "label": "Alpha", "value": 1.5 }] },
+        "metadata": { "title": "Example document" }
+    })
+}
+
+/// US4 (005): the detail carries the template's example only when it passes the template's
+/// schema; the list never carries it.
+#[tokio::test]
+async fn detail_carries_the_example_only_when_it_is_valid() {
+    let volume = TestVolume::new();
+    let example = sample_example();
+    volume
+        .copy_template(&sample_template(), "with-example")
+        .write_file("with-example/example.json", example.to_string())
+        .copy_template(&sample_template(), "broken-example")
+        .write_file(
+            "broken-example/example.json",
+            r#"{ "data": { "title": "", "items": [] } }"#,
+        )
+        .copy_template(&sample_template(), "no-example");
+    let app = test_app(test_config(&volume));
+
+    let (status, body) = get_json(&app, "/templates/with-example").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["example"], example);
+    for id in ["broken-example", "no-example"] {
+        let (status, body) = get_json(&app, &format!("/templates/{id}")).await;
+        assert_eq!(status, StatusCode::OK, "{id}");
+        assert_eq!(body["status"], "valid", "{id}");
+        assert!(body.get("example").is_none(), "{id}: {body}");
+    }
+
+    let (_, body) = get_json(&app, "/templates").await;
+    for template in body["templates"].as_array().unwrap() {
+        assert!(template.get("example").is_none(), "{template}");
+    }
+
+    // SC-003: the example renders as is.
+    let (status, headers, _) = post_json(&app, "/templates/with-example/render", &example).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(headers[header::CONTENT_TYPE], "application/pdf");
+}

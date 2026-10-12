@@ -13,7 +13,11 @@ use typst::foundations::Bytes;
 
 use super::fingerprint::{self, Fingerprint};
 use crate::render::fonts::{self, FontSet};
+use crate::render::metadata;
 use crate::template::{Manifest, TemplateId, TemplateSchema, imports};
+
+/// Name of the optional example request body of a template (research R3 of feature 005).
+const EXAMPLE_FILE: &str = "example.json";
 
 /// Status of a template after loading.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,6 +35,9 @@ pub struct TemplateEntry {
     pub status: TemplateStatus,
     /// Present if the template is valid.
     pub schema: Option<TemplateSchema>,
+    /// The template's `example.json` as written, present only if the template is valid and
+    /// the example passed the load-time check.
+    pub example: Option<serde_json::Value>,
     /// Snapshot of all files; key = `/`-separated relative path.
     pub files: HashMap<String, Bytes>,
     /// Embedded fonts + template fonts (present if valid).
@@ -165,6 +172,7 @@ fn validate(
 
     match checked {
         Ok((schema, fonts)) => TemplateEntry {
+            example: example(&id, &schema, &files),
             name: manifest.name.unwrap_or_else(|| id.to_string()),
             description: manifest.description,
             version: manifest.version,
@@ -178,6 +186,57 @@ fn validate(
         },
         Err(reason) => invalid(id, Some(manifest), fingerprint, reason),
     }
+}
+
+/// The template's `example.json`, if it passes [`check_example`]; otherwise it is dropped and
+/// logged, and the template stays valid (FR-006 of feature 005).
+fn example(
+    id: &TemplateId,
+    schema: &TemplateSchema,
+    files: &HashMap<String, Bytes>,
+) -> Option<serde_json::Value> {
+    let raw = files.get(EXAMPLE_FILE)?;
+    match check_example(schema, raw) {
+        Ok(example) => Some(example),
+        Err(reason) => {
+            // The reason names the faulty paths; the example itself is not logged.
+            tracing::warn!(
+                event = "template.example_invalid",
+                templateId = %id,
+                reason = %reason,
+            );
+            None
+        }
+    }
+}
+
+/// Checks an example like a render body (research R3 of feature 005): `metadata` against the
+/// service's schema, then `data` and `layout` against the template's, `layout` defaults
+/// applied. Returns the example as written, or the reason it fails: one `path: message` per
+/// violation, `; `-separated, or the JSON error.
+fn check_example(schema: &TemplateSchema, raw: &[u8]) -> Result<serde_json::Value, String> {
+    let example: serde_json::Value =
+        serde_json::from_slice(raw).map_err(|e| format!("invalid JSON: {e}"))?;
+    // Checked on a copy: `metadata` extraction and `layout` defaults change it.
+    let mut body = example
+        .as_object()
+        .cloned()
+        .ok_or("the example must be a JSON object (a render body)")?;
+    let mut violations = metadata::extract(&mut body).err().unwrap_or_default();
+    violations.extend(
+        schema
+            .prepare(serde_json::Value::Object(body))
+            .err()
+            .unwrap_or_default(),
+    );
+    if violations.is_empty() {
+        return Ok(example);
+    }
+    Err(violations
+        .iter()
+        .map(|v| format!("{}: {}", v.path, v.message))
+        .collect::<Vec<_>>()
+        .join("; "))
 }
 
 /// Rewrites the `@preview/<name>` imports of each `.typ` file with the installed version;
@@ -227,6 +286,7 @@ fn invalid(
         id,
         status: TemplateStatus::Invalid { reason },
         schema: None,
+        example: None,
         files: HashMap::new(),
         fonts: None,
         fingerprint,
@@ -400,6 +460,119 @@ mod tests {
         assert!(reason.contains("1024"), "{reason}");
         assert!(reason.contains(&entry.fingerprint.total_bytes.to_string()));
         assert!(entry.files.is_empty());
+    }
+
+    /// A `data.title`, a `data.date` with `format: date` and a `layout` with a default.
+    const EXAMPLE_SCHEMA: &str = r##"{
+        "type": "object",
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": ["title"],
+                "additionalProperties": false,
+                "properties": {
+                    "title": { "type": "string", "minLength": 1 },
+                    "date": { "type": "string", "format": "date" }
+                }
+            },
+            "layout": {
+                "type": "object",
+                "properties": { "color": { "type": "string", "default": "#000000" } }
+            }
+        }
+    }"##;
+
+    fn with_example(example: &str) -> TemplateEntry {
+        let f = Fixture::new();
+        f.write("schema.json", EXAMPLE_SCHEMA);
+        f.write("example.json", example);
+        f.load()
+    }
+
+    #[test]
+    fn valid_example_is_kept_as_written() {
+        let example = r#"{
+            "data": { "title": "Report", "date": "2024-02-29" },
+            "metadata": { "title": "Quarterly report", "author": ["A", "B"] }
+        }"#;
+        let entry = with_example(example);
+        assert!(entry.is_valid(), "{:?}", entry.status);
+        // As written: `metadata` kept, no `layout` defaults added.
+        assert_eq!(
+            entry.example,
+            Some(serde_json::from_str::<serde_json::Value>(example).unwrap())
+        );
+    }
+
+    #[test]
+    fn failing_example_is_dropped_and_the_template_stays_valid() {
+        for example in [
+            // Breaks the template's schema.
+            r#"{ "data": { "title": "" , "colour": "red" } }"#,
+            r#"{ "data": { "title": "T", "date": "2026-02-30" } }"#,
+            r#"{ "data": { "title": "T" }, "layout": { "color": 1 } }"#,
+            // Breaks the metadata schema.
+            r#"{ "data": { "title": "T" }, "metadata": { "date": "01/10/2026" } }"#,
+            r#"{ "data": { "title": "T" }, "metadata": { "colour": "red" } }"#,
+            // Not a render body.
+            r#"[{ "data": { "title": "T" } }]"#,
+            // Malformed JSON.
+            r#"{ "data": "#,
+        ] {
+            let entry = with_example(example);
+            assert!(entry.is_valid(), "{example}: {:?}", entry.status);
+            assert_eq!(entry.example, None, "{example}");
+            assert!(entry.files.contains_key("example.json"), "{example}");
+        }
+    }
+
+    #[test]
+    fn template_without_example_has_none() {
+        let f = Fixture::new();
+        f.write("schema.json", EXAMPLE_SCHEMA);
+        let entry = f.load();
+        assert!(entry.is_valid());
+        assert_eq!(entry.example, None);
+    }
+
+    #[test]
+    fn example_of_an_invalid_template_is_not_checked() {
+        let f = Fixture::new();
+        f.write("example.json", r#"{ "data": {} }"#);
+        fs::remove_file(f.dir.join("main.typ")).unwrap();
+        let entry = f.load();
+        assert!(!entry.is_valid());
+        assert_eq!(entry.example, None);
+    }
+
+    #[test]
+    fn example_check_gives_the_violations_or_the_json_error() {
+        let schema = TemplateSchema::load(Bytes::new(EXAMPLE_SCHEMA.as_bytes().to_vec())).unwrap();
+        let check = |example: &str| check_example(&schema, example.as_bytes());
+
+        assert_eq!(
+            check(r#"{ "data": { "title": "T", "date": "2026-02-30" } }"#),
+            Err("/data/date: \"2026-02-30\" is not a valid calendar date (YYYY-MM-DD)".into())
+        );
+        // Every violation, `metadata` first, as in a render's problem.
+        assert_eq!(
+            check(r#"{ "data": {}, "metadata": { "date": "x" } }"#),
+            Err(
+                "/metadata/date: \"x\" does not match \"^[0-9]{4}-[0-9]{2}-[0-9]{2}$\"; \
+                 /data: \"title\" is a required property"
+                    .into()
+            )
+        );
+        assert_eq!(
+            check(r#"{ "data": "#),
+            Err("invalid JSON: EOF while parsing a value at line 1 column 10".into())
+        );
+        assert_eq!(
+            check("[]"),
+            Err("the example must be a JSON object (a render body)".into())
+        );
+        let valid = r#"{ "data": { "title": "T" } }"#;
+        assert_eq!(check(valid), Ok(serde_json::from_str(valid).unwrap()));
     }
 
     #[cfg(unix)]
