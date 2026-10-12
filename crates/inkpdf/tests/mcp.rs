@@ -834,6 +834,21 @@ async fn browser_origins_are_refused_and_private_hosts_accepted() {
     );
 }
 
+/// FR-002: the MCP server answers at `/mcp` only; a path below it is unknown.
+#[tokio::test]
+async fn paths_below_mcp_are_unknown() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+    for path in ["/mcp/", "/mcp/tools"] {
+        let mut request = rpc_request(1, "tools/list", Value::Null, STATELESS_PROTOCOL);
+        *request.uri_mut() = path.parse().unwrap();
+
+        let (status, body) = send_rpc(&app, request).await;
+
+        assert_eq!(status, StatusCode::NOT_FOUND, "{path}: {body}");
+    }
+}
+
 /// Stateless with JSON responses: no stream for server-initiated messages.
 #[tokio::test]
 async fn get_on_mcp_is_not_allowed() {

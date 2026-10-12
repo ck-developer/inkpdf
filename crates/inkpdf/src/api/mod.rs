@@ -95,8 +95,9 @@ pub fn build_app(state: AppState) -> Router {
     let (router, _api) = router().split_for_parts();
     let mut router = router.route("/docs", axum::routing::get(docs::docs_page));
     if state.config.mcp_enabled {
-        // Outside the OpenAPI router: the OpenAPI document does not change (FR-016).
-        router = router.nest_service(
+        // Outside the OpenAPI router: the OpenAPI document does not change (FR-016). At
+        // `/mcp` only, not below it (FR-002).
+        router = router.route_service(
             "/mcp",
             mcp::service(state.clone(), state.shutdown.child_token()),
         );
