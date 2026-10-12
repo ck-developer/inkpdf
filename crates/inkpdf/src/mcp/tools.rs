@@ -110,9 +110,9 @@ impl InkpdfMcp {
 
     #[tool(
         description = "Get one template's details and the JSON Schema of the data it expects \
-            (`data`, `layout`, `metadata`): required fields, types, allowed values, \
-            descriptions and defaults. Ask the user for every required field you do not know \
-            before rendering.",
+            (`data` and `layout`): required fields, types, allowed values, descriptions and \
+            defaults; `metadata` is described in render_template's input schema. Ask the user \
+            for every required field you do not know before rendering.",
         annotations(read_only_hint = true, idempotent_hint = true, open_world_hint = false)
     )]
     async fn get_template(&self, Parameters(args): Parameters<GetTemplateArgs>) -> CallToolResult {

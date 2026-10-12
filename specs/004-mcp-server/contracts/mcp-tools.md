@@ -42,8 +42,9 @@ openWorldHint: false }`.
 ### `get_template`
 
 - **Description**: "Get one template's details and the JSON Schema of the data it expects
-  (`data`, `layout`, `metadata`): required fields, types, allowed values, descriptions and
-  defaults. Ask the user for every required field you do not know before rendering."
+  (`data` and `layout`): required fields, types, allowed values, descriptions and defaults;
+  `metadata` is described in render_template's input schema. Ask the user for every required
+  field you do not know before rendering."
 - **Input**:
 
   ```json
@@ -91,21 +92,23 @@ openWorldHint: false }`.
 
 ## Tool errors
 
-A pipeline error is a successful JSON-RPC response with `isError: true`:
+A pipeline error is a successful JSON-RPC response with `isError: true`. Its text is the
+problem's title and detail, one line per violation (`- <path>: <message>`, `(root)` for an
+empty path) or Typst diagnostic (`- <file>:<line>:<column>: <message>`), then the closing hint:
 
 ```json
-{ "content": [ { "type": "text", "text": "Validation failed: the input does not match the template's schema.\n- /data/employee/name: required property missing\n- /layout/accent: \"pink\" is not one of [\"blue\",\"green\"]\nFix the input and call render_template again." } ],
+{ "content": [ { "type": "text", "text": "Validation failed: 2 violation(s)\n- /data/employee: \"name\" is a required property\n- /layout/accent: \"pink\" is not one of \"blue\" or \"green\"\nFix the input and call render_template again." } ],
   "structuredContent": { "type": "https://github.com/ck-developer/inkpdf/errors/validation-failed",
                          "code": "validation-failed",
-                         "title": "Validation failed", "status": 422, "detail": "…",
+                         "title": "Validation failed", "status": 422, "detail": "2 violation(s)",
                          "templateId": "employer-certificate", "violations": [ … ] },
   "isError": true }
 ```
 
 | Error slug | Closing hint in the text |
 |---|---|
-| `validation-failed`, `invalid-parameter`, `payload-too-large` | Fix the input and call `render_template` again. |
-| `template-not-found` | Call `list_templates` to see the available templates. |
+| `validation-failed`, `invalid-parameter`, `payload-too-large` | Fix the input and call render_template again. |
+| `template-not-found` | Call list_templates to see the available templates. |
 | `template-invalid` | This template cannot be used until the operator fixes it. |
 | `overloaded`, `render-timeout` | Try again in a moment. |
 | `render-failed` | Tell the operator; the template failed to render. |

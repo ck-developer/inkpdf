@@ -175,7 +175,7 @@ template in the volume shows up at the next listing, without a restart, as for t
 | Tool | Input | Result |
 |------|-------|--------|
 | `list_templates` | none | Every template with its id, name, description, version and status (`valid`, or `invalid` with the reason). The same JSON as `GET /templates`. With no template loaded, the list is empty and the text says "No template is loaded." |
-| `get_template` | `templateId` | The template's details and its JSON Schema: `data`, `layout` and `metadata`, with the required fields, types, allowed values, descriptions and defaults. The same JSON as `GET /templates/{templateId}`. |
+| `get_template` | `templateId` | The template's details and its JSON Schema: `data` and `layout`, with the required fields, types, allowed values, descriptions and defaults. The same JSON as `GET /templates/{templateId}`. `metadata` is described in the input schema of `render_template`. |
 | `render_template` | `templateId`, `data`, and optionally `layout`, `metadata`, `filename` | A short text (`Rendered <file> from template <id> (<size>).`) and the PDF itself, as a file (`application/pdf`). |
 
 For `render_template`:
@@ -233,7 +233,7 @@ The user then asks for the same document "in pink". The assistant sends
 `"layout": { "primaryColor": "pink" }`, and the tool answers with an error:
 
 ```text
-Validation failed: the input does not match the template's schema.
+Validation failed: 1 violation(s)
 - /layout/primaryColor: "pink" does not match "^#[0-9a-fA-F]{6}$"
 Fix the input and call render_template again.
 ```
