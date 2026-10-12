@@ -899,6 +899,24 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_version_cannot_reach_a_sibling_version() {
+        // Each version folder is its own root: a link to a sibling version escapes it.
+        let f = template_folder();
+        f.template("1.0.0", None).template("2.0.0", None);
+        fs::create_dir_all(f.dir.join("2.0.0/assets")).unwrap();
+        std::os::unix::fs::symlink("../../1.0.0/main.typ", f.dir.join("2.0.0/assets/x")).unwrap();
+        std::os::unix::fs::symlink("../1.0.0", f.dir.join("2.0.0/old")).unwrap();
+        let template = f.load_template();
+        let newest = template.default_entry();
+        assert_eq!(newest.version.as_deref(), Some("2.0.0"));
+        assert!(newest.is_valid());
+        assert!(!newest.files.contains_key("assets/x"));
+        assert!(!newest.files.keys().any(|path| path.starts_with("old")));
+        assert!(template.versions()[1].files.contains_key("main.typ"));
+    }
+
     #[test]
     fn mixed_layout_makes_the_template_invalid() {
         let f = template_folder();
