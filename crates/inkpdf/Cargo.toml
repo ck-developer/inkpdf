@@ -51,6 +51,9 @@ rmcp = { version = "3.5", default-features = false, features = ["server", "macro
 # `CancellationToken` of the MCP service's shutdown; rmcp does not re-export it and already
 # depends on this crate.
 tokio-util = "0.7"
+# Base64 of the PDF returned by the MCP render tool; rmcp does not re-export it and already
+# depends on this crate.
+base64 = "0.23"
 
 # Embedded Typst packages: verified and extracted by build.rs (specs/002-typst-packages, R1).
 [build-dependencies]

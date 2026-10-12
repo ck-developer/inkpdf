@@ -3,12 +3,15 @@
 //! Streamable HTTP transport, stateless, JSON responses. The tools offer the HTTP API's
 //! read-only operations through the same pipeline and limits (constitution VI).
 
+mod result;
+mod tools;
+
 use std::sync::Arc;
 
-use rmcp::ServerHandler;
 use rmcp::model::{Implementation, ServerCapabilities, ServerConfig};
 use rmcp::transport::streamable_http_server::session::never::NeverSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
+use rmcp::{ServerHandler, tool_handler};
 use tokio_util::sync::CancellationToken;
 
 use crate::AppState;
@@ -29,7 +32,6 @@ and call it again.";
 /// service's state (registry snapshot, render slots, configuration).
 #[derive(Clone)]
 pub struct InkpdfMcp {
-    #[allow(dead_code, reason = "read by the tools, added with user story 1")]
     state: AppState,
 }
 
@@ -39,6 +41,8 @@ impl InkpdfMcp {
     }
 }
 
+/// Tools of [`tools`]; `tools/list` and `tools/call` come from its router.
+#[tool_handler]
 impl ServerHandler for InkpdfMcp {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(ServerCapabilities::builder().enable_tools().build())

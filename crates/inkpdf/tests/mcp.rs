@@ -3,133 +3,100 @@
 
 mod common;
 
-use axum::Router;
-use axum::body::Body;
-use axum::http::{Request, StatusCode};
+use std::fs;
+
+use axum::http::StatusCode;
+use common::mcp::*;
 use common::*;
 use inkpdf::Config;
 use serde_json::{Value, json};
 
-/// Protocol of the stateless path: no `initialize`, per-request `_meta` and headers.
-const STATELESS_PROTOCOL: &str = "2026-07-28";
-
-/// Last protocol with an `initialize` handshake, as sent by current clients.
-const HANDSHAKE_PROTOCOL: &str = "2025-06-18";
-
-/// `test_config` with the MCP interface on.
-fn mcp_config(volume: &TestVolume) -> Config {
-    Config {
-        mcp_enabled: true,
-        ..test_config(volume)
+/// The example templates, plus a template whose schema does not load.
+fn examples_volume() -> TestVolume {
+    let volume = TestVolume::new();
+    for template in ["sample", "packages-demo", "progress-invoice"] {
+        volume.copy_template(
+            &repo_root().join("examples/templates").join(template),
+            template,
+        );
     }
+    volume.copy_template(&fixture("invalid-schema"), "invalid-schema");
+    volume
 }
 
-/// `test_app` with the MCP interface on.
-fn mcp_app(volume: &TestVolume) -> Router {
-    test_app(mcp_config(volume))
+/// Request body from `examples/requests/`.
+fn example_request(path: &str) -> Value {
+    let raw = fs::read(repo_root().join("examples/requests").join(path)).unwrap();
+    serde_json::from_slice(&raw).unwrap()
 }
 
-/// Posts one JSON-RPC request to `/mcp` as an MCP client does, and returns the HTTP status
-/// with the JSON body; a body that is not JSON (a transport refusal) comes back as a string.
-///
-/// From protocol `2026-07-28` on, adds what the stateless path requires: the `Mcp-Method`
-/// and `Mcp-Name` headers and the request `_meta` (protocol version, client capabilities).
-async fn rpc(
-    app: &Router,
-    id: u64,
-    method: &str,
-    params: Value,
-    protocol_version: &str,
-) -> (StatusCode, Value) {
-    let mut params = params;
-    let mut request = Request::post("/mcp")
-        // rmcp needs a `Host` header even with the host check off; hyper always sets one.
-        .header("host", "localhost:3000")
-        .header("content-type", "application/json")
-        .header("accept", "application/json, text/event-stream")
-        .header("mcp-protocol-version", protocol_version);
-    if protocol_version >= STATELESS_PROTOCOL {
-        request = request.header("mcp-method", method);
-        if let Some(name) = params.get("name").and_then(Value::as_str) {
-            request = request.header("mcp-name", name);
-        }
-        if params.is_null() {
-            params = json!({});
-        }
-        params["_meta"] = json!({
-            "io.modelcontextprotocol/protocolVersion": protocol_version,
-            "io.modelcontextprotocol/clientCapabilities": {},
-            "io.modelcontextprotocol/clientInfo": { "name": "inkpdf-tests", "version": "0" },
-        });
+/// Every example request with its template: `sample`, `packages-demo` and each
+/// `progress-invoice` request.
+fn example_cases() -> Vec<(&'static str, Value)> {
+    let mut cases = vec![
+        ("sample", example_request("sample.json")),
+        ("packages-demo", example_request("packages-demo.json")),
+    ];
+    let mut invoices: Vec<_> = fs::read_dir(repo_root().join("examples/requests/progress-invoice"))
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    invoices.sort();
+    for name in invoices {
+        cases.push((
+            "progress-invoice",
+            example_request(&format!("progress-invoice/{name}")),
+        ));
     }
-    let mut message = json!({ "jsonrpc": "2.0", "id": id, "method": method });
-    if !params.is_null() {
-        message["params"] = params;
-    }
-    let request = request
-        .body(Body::from(serde_json::to_vec(&message).unwrap()))
-        .unwrap();
-    let (status, _, body) = send(app, request).await;
-    let body = serde_json::from_slice(&body)
-        .unwrap_or_else(|_| Value::String(String::from_utf8_lossy(&body).into_owned()));
-    (status, body)
+    cases
 }
 
-/// `initialize` params of a client speaking `protocol_version`.
-fn initialize_params(protocol_version: &str) -> Value {
-    json!({
-        "protocolVersion": protocol_version,
-        "capabilities": {},
-        "clientInfo": { "name": "inkpdf-tests", "version": "0" },
-    })
+/// `render_template` arguments: an HTTP render body plus the template id.
+fn render_args(template_id: &str, body: &Value) -> Value {
+    let mut args = body.clone();
+    args["templateId"] = template_id.into();
+    args
 }
 
-/// `tools/call` on the stateless path (protocol `2026-07-28`); returns the JSON-RPC `result`.
-#[allow(dead_code, reason = "used by the tool tests")]
-async fn call_tool(app: &Router, name: &str, args: Value) -> Value {
-    let params = json!({ "name": name, "arguments": args });
-    let (status, body) = rpc(app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
-    assert_eq!(status, StatusCode::OK, "{body}");
-    match body.get("result") {
-        Some(result) => result.clone(),
-        None => panic!("no result: {body}"),
-    }
-}
-
-/// PDF of a `render_template` result: the base64 `blob` of its embedded resource.
-#[allow(dead_code, reason = "used by the render tests")]
-fn decode_pdf(result: &Value) -> Vec<u8> {
-    let blob = result["content"]
+/// Text of the result's text blocks, in order.
+fn texts(result: &Value) -> Vec<&str> {
+    result["content"]
         .as_array()
         .into_iter()
         .flatten()
-        .find_map(|block| block["resource"]["blob"].as_str());
-    match blob {
-        Some(blob) => base64_decode(blob),
-        None => panic!("no embedded resource: {result}"),
-    }
+        .filter(|block| block["type"] == "text")
+        .filter_map(|block| block["text"].as_str())
+        .collect()
 }
 
-/// Standard base64 with padding (RFC 4648), enough for the tests.
-fn base64_decode(text: &str) -> Vec<u8> {
-    fn sextet(c: u8) -> u32 {
-        match c {
-            b'A'..=b'Z' => u32::from(c - b'A'),
-            b'a'..=b'z' => u32::from(c - b'a') + 26,
-            b'0'..=b'9' => u32::from(c - b'0') + 52,
-            b'+' => 62,
-            b'/' => 63,
-            _ => panic!("invalid base64 character {:?}", c as char),
-        }
-    }
-    let text = text.trim_end_matches('=').as_bytes();
-    let mut out = Vec::with_capacity(text.len() * 3 / 4);
-    for chunk in text.chunks(4) {
-        let bits = chunk.iter().fold(0, |acc, &c| acc << 6 | sextet(c)) << (6 * (4 - chunk.len()));
-        let bytes = [(bits >> 16) as u8, (bits >> 8) as u8, bits as u8];
-        out.extend_from_slice(&bytes[..chunk.len().saturating_sub(1)]);
-    }
-    out
+/// Input schema of the tool `name` in a `tools/list` result.
+fn input_schema<'a>(tools: &'a [Value], name: &str) -> &'a Value {
+    let tool = tools.iter().find(|tool| tool["name"] == name);
+    &tool.unwrap_or_else(|| panic!("no tool {name}"))["inputSchema"]
+}
+
+/// Sorted keys of a JSON object.
+fn keys(value: &Value) -> Vec<&str> {
+    let mut keys: Vec<&str> = value
+        .as_object()
+        .into_iter()
+        .flatten()
+        .map(|(key, _)| key.as_str())
+        .collect();
+    keys.sort();
+    keys
+}
+
+/// Sorted strings of a JSON array (absent: empty).
+fn strings(value: &Value) -> Vec<&str> {
+    let mut items: Vec<&str> = value
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    items.sort();
+    items
 }
 
 #[test]
@@ -187,4 +154,235 @@ async fn mcp_body_limit_leaves_room_for_the_envelope() {
         body.as_str().is_some_and(|text| text.contains(&limit)),
         "{body}"
     );
+}
+
+// --- User story 1: list, read, render -------------------------------------------------------
+
+#[tokio::test]
+async fn tools_list_offers_the_three_tools() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+
+    let (status, body) = rpc(&app, 1, "tools/list", Value::Null, STATELESS_PROTOCOL).await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let tools = body["result"]["tools"].as_array().expect("tools");
+    let mut names: Vec<&str> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
+    names.sort();
+    assert_eq!(names, ["get_template", "list_templates", "render_template"]);
+    for tool in tools {
+        let name = &tool["name"];
+        let description = tool["description"].as_str().unwrap_or_default();
+        assert!(!description.trim().is_empty(), "{name}: no description");
+        let annotations = &tool["annotations"];
+        assert_eq!(annotations["readOnlyHint"], true, "{name}: {annotations}");
+        assert_eq!(annotations["idempotentHint"], true, "{name}: {annotations}");
+        assert_eq!(annotations["openWorldHint"], false, "{name}: {annotations}");
+        let schema = &tool["inputSchema"];
+        assert_eq!(schema["type"], "object", "{name}: {schema}");
+        assert_eq!(schema["additionalProperties"], false, "{name}: {schema}");
+    }
+
+    let list = input_schema(tools, "list_templates");
+    assert!(keys(&list["properties"]).is_empty(), "{list}");
+    assert!(strings(&list["required"]).is_empty(), "{list}");
+
+    let get = input_schema(tools, "get_template");
+    assert_eq!(keys(&get["properties"]), ["templateId"], "{get}");
+    assert_eq!(strings(&get["required"]), ["templateId"], "{get}");
+    assert_eq!(get["properties"]["templateId"]["type"], "string", "{get}");
+    assert!(get["properties"]["templateId"]["description"].is_string());
+
+    let render = input_schema(tools, "render_template");
+    let properties = &render["properties"];
+    assert_eq!(
+        keys(properties),
+        ["data", "filename", "layout", "metadata", "templateId"],
+        "{render}"
+    );
+    assert_eq!(strings(&render["required"]), ["data", "templateId"]);
+    assert_eq!(properties["templateId"]["type"], "string");
+    assert_eq!(properties["data"]["type"], "object");
+    assert_eq!(properties["layout"]["type"], "object");
+    assert_eq!(properties["filename"]["type"], "string");
+    for name in ["data", "layout", "filename"] {
+        assert!(properties[name]["description"].is_string(), "{name}");
+    }
+    // `metadata`: the HTTP API's DocumentMetadata schema.
+    let metadata = &properties["metadata"];
+    assert_eq!(metadata["type"], "object", "{metadata}");
+    assert_eq!(metadata["additionalProperties"], false, "{metadata}");
+    assert_eq!(
+        keys(&metadata["properties"]),
+        ["author", "date", "keywords", "subject", "title"],
+        "{metadata}"
+    );
+}
+
+#[tokio::test]
+async fn list_templates_returns_the_http_listing() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let (status, expected) = get_json(&app, "/templates").await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(expected["templates"].as_array().unwrap().len(), 4);
+
+    let result = call_tool(&app, "list_templates", json!({})).await;
+
+    assert_eq!(result["isError"], false, "{result}");
+    assert_eq!(result["structuredContent"], expected);
+    let text = texts(&result);
+    assert_eq!(text.len(), 1, "{result}");
+    assert_eq!(serde_json::from_str::<Value>(text[0]).unwrap(), expected);
+}
+
+#[tokio::test]
+async fn get_template_returns_the_http_detail() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+
+    for id in [
+        "sample",
+        "packages-demo",
+        "progress-invoice",
+        "invalid-schema",
+    ] {
+        let (status, expected) = get_json(&app, &format!("/templates/{id}")).await;
+        assert_eq!(status, StatusCode::OK, "{id}");
+
+        let result = call_tool(&app, "get_template", json!({ "templateId": id })).await;
+
+        assert_eq!(result["isError"], false, "{id}: {result}");
+        assert_eq!(result["structuredContent"], expected, "{id}");
+        let text = texts(&result);
+        assert_eq!(text.len(), 1, "{id}: {result}");
+        assert_eq!(serde_json::from_str::<Value>(text[0]).unwrap(), expected);
+    }
+}
+
+#[tokio::test]
+async fn empty_volume_lists_no_template() {
+    let volume = TestVolume::new();
+    let app = mcp_app(&volume);
+
+    let result = call_tool(&app, "list_templates", json!({})).await;
+
+    assert_eq!(result["isError"], false, "{result}");
+    assert_eq!(result["structuredContent"], json!({ "templates": [] }));
+    assert!(
+        texts(&result).contains(&"No template is loaded."),
+        "{result}"
+    );
+}
+
+/// SC-002: for every example request, the same PDF as the HTTP API, byte for byte.
+#[tokio::test]
+async fn render_template_returns_the_http_pdf() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+
+    for (id, body) in example_cases() {
+        let (status, _, expected) =
+            post_json(&app, &format!("/templates/{id}/render"), &body).await;
+        assert_eq!(status, StatusCode::OK, "{id}");
+
+        let result = call_tool(&app, "render_template", render_args(id, &body)).await;
+
+        assert_eq!(result["isError"], false, "{id}: {result}");
+        let pdf = decode_pdf(&result);
+        assert!(
+            pdf == expected,
+            "{id}: the PDF differs from the HTTP render"
+        );
+    }
+}
+
+#[tokio::test]
+async fn render_result_carries_a_summary_and_the_pdf() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+
+    let result = call_tool(
+        &app,
+        "render_template",
+        render_args("sample", &sample_request()),
+    )
+    .await;
+
+    assert_eq!(result["isError"], false, "{result}");
+    let content = result["content"].as_array().unwrap();
+    assert_eq!(content.len(), 2, "{result}");
+    assert_eq!(content[0]["type"], "text");
+    let summary = content[0]["text"].as_str().unwrap();
+    assert!(
+        summary.starts_with("Rendered sample.pdf from template sample (")
+            && summary.ends_with(" KiB)."),
+        "{summary}"
+    );
+    assert_eq!(content[1]["type"], "resource");
+    let resource = &content[1]["resource"];
+    assert_eq!(resource["mimeType"], "application/pdf");
+    assert_eq!(
+        resource["uri"],
+        "inkpdf://templates/sample/render/sample.pdf"
+    );
+    let pdf = decode_pdf(&result);
+    assert!(pdf.starts_with(b"%PDF-"));
+    let size = format!("({:.1} KiB)", pdf.len() as f64 / 1024.0);
+    assert!(summary.contains(&size), "{summary}, expected {size}");
+}
+
+#[tokio::test]
+async fn render_options_follow_the_http_api() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let render = |args: Value| {
+        let app = app.clone();
+        async move {
+            let result = call_tool(&app, "render_template", args).await;
+            assert_eq!(result["isError"], false, "{result}");
+            result
+        }
+    };
+    let http = |body: Value| {
+        let app = app.clone();
+        async move {
+            let (status, _, pdf) = post_json(&app, "/templates/sample/render", &body).await;
+            assert_eq!(status, StatusCode::OK);
+            pdf.to_vec()
+        }
+    };
+
+    // `filename`: cleaned like the HTTP query parameter; `.pdf` appended.
+    let mut args = render_args("sample", &sample_request());
+    args["filename"] = "certificate".into();
+    let result = render(args.clone()).await;
+    assert!(texts(&result)[0].starts_with("Rendered certificate.pdf "));
+    assert_eq!(
+        result["content"][1]["resource"]["uri"],
+        "inkpdf://templates/sample/render/certificate.pdf"
+    );
+    args["filename"] = "../Invoice 042.pdf".into();
+    let result = render(args).await;
+    assert!(texts(&result)[0].starts_with("Rendered Invoice 042.pdf "));
+    assert_eq!(
+        result["content"][1]["resource"]["uri"],
+        "inkpdf://templates/sample/render/Invoice%20042.pdf"
+    );
+
+    // `layout` omitted: its defaults, as over HTTP; given: applied, as over HTTP.
+    let without_layout = render(render_args("sample", &sample_request())).await;
+    assert!(decode_pdf(&without_layout) == http(sample_request()).await);
+    let mut centered = sample_request();
+    centered["layout"] = json!({ "align": "center" });
+    let with_layout = decode_pdf(&render(render_args("sample", &centered)).await);
+    assert!(with_layout == http(centered).await);
+    assert!(with_layout != decode_pdf(&without_layout));
+
+    // `metadata`: reaches the PDF, as over HTTP.
+    let mut titled = sample_request();
+    titled["metadata"] = json!({ "title": "Employer certificate", "date": "2026-10-01" });
+    let pdf = decode_pdf(&render(render_args("sample", &titled)).await);
+    assert!(String::from_utf8_lossy(&pdf).contains("Employer certificate"));
+    assert!(pdf == http(titled).await);
 }
