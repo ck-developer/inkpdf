@@ -254,7 +254,8 @@ longer refer to the removed templates and still pass.
 - **FR-007**: Every value that a template declares as a date MUST be checked for calendar validity
   at validation time, at any depth of the data, with the same error form as other validation
   errors (path, message, "fix the input" hint), and reported together with all other faults of
-  the input.
+  the input. The same applies to every other standard format a template declares (date and time,
+  e-mail address, URL…).
 
 **Demonstration template**
 
@@ -318,6 +319,9 @@ longer refer to the removed templates and still pass.
 - The skills follow the standard skill format used by Claude and other assistants, so they are
   not tied to one product; their exact packaging and installation path are a planning decision.
 - The skills live in the repository and are versioned with the service.
+- Values that do not match a standard format declared by a template (for example an invalid
+  e-mail address in a field declared as e-mail) are now refused with a validation error instead of
+  being printed. This is a correction, stated in the release notes.
 - Removing the three example templates is not a breaking change for users: they were examples in
   the repository, never shipped inside the service image.
 - Out of scope: a separate check-without-rendering tool, a summary of the rendered document,

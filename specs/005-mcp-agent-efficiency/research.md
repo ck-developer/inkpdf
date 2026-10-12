@@ -196,6 +196,14 @@ plugins/inkpdf/
   check through the MCP tools (`list_templates` shows it valid, `get_template` shows the example,
   `render_template` with the example succeeds). Uses `demo` as the worked example. Reference files
   are loaded only when needed.
+- **Version**: `plugin.json` carries the crate version, bumped by release-please through
+  `extra-files`. Release-please resolves `extra-files` relative to the package path
+  (`crates/inkpdf`); check during implementation that it can reach
+  `plugins/inkpdf/.claude-plugin/plugin.json` (a `../../` path or the root-relative form). If it
+  cannot, the plugin keeps its own version and the xtask version check is dropped.
+- **One MCP connection, not two**: the plugin's `.mcp.json` declares a server named `inkpdf`, the
+  same name the 004 guide uses with `claude mcp add`. The documentation says to use one or the
+  other, never both.
 - **Checks**: `cargo xtask docs check` also verifies that each `SKILL.md` frontmatter only uses the
   six portable fields, that `plugin.json` and `marketplace.json` parse, and that
   `skills/write-template/packages.md` is up to date. `claude plugin validate plugins/inkpdf` is run
