@@ -117,7 +117,8 @@ empty path) or Typst diagnostic (`- <file>:<line>:<column>: <message>`), then th
 
 Protocol faults are JSON-RPC "invalid params" errors (`-32602`, with HTTP `200`), not tool
 results: unknown tool name, missing `templateId` or `data`, `data` that is not an object, and
-unknown argument keys (the input schemas forbid them). The message names the faulty argument.
+unknown argument keys (the input schemas forbid them). The message is rmcp's deserialization
+message: it names an unknown or missing key, and describes a wrongly typed value by its type.
 `rmcp` reports an unknown tool this way; it returns argument faults as tool errors, which the
 server's `tools/call` turns into this error. The input *inside* `data`, `layout` and `metadata`
 is checked by the template's schema and reported as a tool error, like the HTTP API; so is a

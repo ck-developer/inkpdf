@@ -563,8 +563,8 @@ async fn too_long_filename_is_an_invalid_parameter() {
 
 /// Faults in the arguments themselves (unknown key, missing `templateId` or `data`, `data`
 /// not an object) are refused before the tool runs, as a JSON-RPC "invalid params" error
-/// (`-32602`), not as a tool result (contract, "Protocol faults"). The message names the
-/// faulty argument.
+/// (`-32602`), not as a tool result (contract, "Protocol faults"), with rmcp's
+/// deserialization message.
 #[tokio::test]
 async fn malformed_arguments_are_refused_before_the_tool_runs() {
     let volume = examples_volume();
@@ -600,6 +600,12 @@ async fn malformed_arguments_are_refused_before_the_tool_runs() {
     let params = tool_params("list_templates", json!({ "templateId": "sample" }));
     let (_, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
     assert_eq!(body["error"]["code"], -32602, "{body}");
+
+    // `arguments` is optional in MCP: without it, `list_templates` runs.
+    let params = json!({ "name": "list_templates" });
+    let (status, body) = rpc(&app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["result"]["isError"], false, "{body}");
 }
 
 #[tokio::test]
