@@ -13,7 +13,7 @@ No stored data. The feature adds one setting and in-memory types only.
 | Type | Fields | Rules |
 |---|---|---|
 | `GetTemplateArgs` | `templateId: string` | unknown keys refused |
-| `RenderTemplateArgs` | `templateId: string`, `data: object`, `layout?: object`, `metadata?: DocumentMetadata`, `filename?: string` | unknown keys refused; `{ data, layout, metadata }` is then validated by the template's schema and the fixed metadata schema, exactly as the HTTP body |
+| `RenderTemplateArgs` | `templateId: string`, `data: object`, `layout?: object`, `metadata?: DocumentMetadata`, `filename?: string` | unknown keys refused, `data` must be an object; `layout` and `metadata` are passed on as sent (`null` or not an object included); `{ data, layout, metadata }` is then validated by the template's schema and the fixed metadata schema, exactly as the HTTP body |
 
 ## Shared pipeline (refactor, no new data)
 
