@@ -19,7 +19,6 @@ use typst_pdf::PdfOptions;
 use crate::AppState;
 use crate::error::{ApiError, Diagnostic};
 use crate::registry::{TemplateEntry, TemplateStatus};
-use crate::template::TemplateId;
 use metadata::DocumentMetadata;
 use world::SandboxWorld;
 
@@ -42,22 +41,19 @@ impl Interface {
     }
 }
 
-/// Validate-and-render pipeline shared by the HTTP API and the MCP interface, from a parsed
-/// request body (`{ data, layout?, metadata? }`) to the PDF.
+/// Validate-and-render pipeline shared by the HTTP API and the MCP interface, from the
+/// template the caller looked up and a parsed request body (`{ data, layout?, metadata? }`) to
+/// the PDF.
 ///
-/// In order: template lookup and status, `metadata` extraction, schema preparation (all
-/// violations together), the `render` log event, then [`render`]. A malformed id is treated as
-/// unknown. The caller attaches the template id to the error ([`ApiError::for_template`]).
+/// In order: template status, `metadata` extraction, schema preparation (all violations
+/// together), the `render` log event, then [`render`]. The caller attaches the template id to
+/// the error ([`ApiError::for_template`]).
 pub async fn run(
     state: &AppState,
-    template_id: &str,
+    entry: Arc<TemplateEntry>,
     body: serde_json::Value,
     interface: Interface,
 ) -> Result<Vec<u8>, ApiError> {
-    let id = template_id
-        .parse::<TemplateId>()
-        .map_err(|_| ApiError::TemplateNotFound)?;
-    let entry = state.registry.get(&id).ok_or(ApiError::TemplateNotFound)?;
     let schema = match (&entry.status, &entry.schema) {
         (TemplateStatus::Valid, Some(schema)) => schema,
         (TemplateStatus::Invalid { reason }, _) => {
@@ -77,7 +73,7 @@ pub async fn run(
     let log = |outcome: &str| {
         tracing::info!(
             event = "render",
-            templateId = %id,
+            templateId = %entry.id,
             interface = interface.as_str(),
             durationMs = started.elapsed().as_millis() as u64,
             outcome,

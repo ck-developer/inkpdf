@@ -148,8 +148,8 @@ impl InkpdfMcp {
     /// every error after the lookup, as over HTTP.
     async fn render(&self, args: RenderTemplateArgs) -> Outcome {
         let entry = templates::find(&self.state, &args.template_id)?;
-        let id = entry.id.as_str();
-        let fail = |error: ApiError| error.for_template(id);
+        let id = entry.id.to_string();
+        let fail = |error: ApiError| error.for_template(&id);
         if let Some(filename) = &args.filename {
             check_filename(filename).map_err(fail)?;
         }
@@ -169,11 +169,12 @@ impl InkpdfMcp {
             return Err(fail(ApiError::PayloadTooLarge { limit }));
         }
 
-        let pdf = render::run(&self.state, id, body, Interface::Mcp)
+        let pdf = render::run(&self.state, entry, body, Interface::Mcp)
             .await
             .map_err(fail)?;
-        let file_name = pdf_file_name(id, args.filename.as_deref());
-        Ok((Some(id.to_owned()), pdf_result(id, &file_name, &pdf)))
+        let file_name = pdf_file_name(&id, args.filename.as_deref());
+        let result = pdf_result(&id, &file_name, &pdf);
+        Ok((Some(id), result))
     }
 }
 

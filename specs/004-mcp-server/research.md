@@ -58,7 +58,10 @@ render::run(state, template_id, body: serde_json::Value, interface) -> Result<Ve
 
 It does, in order: template lookup and status, `metadata` extraction, schema preparation and
 validation (all violations together), the render log, and `render::render` (semaphore, queue
-timeout, render timeout, sandbox). The HTTP handler keeps only what is HTTP-specific:
+timeout, render timeout, sandbox).
+**Confirmed during implementation**: the lookup stays with the callers, which report an unknown
+template before any other error; `run` takes the entry they looked up
+(`run(state, entry, body, interface)`), so a render uses the template it was checked against. The HTTP handler keeps only what is HTTP-specific:
 content type, body size, query parameters, headers. The MCP render tool builds the same
 `{ data, layout?, metadata? }` object and calls the same function.
 

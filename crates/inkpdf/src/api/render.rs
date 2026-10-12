@@ -105,12 +105,12 @@ pub async fn render_template(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    // An unknown template is reported before any query or body error; `render::run` looks
-    // the template up again for its own checks.
-    let id = match templates::find(&state, &template_id) {
-        Ok(entry) => entry.id.clone(),
+    // An unknown template is reported before any query or body error.
+    let entry = match templates::find(&state, &template_id) {
+        Ok(entry) => entry,
         Err(error) => return error.into_response(),
     };
+    let id = entry.id.clone();
     let fail = |error: ApiError| error.for_template(id.as_str()).into_response();
     let query = match RenderQuery::parse(query.as_deref()) {
         Ok(query) => query,
@@ -147,7 +147,7 @@ pub async fn render_template(
         }
     };
 
-    match render::run(&state, id.as_str(), body, Interface::Http).await {
+    match render::run(&state, entry, body, Interface::Http).await {
         Ok(pdf) => {
             let disposition =
                 content_disposition(id.as_str(), query.download, query.filename.as_deref());

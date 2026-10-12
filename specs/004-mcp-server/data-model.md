@@ -17,12 +17,13 @@ No stored data. The feature adds one setting and in-memory types only.
 
 ## Shared pipeline (refactor, no new data)
 
-`render::run(state, templateId, body, interface) -> Result<Vec<u8>, ApiError>`
+`render::run(state, entry, body, interface) -> Result<Vec<u8>, ApiError>`
 
-- **Input**: the same JSON object as the HTTP request body, and the calling `Interface`
-  (`Http` | `Mcp`, used only for logs).
+- **Input**: the template entry the caller looked up (`api::templates::find`, which reports an
+  unknown template before any other error), the same JSON object as the HTTP request body, and
+  the calling `Interface` (`Http` | `Mcp`, used only for logs).
 - **Output**: the PDF bytes, or one `ApiError` (unchanged enum).
-- **Steps**: lookup → status check → metadata extraction → schema preparation → violations
+- **Steps**: status check → metadata extraction → schema preparation → violations
   merged → render under the semaphore and timeouts.
 
 ## Tool result mapping
