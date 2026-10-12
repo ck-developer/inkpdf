@@ -1,6 +1,30 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.1.1 → 2.0.0
+Bump rationale: MAJOR — redéfinition incompatible du principe V (décision de l'utilisateur du
+2026-10-12, feature 005). Le rechargement à chaud n'est plus une obligation : les templates sont
+lus au démarrage, une nouvelle version devient disponible après un redémarrage, et le
+rechargement à chaud n'est plus qu'une option de développement, désactivée par défaut. Ajouts
+liés : versions de templates (principe II) et choix de la version à la génération (principe VI).
+
+Modifications 2.0.0 :
+- V. « Templates à chaud, binaire figé » → « Templates sur volume, binaire figé » : chargement au
+  démarrage ; rechargement à chaud optionnel, réservé au développement ; un template ou une
+  version invalide n'empêche pas le démarrage et ne masque pas les autres.
+- II. Le template, unité auto-suffisante : un template PEUT contenir plusieurs versions, un
+  sous-dossier par version, chacun auto-suffisant ; la disposition actuelle reste valide (une
+  seule version).
+- VI. API REST auto-descriptive : la génération et le détail d'un template PEUVENT recevoir une
+  version ; sans version, la plus récente version valide est utilisée, et la réponse indique la
+  version utilisée.
+
+Templates dépendants : aucun changement requis (le « Constitution Check » vérifie toujours les
+principes I à VII).
+
+TODO différés : aucun.
+
+Historique 1.1.1 :
 Version change: 1.1.0 → 1.1.1
 Bump rationale: PATCH — clarification du principe II : la liste du contenu d'un dossier de template
 nomme aussi les deux fichiers descriptifs optionnels (`template.json`, `example.json`), et précise
@@ -119,7 +143,10 @@ latence, en mémoire et en taille d'image.
 
 ### II. Le template, unité auto-suffisante
 
-- Le template est l'unité du service. Un template est un dossier contenant :
+- Le template est l'unité du service. Un template est un dossier, identifié par son nom, qui
+  contient soit directement les fichiers d'une seule version, soit un sous-dossier par version,
+  nommé d'après son numéro de version (ex. `facture/1.0.0/`, `facture/2.0.0/`). Chaque version
+  est auto-suffisante et contient :
   1. un fichier Typst paramétrable décrivant le document ;
   2. un schéma (JSON Schema) déclarant les données métier et les paramètres de mise en page (`layout`) acceptés ;
      il PEUT annoter chaque variable de son rôle (`x-role` : `ask`, `fill` ou `default`) pour
@@ -127,8 +154,8 @@ latence, en mémoire et en taille d'image.
   3. des ressources optionnelles (polices, images) ;
   4. des fichiers descriptifs optionnels : `template.json` (nom, description, version) et
      `example.json` (un exemple complet d'entrée, vérifié au chargement du template).
-- Un template DOIT être auto-suffisant : toutes ses ressources sont résolues localement, à
-  l'intérieur de son dossier (ou des ressources embarquées par le binaire, comme les polices par
+- Un template (chacune de ses versions) DOIT être auto-suffisant : toutes ses ressources sont
+  résolues localement, à l'intérieur de son dossier (ou des ressources embarquées par le binaire, comme les polices par
   défaut).
 - La résolution d'un template NE DOIT jamais nécessiter d'accès réseau (pas de paquets Typst
   téléchargés, pas d'URL distante).
@@ -173,21 +200,24 @@ transforme les erreurs de rendu opaques en erreurs de contrat lisibles par l'app
 **Rationale** : l'absence d'authentification (cf. VII) n'est acceptable que si la surface
 d'attaque est réduite au strict contrat JSON + schéma.
 
-### V. Templates à chaud, binaire figé
+### V. Templates sur volume, binaire figé
 
 - Le binaire Rust (moteur inclus) est figé dans l'image Docker `ghcr.io/ck-developer/inkpdf`.
-  Ajouter ou modifier un template NE DOIT jamais nécessiter de recompiler ni de reconstruire
-  l'image.
-- Les templates sont lus depuis un volume monté et découverts dynamiquement au runtime : un
-  template déposé dans le volume DOIT devenir disponible sans redémarrage.
-- Un template invalide (schéma illisible, fichier Typst manquant) NE DOIT pas empêcher le
-  service de démarrer ni masquer les autres templates ; il est signalé (logs, et exclu ou marqué
-  comme invalide dans la découverte).
-- Toute mise en cache éventuelle DOIT rester cohérente avec le contenu du volume (invalidation
-  sur modification).
+  Ajouter ou modifier un template, ou une version de template, NE DOIT jamais nécessiter de
+  recompiler ni de reconstruire l'image.
+- Les templates sont lus depuis un volume monté au démarrage du service. En production, un
+  template ou une version ajouté ou modifié devient disponible après un redémarrage du service.
+- Le rechargement à chaud (surveillance du volume et rechargement sans redémarrage) PEUT être
+  activé pour le développement uniquement ; il est désactivé par défaut.
+- Un template ou une version invalide (schéma illisible, fichier Typst manquant) NE DOIT pas
+  empêcher le service de démarrer ni masquer les autres ; il est signalé (logs, et exclu ou
+  marqué comme invalide dans la découverte).
+- Toute mise en cache éventuelle DOIT rester cohérente avec les templates chargés.
 
 **Rationale** : séparer le cycle de vie du moteur de celui des templates permet aux équipes
-de livrer des documents sans toucher au service.
+de livrer des documents sans toucher au service. Pendant que le service tourne, ses templates et
+leurs versions ne changent pas : un appelant obtient toujours la version qu'il a demandée. Le
+rechargement à chaud reste une commodité de développement.
 
 ### VI. API REST auto-descriptive
 
@@ -197,6 +227,9 @@ de livrer des documents sans toucher au service.
   - le détail et le schéma d'un template par identifiant ;
   - la génération d'un PDF à partir d'un template et d'un corps JSON, le PDF étant renvoyé
     directement dans la réponse (`application/pdf`).
+- Le détail, le schéma et la génération PEUVENT recevoir une version de template ; sans
+  version, la plus récente version valide est utilisée, et la réponse indique la version
+  utilisée.
 - L'API DOIT être décrite par un document OpenAPI servi par le service lui-même et maintenu
   synchrone avec le code (généré depuis le code ou vérifié par les tests).
 - Les schémas de templates DOIVENT être exprimés en JSON Schema et exposés tels quels par l'API.
@@ -288,4 +321,4 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les décisions différées (TODO) DOIVENT être résolues par un amendement PATCH ou MINOR dès
   qu'elles sont tranchées.
 
-**Version**: 1.1.1 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-12
+**Version**: 2.0.0 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-12
