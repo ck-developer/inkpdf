@@ -80,8 +80,9 @@ Both `SKILL.md` frontmatters use only `name`, `description`, `license`, `metadat
   main.typ and example.json) so that AI assistants can fill it: a description and an x-role for
   every variable, defaults for layout, dates with format: date, and a valid example. Use when the
   user wants a new document template for inkpdf or asks to improve one."
-- **Steps**: ask what the document contains and who provides each piece of information; create the
-  folder in the templates volume; write `template.json`, `schema.json` (closed objects,
+- **Steps**: ask what the document contains and who provides each piece of information; find the
+  templates folder (ask the user, or read the volume mounted in their `compose.yaml`; no MCP tool
+  reveals it) and create the template folder there, where it is picked up without a restart; write `template.json`, `schema.json` (closed objects,
   descriptions, roles, formats, defaults), `main.typ` (reads `sys.inputs`, uses bundled packages
   only), `example.json`; check through the MCP tools (`list_templates` shows it `valid`,
   `get_template` shows the example, `render_template` with the example succeeds); fix and repeat.

@@ -114,7 +114,6 @@ crates/inkpdf/
     └── …                       # common/mod.rs paths updated; new role/example/format tests
 examples/
 ├── templates/demo/             # template.json · schema.json · main.typ · example.json
-├── requests/                   # emptied of sample, packages-demo, progress-invoice
 └── bruno/                      # points to demo; progress invoice and package demo removed
 .claude-plugin/marketplace.json
 plugins/inkpdf/

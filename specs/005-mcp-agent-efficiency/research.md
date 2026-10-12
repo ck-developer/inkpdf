@@ -101,7 +101,7 @@ reusable; checking it at load guarantees SC-003 and keeps a broken example from 
   > then `get_template` to read its schema and its example. Each variable has a description and
   > may have an `x-role`: `ask` — ask the user unless they already gave the value; `fill` — fill it
   > in yourself (for example today's date), and ask if you cannot work it out; `default` — leave
-  > the default unless the user mentions it. Without a role, treat a required variable as `ask`
+  > the default unless the user mentions it, or leave the variable out if it has none. Without a role, treat a required variable as `ask`
   > and an optional one with a default as `default`. Never invent a value you should have asked
   > for. Start from the example's structure. Then call `render_template`; if it returns validation
   > errors, ask the user about those fields only and call it again.
@@ -169,7 +169,7 @@ dozens of assertions, which would be risk without value.
 .claude-plugin/marketplace.json        # marketplace "inkpdf", one plugin, source ./plugins/inkpdf
 plugins/inkpdf/
 ├── .claude-plugin/plugin.json         # name, version, description, userConfig.server_url
-├── .mcp.json                          # { "inkpdf": { "type": "http", "url": "${user_config.server_url}/mcp" } }
+├── .mcp.json                          # { "mcpServers": { "inkpdf": { "type": "http", "url": "${user_config.server_url}/mcp" } } }
 └── skills/
     ├── generate-document/SKILL.md
     └── write-template/
@@ -190,7 +190,9 @@ plugins/inkpdf/
 - **generate-document**: the steps of US2 and R4 — tools only, roles, example, ask only what is
   needed, render, on validation errors ask about those fields only, report the file. Under 150
   lines. Template-independent.
-- **write-template**: the steps of US3 — create the folder in the templates volume, `template.json`,
+- **write-template**: the steps of US3 — find the templates folder (ask the user, or read the
+  volume mounted in their `compose.yaml`, `INKPDF_TEMPLATES`); no MCP tool reveals it, and a new
+  folder there is picked up without a restart. Then create the template folder, `template.json`,
   `schema.json` with `description` and `x-role` on every property and `additionalProperties: false`,
   layout defaults, `format: date` for dates, `example.json`, `main.typ` reading `sys.inputs`, then
   check through the MCP tools (`list_templates` shows it valid, `get_template` shows the example,

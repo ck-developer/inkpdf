@@ -33,6 +33,9 @@ question. In short: the MCP server, plus generic skills for this MCP server."
   errors.
 - Q: What about the payment QR code limits of the invoice template? → A: Moot: the invoice
   template is removed.
+- Q: How are faults in the tool arguments themselves reported (unknown key, missing `templateId`
+  or `data`)? → A: As tool errors the assistant can see and fix, not as protocol errors that some
+  clients hide from the model (decided after the analysis of this feature; audit defect 34).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -112,7 +115,8 @@ demonstration document in plain language, and check the sequence of tool calls a
 
 A template author installs the "write an inkpdf template" skill. When they ask their assistant
 to create or improve a template for their own document, the assistant follows its steps: the
-template folder, the schema with a description and a role for every variable, the layout
+template folder (created in the templates folder, whose location it asks the author for when
+it does not know it), the schema with a description and a role for every variable, the layout
 settings with defaults, the example input, the use of bundled packages, and a test through the
 inkpdf tools before calling it done.
 
@@ -276,6 +280,13 @@ longer refer to the removed templates and still pass.
 - **FR-012**: Both skills MUST be installable by a user in their assistant by following the
   documentation, without cloning or building the service.
 
+**Errors on tool arguments**
+
+- **FR-014**: Faults in the tool arguments themselves (unknown key, missing `templateId` or
+  `data`, `data` that is not an object) MUST come back as tool errors that name the faulty argument
+  and say to fix the arguments, so the assistant always sees them. Only an unknown tool name stays a
+  protocol error.
+
 **Documentation**
 
 - **FR-013**: The template format reference, the template writing guide, the MCP guide and the
@@ -302,9 +313,9 @@ longer refer to the removed templates and still pass.
   **default** variables, then renders successfully at the first attempt.
 - **SC-002**: 100 % of the demonstration template's variables have a description and a role.
 - **SC-003**: The demonstration template's example renders without error, unchanged.
-- **SC-004**: 100 % of impossible dates (the 25 audit cases, replayed on the demonstration
-  template's date variables) are refused with a validation error naming the field; 0 end in a
-  render failure.
+- **SC-004**: 100 % of the audit's impossible dates (`2026-02-30`, `2026-13-45`, `2025-02-29`,
+  `2026-04-31`, `0000-00-00`), placed in any variable declared as a date at any depth, are refused
+  with a validation error naming the field; 0 end in a render failure.
 - **SC-005**: A template written with the writing skill for a simple document loads without error,
   has a description and a role for every variable, and its example renders, at the first try.
 - **SC-006**: 0 references to the removed templates remain in the documentation, the examples and

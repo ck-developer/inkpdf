@@ -43,6 +43,6 @@ message reads `"<value>" is not a valid calendar date (YYYY-MM-DD)`.
 |---|---|
 | `examples/templates/demo/` | **new** (see [contracts/demo-template.md](./contracts/demo-template.md)) |
 | `examples/templates/sample`, `examples/templates/packages-demo` | moved to `crates/inkpdf/tests/fixtures/templates/` |
-| `examples/templates/progress-invoice`, `examples/requests/progress-invoice/` | deleted |
+| `examples/templates/progress-invoice`, `examples/requests/` (the whole folder, emptied by the moves) | deleted; the example now lives in `examples/templates/demo/example.json` |
 | `examples/requests/sample.json`, `examples/requests/packages-demo.json` | moved to `crates/inkpdf/tests/fixtures/requests/` |
 | `.claude-plugin/marketplace.json`, `plugins/inkpdf/` | **new** (see [contracts/plugin-skills.md](./contracts/plugin-skills.md)) |

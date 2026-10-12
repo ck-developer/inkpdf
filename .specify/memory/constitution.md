@@ -1,6 +1,21 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.1.0 → 1.1.1
+Bump rationale: PATCH — clarification du principe II : la liste du contenu d'un dossier de template
+nomme aussi les deux fichiers descriptifs optionnels (`template.json`, `example.json`), et précise
+que le schéma peut annoter chaque variable de son rôle (`x-role`) pour guider les assistants, sans
+changer les entrées acceptées (feature 005). Aucune règle ajoutée, retirée ou modifiée.
+
+Modifications 1.1.1 :
+- II. Le template, unité auto-suffisante : liste du contenu complétée (fichiers descriptifs
+  optionnels), mention de l'annotation `x-role`.
+
+Templates dépendants : aucun changement requis.
+
+TODO différés : aucun.
+
+Historique 1.1.0 :
 Version change: 1.0.3 → 1.1.0
 Bump rationale: MINOR — extension matérielle du principe VI : le service PEUT exposer une
 interface MCP (Model Context Protocol) optionnelle, désactivée par défaut, offrant les mêmes
@@ -107,7 +122,11 @@ latence, en mémoire et en taille d'image.
 - Le template est l'unité du service. Un template est un dossier contenant :
   1. un fichier Typst paramétrable décrivant le document ;
   2. un schéma (JSON Schema) déclarant les données métier et les paramètres de mise en page (`layout`) acceptés ;
-  3. des ressources optionnelles (polices, images).
+     il PEUT annoter chaque variable de son rôle (`x-role` : `ask`, `fill` ou `default`) pour
+     guider les assistants, sans changer les entrées acceptées ;
+  3. des ressources optionnelles (polices, images) ;
+  4. des fichiers descriptifs optionnels : `template.json` (nom, description, version) et
+     `example.json` (un exemple complet d'entrée, vérifié au chargement du template).
 - Un template DOIT être auto-suffisant : toutes ses ressources sont résolues localement, à
   l'intérieur de son dossier (ou des ressources embarquées par le binaire, comme les polices par
   défaut).
@@ -269,4 +288,4 @@ s'applique tant qu'un besoin réel n'est pas démontré.
 - Les décisions différées (TODO) DOIVENT être résolues par un amendement PATCH ou MINOR dès
   qu'elles sont tranchées.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-12
+**Version**: 1.1.1 | **Ratified**: 2026-10-09 | **Last Amended**: 2026-10-12

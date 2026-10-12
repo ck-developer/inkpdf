@@ -99,7 +99,7 @@ Dependencies.
 
 **Goal**: the `generate-document` skill, installable with the plugin.
 
-**Independent Test**: `cargo xtask docs check` validates the skill and plugin files; with the plugin installed, an assistant follows the skill on the `demo` template (manual, T034).
+**Independent Test**: `cargo xtask docs check` validates the skill and plugin files; with the plugin installed, an assistant follows the skill on the `demo` template (manual, T035).
 
 - [ ] T010 [US2] Write `plugins/inkpdf/skills/generate-document/SKILL.md` as in [contracts/plugin-skills.md](./contracts/plugin-skills.md).
   - Frontmatter: `name`, `description`, `license` and `metadata` only.
@@ -112,10 +112,15 @@ Dependencies.
 - [ ] T012 [P] [US2] Write `docs/src/guides/assistant-skills.md` and add it to `docs/src/SUMMARY.md` under Guides. The page covers:
   - what the two skills do;
   - installing the plugin in Claude Code (`/plugin marketplace add ck-developer/inkpdf`, `/plugin install inkpdf@inkpdf`, `server_url`);
-  - uploading the skills to claude.ai or Claude Desktop as a zip;
+  - uploading the skills to claude.ai or Claude Desktop: how to build the zip of a skill folder
+    (one command), and that the MCP connection is then made separately;
   - **one MCP connection only**: either the plugin's or `claude mcp add`, never both (research R7).
 
   In `docs/src/guides/mcp.md`, point the "Connect Claude Code" section to the plugin as the recommended way.
+- [ ] T013 [US2] Report faults in the tool arguments as tool errors (FR-014), test first.
+  - **Tests**, in `crates/inkpdf/tests/mcp.rs`: an unknown key, a missing `templateId` or `data`, and a `data` that is not an object each return `isError: true`, with a text naming the argument and ending with "Fix the arguments and call the tool again.". An unknown tool name stays a JSON-RPC `-32602` error.
+  - **Code**, in `call_tool` in `crates/inkpdf/src/mcp/mod.rs`: turn rmcp's argument refusal into that tool error, and keep the `mcp.tool` log with outcome `invalid-arguments` (`crates/inkpdf/tests/mcp_logs.rs` stays green).
+  - **Docs**: update the errors section of `docs/src/guides/mcp.md` and the Errors bullet of `docs/src/contributing/architecture.md`. Add a note under "Protocol faults" in `specs/004-mcp-server/contracts/mcp-tools.md` saying that feature 005 changes it.
 
 ---
 
@@ -123,14 +128,16 @@ Dependencies.
 
 **Goal**: the `write-template` skill and its reference files.
 
-**Independent Test**: `cargo xtask docs check` passes with `packages.md` up to date; with the plugin, an assistant writes a valid template (manual, T034).
+**Independent Test**: `cargo xtask docs check` passes with `packages.md` up to date; with the plugin, an assistant writes a valid template (manual, T035).
 
-- [ ] T013 [US3] Write the `write-template` skill files in `plugins/inkpdf/skills/write-template/`, following [contracts/plugin-skills.md](./contracts/plugin-skills.md):
-  - `SKILL.md`: portable frontmatter; the steps, ending with the check through the MCP tools; `demo` as the worked example;
+- [ ] T014 [US3] Write the `write-template` skill files in `plugins/inkpdf/skills/write-template/`, following [contracts/plugin-skills.md](./contracts/plugin-skills.md):
+  - `SKILL.md`: portable frontmatter; the steps, starting by finding the templates folder (ask the
+    author, or read the volume mounted in their `compose.yaml`; no MCP tool reveals it) and ending
+    with the check through the MCP tools; `demo` as the worked example;
   - `template-format.md`: folder, `template.json`, schema rules (closed objects, `description` and `x-role` everywhere, defaults for layout, `format: date`), `example.json`, limits;
   - `typst-basics.md`: reading `sys.inputs`, tables, page setup, fonts, bundled packages only.
-- [ ] T014 [US3] In `xtask/src/docs.rs`, make `cargo xtask docs generate` write `plugins/inkpdf/skills/write-template/packages.md` from `packages/lock.toml`, reusing the package reference logic: each selectable package with its version, import line and one-line purpose. `cargo xtask docs check` MUST fail when the file is stale. Add a unit test.
-- [ ] T015 [P] [US3] Rewrite `docs/src/guides/writing-a-template.md` and `docs/src/guides/best-practices.md` around descriptions, roles, the example and `format`, using `demo` as the worked example. The template content is final after T026, so review these two pages again then.
+- [ ] T015 [US3] In `xtask/src/docs.rs`, make `cargo xtask docs generate` write `plugins/inkpdf/skills/write-template/packages.md` from `packages/lock.toml`, reusing the package reference logic: each selectable package with its version, import line and one-line purpose. `cargo xtask docs check` MUST fail when the file is stale. Add a unit test.
+- [ ] T016 [P] [US3] Rewrite `docs/src/guides/writing-a-template.md` and `docs/src/guides/best-practices.md` around descriptions, roles, the example and `format`, using `demo` as the worked example. The template content is final after T027, so review these two pages again then.
 
 ---
 
@@ -142,32 +149,32 @@ Dependencies.
 
 ### Tests (write first, must fail)
 
-- [ ] T016 [P] [US4] Loader tests in `crates/inkpdf/src/registry/loader.rs`:
+- [ ] T017 [P] [US4] Loader tests in `crates/inkpdf/src/registry/loader.rs`:
   - a valid `example.json` is stored as written, without defaults applied;
   - an example that breaks the schema, one with a bad `metadata`, and malformed JSON all give `example: None`, with the template still `Valid`;
   - no `example.json` gives `None`.
-- [ ] T017 [P] [US4] API and MCP tests:
+- [ ] T018 [P] [US4] API and MCP tests:
   - `crates/inkpdf/tests/api_templates.rs`: `GET /templates/{id}` has `example` when valid and omits it otherwise; the list never carries it;
   - `crates/inkpdf/tests/mcp.rs`: `get_template` `structuredContent.example` is present, and `render_template` with it succeeds;
-  - `crates/inkpdf/tests/api_live_openapi.rs`: the template's render operation has the example as its request body `example`;
+  - `crates/inkpdf/tests/api_live_openapi.rs`: the template's render operation has the example as its request body `example`, and the copied schemas keep their `x-role` annotations (FR-003);
   - `crates/inkpdf/tests/hot_reload.rs`: editing `example.json` is picked up.
 
 ### Implementation
 
-- [ ] T018 [US4] Add `example: Option<serde_json::Value>` to `TemplateEntry` in `crates/inkpdf/src/registry/mod.rs`. In `crates/inkpdf/src/registry/loader.rs`, read `example.json` from the loaded files and check a copy:
+- [ ] T019 [US4] Add `example: Option<serde_json::Value>` to `TemplateEntry` in `crates/inkpdf/src/registry/mod.rs`. In `crates/inkpdf/src/registry/loader.rs`, read `example.json` from the loaded files and check a copy:
   1. `render::metadata::extract`;
   2. `TemplateSchema::prepare`.
 
   Keep the original on success. On failure, log `event = "template.example_invalid"` with `templateId` and the reason (the violation paths or the JSON error), without any example value.
-- [ ] T019 [US4] Add the optional `example` field (`skip_serializing_if = "Option::is_none"`, documented with utoipa) to `TemplateDetail` in `crates/inkpdf/src/api/templates.rs`. Then regenerate the documentation:
+- [ ] T020 [US4] Add the optional `example` field (`skip_serializing_if = "Option::is_none"`, documented with utoipa) to `TemplateDetail` in `crates/inkpdf/src/api/templates.rs`. Then regenerate the documentation:
   - `openapi/openapi.json` with `INKPDF_UPDATE_OPENAPI=1 cargo test -p inkpdf --test contract_openapi`;
   - `docs/src/reference/api.md` with `cargo xtask docs generate`.
-- [ ] T020 [US4] In `crates/inkpdf/src/api/live.rs`, add the template's example as the `example` of each per-template render request body when present.
-- [ ] T021 [P] [US4] Document `example.json`:
+- [ ] T021 [US4] In `crates/inkpdf/src/api/live.rs`, add the template's example as the `example` of each per-template render request body when present.
+- [ ] T022 [P] [US4] Document `example.json`:
   - in `docs/src/reference/template-format.md`: content, load-time check, log event;
   - in `docs/src/guides/exploring-the-api.md`: the `example` field of the template detail.
 
-**Checkpoint**: T016–T017 pass.
+**Checkpoint**: T017–T018 pass.
 
 ---
 
@@ -179,27 +186,28 @@ Dependencies.
 
 ### Tests (write first, must fail)
 
-- [ ] T022 [P] [US5] Unit tests in `crates/inkpdf/src/template/schema.rs`, with a `format: date` property at the root of `data`, in a nested object, in array `items` and via `$defs`:
+- [ ] T023 [P] [US5] Unit tests in `crates/inkpdf/src/template/schema.rs`, with a `format: date` property at the root of `data`, in a nested object, in array `items` and via `$defs`:
   - `2026-02-30`, `2026-13-45`, `2025-02-29`, `2026-04-31` and `0000-00-00` are refused with `"<value>" is not a valid calendar date (YYYY-MM-DD)` on the right path;
   - `2024-02-29` is accepted;
+  - `format: date-time` refuses `"2026-02-30T10:00:00Z"` and accepts `"2024-02-29T10:00:00Z"`;
   - `format: email` refuses `"not-an-email"`;
   - an unknown format name is ignored;
   - several date faults plus a type fault come back together.
-- [ ] T023 [P] [US5] HTTP and MCP tests in `crates/inkpdf/tests/api_render.rs` and `crates/inkpdf/tests/mcp.rs`:
+- [ ] T024 [P] [US5] HTTP and MCP tests in `crates/inkpdf/tests/api_render.rs` and `crates/inkpdf/tests/mcp.rs`:
   - a render with an impossible date gives 422 `validation-failed` with the path;
   - through MCP, a tool error with the hint "Fix the input and call render_template again.", never `render-failed`.
 
 ### Implementation
 
-- [ ] T024 [US5] In `crates/inkpdf/src/template/schema.rs`, build the validator with `should_validate_formats(true)`. Rewrite the message of `format: date` violations as in [contracts/template-format.md](./contracts/template-format.md). Other messages are unchanged.
-- [ ] T025 [P] [US5] Document asserted formats in `docs/src/reference/template-format.md` and `docs/src/concepts/schemas.md`:
+- [ ] T025 [US5] In `crates/inkpdf/src/template/schema.rs`, build the validator with `should_validate_formats(true)`. Rewrite the message of `format: date` violations as in [contracts/template-format.md](./contracts/template-format.md). Other messages are unchanged.
+- [ ] T026 [P] [US5] Document asserted formats in `docs/src/reference/template-format.md` and `docs/src/concepts/schemas.md`:
   - which standard formats are checked;
   - the date message;
   - the behaviour change for templates that used `format` as a hint.
 
   The commit message body states the change, so that it reaches the release notes.
 
-**Checkpoint**: T022–T023 pass; the audit's 25 impossible-date cases are covered by T022's list and paths.
+**Checkpoint**: T023–T024 pass; the audit's five impossible dates are refused at every depth (SC-004).
 
 ---
 
@@ -209,7 +217,7 @@ Dependencies.
 
 **Independent Test**: the example volume lists only `demo`, valid, with a description and a role on every property; its example and every layout setting render; `cargo xtask docs check` finds no reference to removed templates.
 
-- [ ] T026 [US6] Create `examples/templates/demo/` (`template.json`, `schema.json`, `main.typ`, `example.json`) exactly as in [contracts/demo-template.md](./contracts/demo-template.md):
+- [ ] T027 [US6] Create `examples/templates/demo/` (`template.json`, `schema.json`, `main.typ`, `example.json`) exactly as in [contracts/demo-template.md](./contracts/demo-template.md):
   - every property has a `description` and an `x-role`;
   - every object has `additionalProperties: false`;
   - `date` uses `format: date` and `recipient.email` uses `format: email`;
@@ -218,46 +226,46 @@ Dependencies.
   - no QR code and no legal or payment wording.
 
   Use the `typst-dev` skill for `main.typ`.
-- [ ] T027 [US6] Rewrite `crates/inkpdf/tests/examples.rs` for the example volume. Check that:
+- [ ] T028 [US6] Rewrite `crates/inkpdf/tests/examples.rs` for the example volume. Check that:
   - it contains exactly `demo`, `valid`;
   - every property of its `data` and `layout` (walked at any depth) has a `description` and an `x-role` (SC-002);
   - its detail carries the example, which renders unchanged (SC-003);
   - each layout variant renders: both fonts, both densities, `showTotal: false`, another `accentColor`;
   - impossible dates in `date` are refused with `/data/date` (SC-004).
-- [ ] T028 [US6] Delete:
+- [ ] T029 [US6] Delete:
   - `examples/templates/progress-invoice`;
-  - `examples/requests/progress-invoice/`;
+  - the whole `examples/requests/` folder (after T003 it only holds `progress-invoice/`);
   - `docs/src/guides/progress-invoice.md`, with its `docs/src/SUMMARY.md` entry;
   - `examples/bruno/5 Progress invoice/`.
 
   Switch every test that still uses `progress-invoice` (`grep -rn progress-invoice crates/`) to `demo` or to the `sample` fixture, keeping what it checks. The `unique_prefix` examples in `crates/inkpdf/src/api/live.rs` are plain strings and stay.
-- [ ] T029 [P] [US6] Update the Bruno collection: `examples/bruno/2 Templates/02 Template detail.bru`, `03 Template schema.bru` and the `examples/bruno/4 Render/` requests use `demo` and its example. Delete `examples/bruno/4 Render/04 Package demo.bru`.
-- [ ] T030 [P] [US6] Replace every remaining reference to the removed templates with `demo`, or with a short inline snippet where a package example is needed, in:
+- [ ] T030 [P] [US6] Update the Bruno collection: `examples/bruno/2 Templates/02 Template detail.bru`, `03 Template schema.bru` and the `examples/bruno/4 Render/` requests use `demo` and its example. Delete `examples/bruno/4 Render/04 Package demo.bru`.
+- [ ] T031 [P] [US6] Replace every remaining reference to the removed templates with `demo`, or with a short inline snippet where a package example is needed, in:
   - `docs/src/concepts/packages.md`, `docs/src/guides/packages.md`, `docs/src/guides/exploring-the-api.md`;
   - `docs/src/guides/mcp.md` (the worked conversation uses `demo`);
   - `docs/src/contributing/development.md` (fixtures location);
   - `README.md`, and the `compose.yaml` header comment.
-- [ ] T031 [US6] Extend `cargo xtask docs check` in `xtask/src/docs.rs`: fail when `progress-invoice`, `packages-demo` or `examples/templates/sample` appears in `docs/src/`, `examples/`, `plugins/`, `README.md` or `compose.yaml` (SC-006). Add a unit test.
+- [ ] T032 [US6] Extend `cargo xtask docs check` in `xtask/src/docs.rs`: fail when `progress-invoice`, `packages-demo` or `examples/templates/sample` appears in `docs/src/`, `examples/`, `plugins/`, `README.md` or `compose.yaml` (SC-006). Add a unit test.
 
-**Checkpoint**: T027 passes; `cargo xtask docs check` passes.
+**Checkpoint**: T028 passes; `cargo xtask docs check` passes.
 
 ---
 
 ## Phase 9: Polish
 
-- [ ] T032 [P] Describe the role check, `example.json` and format assertion in the loader section of `docs/src/contributing/architecture.md`. Update the user's project memory note `repo-layout-003.md` (outside the repository): `demo` only, fixtures location, `plugins/inkpdf`, `x-role`.
-- [ ] T033 Run [quickstart.md](./quickstart.md) §1–§4:
+- [ ] T033 [P] Describe the role check, `example.json` and format assertion in the loader section of `docs/src/contributing/architecture.md`. Update the user's project memory note `repo-layout-003.md` (outside the repository): `demo` only, fixtures location, `plugins/inkpdf`, `x-role`.
+- [ ] T034 Run [quickstart.md](./quickstart.md) §1–§4:
   - `cargo fmt --all --check`, clippy with `-D warnings`, `cargo test --workspace`;
   - `cargo xtask docs check`, `mdbook build docs`;
   - `docker compose up --build` with MCP on: the curl checks of §2–§4.
 
   Fix anything stale.
-- [ ] T034 Quickstart §5, with Claude Code: `claude plugin validate plugins/inkpdf`, then install the plugin from the local marketplace. Then:
+- [ ] T035 Quickstart §5, with Claude Code: `claude plugin validate plugins/inkpdf`, then install the plugin from the local marketplace. Then:
   - check SC-001 with a request for a demo document;
   - check SC-005 by asking for a meeting attendance sheet template.
 
   These two conversations need the user. Record what was checked under this task.
-- [ ] T035 Mark `specs/005-mcp-agent-efficiency/spec.md` as implemented once merged. Write the PR description in English, covering:
+- [ ] T036 Mark `specs/005-mcp-agent-efficiency/spec.md` as implemented once merged. Write the PR description in English, covering:
   - what changes for template authors, assistants and HTTP callers;
   - the behaviour change of asserted formats;
   - the removed templates;
@@ -272,32 +280,33 @@ Dependencies.
 - **US2 (Phase 4)**:
   - T010 needs T001;
   - T011 needs T001 and T002;
-  - its manual check (T034) needs US1, US4 and US6.
+  - T013 needs Phase 2 only; it changes `mcp/mod.rs`, like T008, so do them one after the other;
+  - its manual check (T035) needs US1, US4 and US6.
 - **US3 (Phase 5)**:
-  - T013 and T014 need T001;
-  - T015 is written early and reviewed after T026.
-- **US4 (Phase 6)**: after Phase 2; independent of US1. T019 regenerates the OpenAPI contract.
-- **US5 (Phase 7)**: after Phase 2. T024 and T007 both change `template/schema.rs`, so do them one after the other or merge carefully.
+  - T014 and T015 need T001;
+  - T016 is written early and reviewed after T027.
+- **US4 (Phase 6)**: after Phase 2; independent of US1. T020 regenerates the OpenAPI contract.
+- **US5 (Phase 7)**: after Phase 2. T025 and T007 both change `template/schema.rs`, so do them one after the other or merge carefully.
 - **US6 (Phase 8)**:
-  - T026 needs US1 (roles), US4 (example) and US5 (formats);
-  - T027 needs T026;
-  - T028 needs T003 and T026;
-  - T031 needs T028, T029 and T030.
+  - T027 needs US1 (roles), US4 (example) and US5 (formats);
+  - T028 needs T027;
+  - T029 needs T003 and T027;
+  - T032 needs T029, T030 and T031.
 - **Polish**: last.
 
 ### Parallel Opportunities
 
 - Setup: T001 ∥ T002.
 - After Phase 2: US1 (`template/schema.rs`, `mcp/`) ∥ US4 (`registry/`, `api/`) ∥ the skill writing of US2 and US3 (`plugins/`, `xtask/`).
-- Tests within a story: T004 ∥ T005 ∥ T006; T016 ∥ T017; T022 ∥ T023.
-- Docs: T009, T012, T015, T021, T025, T029 and T030 touch different pages, so they can run in parallel.
+- Tests within a story: T004 ∥ T005 ∥ T006; T017 ∥ T018; T023 ∥ T024.
+- Docs: T009, T012, T016, T022, T026, T030 and T031 touch different pages, so they can run in parallel.
 
 ### Parallel Example: after Phase 2
 
 ```text
 Task: "T004–T008 US1 roles in crates/inkpdf/src/template/schema.rs and crates/inkpdf/src/mcp/"
-Task: "T016–T020 US4 example in crates/inkpdf/src/registry/ and crates/inkpdf/src/api/"
-Task: "T010, T013 skills in plugins/inkpdf/skills/"
+Task: "T017–T021 US4 example in crates/inkpdf/src/registry/ and crates/inkpdf/src/api/"
+Task: "T010, T014 skills in plugins/inkpdf/skills/"
 ```
 
 ## Implementation Strategy
@@ -310,4 +319,4 @@ Task: "T010, T013 skills in plugins/inkpdf/skills/"
 ## Notes
 
 - T002 may end in "plugin version independent"; T011 then skips the version check.
-- T034 is the only task that needs the user (live conversations with Claude Code).
+- T035 is the only task that needs the user (live conversations with Claude Code).
