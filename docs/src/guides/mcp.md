@@ -43,7 +43,21 @@ See [Configuration](../reference/configuration.md) for the accepted values.
 ## Connect Claude Code
 
 [Claude Code](https://code.claude.com/docs/en/mcp) connects to the MCP server directly over
-HTTP, from your computer. Run, with your own address:
+HTTP, from your computer.
+
+**Recommended: the inkpdf plugin.** One install connects the server and adds two skills, one
+to generate documents and one to write templates:
+
+```text
+/plugin marketplace add ck-developer/inkpdf
+/plugin install inkpdf@inkpdf
+```
+
+Claude Code asks for `server_url`, the base address of your inkpdf server without `/mcp`
+(`http://localhost:3000` by default). See [Assistant skills](assistant-skills.md).
+
+**By hand.** Without the plugin, add the server yourself. Use one way or the other, never
+both: the plugin's server is also called `inkpdf`. Run, with your own address:
 
 ```sh
 claude mcp add --transport http inkpdf http://localhost:3000/mcp
@@ -169,14 +183,26 @@ must name both types, as MCP requires; otherwise the server answers `406`. A req
 ## The tools
 
 The server offers three tools. They are the same for every deployment: templates are not tools.
-The assistant learns what a template needs from `get_template`. Adding, changing or removing a
-template in the volume shows up at the next listing, without a restart, as for the HTTP API.
+The assistant learns what a template needs from `get_template`. The tools see the templates the
+service loaded at startup, as the HTTP API does; with hot reload on (development), a template
+added, changed or removed in the volume shows up at the next listing (see
+[Loading templates](../concepts/hot-reload.md)).
 
 | Tool | Input | Result |
 |------|-------|--------|
-| `list_templates` | none | Every template with its id, name, description, version and status (`valid`, or `invalid` with the reason). The same JSON as `GET /templates`. With no template loaded, the list is empty and the text says "No template is loaded." |
-| `get_template` | `templateId` | The template's details and its JSON Schema: `data` and `layout`, with the required fields, types, allowed values, descriptions and defaults. The same JSON as `GET /templates/{templateId}`. `metadata` is described in the input schema of `render_template`. |
-| `render_template` | `templateId`, `data`, and optionally `layout`, `metadata`, `filename` | A short text (`Rendered <file> from template <id> (<size>).`) and the PDF itself, as a file (`application/pdf`). |
+| `list_templates` | none | Every template with its id, name, description, default version, available versions and status (`valid`, or `invalid` with the reason). The same JSON as `GET /templates`. With no template loaded, the list is empty and the text says "No template is loaded." |
+| `get_template` | `templateId`, and optionally `version` | The template's details and its JSON Schema: `data` and `layout`, with the required fields, types, allowed values, formats, defaults, and each variable's `description` and `x-role`. When the template ships one, a complete `example` input. The same JSON as `GET /templates/{templateId}`. `metadata` is described in the input schema of `render_template`. |
+| `render_template` | `templateId`, `data`, and optionally `layout`, `metadata`, `filename`, `version` | A short text (`Rendered <file> from template <id> <version> (<size>).`, without the version when the template has none) and the PDF itself, as a file (`application/pdf`). |
+
+`version` chooses which [version](../concepts/templates.md#versions) of the template to read or
+render, with the same rules as the HTTP `version` parameter:
+
+- absent: the template's default version, its highest valid one;
+- a major version, such as `1`: the highest valid `1.x.y`;
+- an exact version, such as `1.0.0`: that version.
+
+A version that does not exist gives a `template-version-not-found` error listing the available
+versions. Assistants should use the default unless the user asks for a specific version.
 
 For `render_template`:
 
@@ -192,10 +218,42 @@ For `render_template`:
 All three tools only read: they change nothing on the server, and the assistant may call them
 again safely.
 
-The server also gives the assistant the expected flow when it connects: find a template with
-`list_templates`, read its schema with `get_template`, ask the user for every required field it
-does not know (never invent values), keep the `layout` defaults unless the user asks otherwise,
-then call `render_template`, and ask again about the fields named in a validation error.
+## What the assistant is told
+
+When it connects, the server gives the assistant these instructions:
+
+> Everything you need is available through these tools; do not look for templates, schemas or
+> examples in local files. Use `list_templates` to find a template matching the user's request,
+> then `get_template` to read its schema and its example. Each variable has a description and
+> may have an `x-role`: `ask` — ask the user unless they already gave the value; `fill` — fill
+> it in yourself (for example today's date), and ask if you cannot work it out; `default` —
+> leave the default unless the user mentions it, or leave the variable out if it has none.
+> Without a role, treat a required variable as `ask` and an optional one with a default as
+> `default`. Never invent a value you should have asked for. Start from the example's
+> structure. Then call `render_template`; if it returns validation errors, ask the user about
+> those fields only and call it again. Use a template's default version unless the user asks
+> for a specific one; `get_template` and `render_template` take an optional `version`.
+
+### How assistants use roles
+
+The role of a variable, its `x-role` in the template's schema, tells the assistant who provides
+the value (see [Template format](../reference/template-format.md#roles-x-role)):
+
+| `x-role` | The assistant… |
+|---|---|
+| `ask` | asks the user, unless the user already gave the value in the conversation. |
+| `fill` | fills it in itself from the context: today's date, a value derived from the user's answers, a rule given in the description. It asks when it cannot work the value out. |
+| `default` | leaves the default value, or leaves the variable out, unless the user mentions it. |
+
+So for a template whose `title` and `recipient` are `ask`, whose `date` is `fill` and whose
+`status` and `layout` settings are `default`, a request such as "a document for Jane Doe" gets
+one question (the title and Jane Doe's address, together), the date is today's, and the status
+and appearance keep their defaults. A template without roles still works: the assistant treats
+its required variables as `ask` and its optional ones as `default`.
+
+The `example` returned by `get_template` shows the assistant a complete, valid input, so it gets
+the structure and the formats right at the first attempt. The
+[generate-document skill](assistant-skills.md) gives assistants the same steps in more detail.
 
 ## A worked conversation
 
@@ -256,16 +314,17 @@ protocol failure. It carries:
 | `code` | Meaning | Closing hint |
 |--------|---------|--------------|
 | `validation-failed` | The input does not match the template's schema. Every faulty field is listed, not only the first. | Fix the input and call `render_template` again. |
-| `invalid-parameter` | `filename` is not valid (longer than 200 characters). | Fix the input and call `render_template` again. |
+| `invalid-parameter` | `filename` is not valid (longer than 200 characters), or `version` is neither a major version (`1`) nor an exact one (`1.0.0`). | Fix the input and call `render_template` again. |
 | `payload-too-large` | The input is larger than `INKPDF_MAX_BODY_BYTES`. | Fix the input and call `render_template` again. |
 | `template-not-found` | No template has this id. | Call `list_templates` to see the available templates. |
+| `template-version-not-found` | The template has no version matching `version`; the available versions are listed. | Call `get_template` without a version to see the available versions. |
 | `template-invalid` | The template failed to load; the reason is given. | This template cannot be used until the operator fixes it. |
 | `overloaded` | Every render slot stayed busy for `INKPDF_QUEUE_TIMEOUT_SECS`. | Try again in a moment. |
 | `render-timeout` | The render took longer than `INKPDF_RENDER_TIMEOUT_SECS`. | Try again in a moment. |
 | `render-failed` | The template failed to compile with this input. | Tell the operator; the template failed to render. |
 
-The first three, and an unknown template, are for the assistant to fix, usually by asking the
-user. The others are not: the assistant retries later or tells the user.
+The first three, an unknown template and an unknown version are for the assistant to fix,
+usually by asking the user. The others are not: the assistant retries later or tells the user.
 
 Mistakes in the arguments themselves are refused before the tool runs: an argument the tool
 does not declare, a missing `templateId` or `data`, or an argument of the wrong type (a `data`
@@ -318,8 +377,9 @@ on claude.ai, is a planned feature.
 
 ## Logs
 
-Each tool call writes one `mcp.tool` log event with the tool, the template id when there is
-one, the duration and the outcome: `ok`, the error code, or `invalid-arguments` for a call
-refused for its arguments. Each render also writes the usual
+Each tool call writes one `mcp.tool` log event with the tool, the template id and the version
+used when there is one (`templateId`, `templateVersion`), the duration and the outcome: `ok`,
+the error code, or `invalid-arguments` for a call refused for its arguments. Each render also
+writes the usual
 `render` event, with `interface` set to `mcp` (or `http` for the HTTP API). The input data is
 never logged. See [Deployment → Logs](../operations/deployment.md#logs).
