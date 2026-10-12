@@ -63,8 +63,9 @@ curl -si -H 'content-type: application/json' --data @facture.json \
 inkpdf-template-version: 1.1.0
 ```
 
-Every render response of a template that has a version carries the version used in the
-`Inkpdf-Template-Version` header, with or without the parameter. A version that is not a
+Every schema and render response of a template that has a version carries the version used in
+the `Inkpdf-Template-Version` header, with or without the parameter (the detail gives it in its
+`version` field). A version that is not a
 version number (`latest`, `v2`, `1.2`) gives `400 invalid-parameter`; a version that does not
 exist gives `404 template-version-not-found`, whose problem object lists the available versions:
 
@@ -160,8 +161,8 @@ or, for TypeScript types only, with [openapi-typescript](https://openapi-ts.dev)
 npx openapi-typescript http://localhost:3000/openapi.json -o inkpdf.d.ts
 ```
 
-The result exposes, for instance, `renderProgressInvoice(...)` taking a
-`ProgressInvoiceRenderRequest`. Things to keep in mind:
+The result exposes, for instance, `renderDemo(...)` taking a
+`DemoRenderRequest`. Things to keep in mind:
 
 - the client reflects the templates loaded **at generation time**: regenerate it when a
   template's schema changes, ideally in CI against the same templates you deploy;

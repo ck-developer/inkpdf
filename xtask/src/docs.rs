@@ -132,11 +132,14 @@ pub fn check(root: &Path) -> Result<()> {
     }
 }
 
-/// Names of the example templates removed by feature 005 (`demo` replaces them).
-const REMOVED_TEMPLATES: [&str; 3] = [
+/// Names of the example templates removed by feature 005 (`demo` replaces them), including the
+/// PascalCase form that generated clients use (`renderProgressInvoice`, `PackagesDemoData`).
+const REMOVED_TEMPLATES: [&str; 5] = [
     "progress-invoice",
     "packages-demo",
     "examples/templates/sample",
+    "ProgressInvoice",
+    "PackagesDemo",
 ];
 
 /// Folders and files, relative to the repository root, that must not refer to a removed example
