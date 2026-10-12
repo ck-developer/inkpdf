@@ -8,8 +8,9 @@
 //! (`plugins/inkpdf/skills/write-template/`).
 //!
 //! `check` also verifies that every `INKPDF_*` variable read by the service is documented in the
-//! hand-written `configuration.md` and in the complete Compose example of `deployment.md`, and
-//! checks the plugin files (see `plugin.rs`).
+//! hand-written `configuration.md` and in the complete Compose example of `deployment.md`,
+//! checks the plugin files (see `plugin.rs`), and that nothing refers to the example templates
+//! removed by feature 005.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -119,12 +120,77 @@ pub fn check(root: &Path) -> Result<()> {
     for problem in &plugin {
         eprintln!("plugin: {problem}");
     }
-    if stale.is_empty() && missing.is_empty() && plugin.is_empty() {
+    let removed = removed_template_references(root)?;
+    for reference in &removed {
+        eprintln!("reference to a removed example template: {reference}");
+    }
+    if stale.is_empty() && missing.is_empty() && plugin.is_empty() && removed.is_empty() {
         println!("generated documentation is up to date; plugin files are valid");
         Ok(())
     } else {
         bail!("documentation check failed")
     }
+}
+
+/// Names of the example templates removed by feature 005 (`demo` replaces them).
+const REMOVED_TEMPLATES: [&str; 3] = [
+    "progress-invoice",
+    "packages-demo",
+    "examples/templates/sample",
+];
+
+/// Folders and files, relative to the repository root, that must not refer to a removed example
+/// template.
+const REFERENCE_SCOPE: [&str; 5] = [
+    "docs/src",
+    "examples",
+    "plugins",
+    "README.md",
+    "compose.yaml",
+];
+
+/// Every `path:line: name` where a removed example template is named in [`REFERENCE_SCOPE`].
+/// Files that are not UTF-8 text are skipped.
+fn removed_template_references(root: &Path) -> Result<Vec<String>> {
+    fn walk(path: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+        if path.is_dir() {
+            let mut entries = fs::read_dir(path)
+                .with_context(|| format!("reading {}", path.display()))?
+                .map(|entry| entry.map(|e| e.path()))
+                .collect::<std::io::Result<Vec<_>>>()?;
+            entries.sort();
+            for entry in entries {
+                walk(&entry, out)?;
+            }
+        } else if path.is_file() {
+            out.push(path.to_path_buf());
+        }
+        Ok(())
+    }
+
+    let mut files = Vec::new();
+    for scope in REFERENCE_SCOPE {
+        walk(&root.join(scope), &mut files)?;
+    }
+    let mut found = Vec::new();
+    for file in files {
+        let Ok(text) = fs::read_to_string(&file) else {
+            continue;
+        };
+        let shown = file
+            .strip_prefix(root)
+            .unwrap_or(&file)
+            .display()
+            .to_string();
+        for (number, line) in text.lines().enumerate() {
+            for name in REMOVED_TEMPLATES {
+                if line.contains(name) {
+                    found.push(format!("{shown}:{}: {name}", number + 1));
+                }
+            }
+        }
+    }
+    Ok(found)
 }
 
 /// `INKPDF_*` variables read in `config.rs`.
@@ -517,6 +583,53 @@ mod tests {
                 entry.name
             );
         }
+    }
+
+    #[test]
+    fn removed_templates_are_found_in_scope_only() {
+        let root =
+            std::env::temp_dir().join(format!("inkpdf-xtask-removed-{}", std::process::id()));
+        let write = |path: &str, content: &[u8]| {
+            let path = root.join(path);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, content).unwrap();
+        };
+        write(
+            "docs/src/guide.md",
+            b"Render `demo`.\nThen `progress-invoice`.\n",
+        );
+        write(
+            "examples/bruno/a.bru",
+            b"url: /templates/packages-demo/render\n",
+        );
+        write(
+            "plugins/skill.md",
+            b"See examples/templates/sample/main.typ\n",
+        );
+        write("README.md", b"Only demo here.\n");
+        write("compose.yaml", b"# packages-demo\n");
+        write("examples/logo.png", &[0xff, 0xfe, 0x00]);
+        write(
+            "crates/inkpdf/tests/fixtures/templates/packages-demo/main.typ",
+            b"packages-demo\n",
+        );
+        let found = removed_template_references(&root);
+        fs::remove_dir_all(&root).unwrap();
+        assert_eq!(
+            found.unwrap(),
+            [
+                "docs/src/guide.md:2: progress-invoice",
+                "examples/bruno/a.bru:1: packages-demo",
+                "plugins/skill.md:1: examples/templates/sample",
+                "compose.yaml:1: packages-demo",
+            ]
+        );
+    }
+
+    #[test]
+    fn the_repository_has_no_reference_to_removed_templates() {
+        let found = removed_template_references(&crate::repo_root()).unwrap();
+        assert!(found.is_empty(), "{found:#?}");
     }
 
     #[test]
