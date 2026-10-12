@@ -101,8 +101,18 @@ pub fn tool_params(name: &str, args: Value) -> Value {
 
 /// `tools/call` on the stateless path (protocol `2026-07-28`); returns the JSON-RPC `result`.
 pub async fn call_tool(app: &Router, name: &str, args: Value) -> Value {
+    call_tool_with(app, name, args, STATELESS_PROTOCOL).await
+}
+
+/// `tools/call` in `protocol_version`; returns the JSON-RPC `result`.
+pub async fn call_tool_with(
+    app: &Router,
+    name: &str,
+    args: Value,
+    protocol_version: &str,
+) -> Value {
     let params = tool_params(name, args);
-    let (status, body) = rpc(app, 1, "tools/call", params, STATELESS_PROTOCOL).await;
+    let (status, body) = rpc(app, 1, "tools/call", params, protocol_version).await;
     assert_eq!(status, StatusCode::OK, "{body}");
     match body.get("result") {
         Some(result) => result.clone(),

@@ -302,6 +302,35 @@ async fn render_template_returns_the_http_pdf() {
     }
 }
 
+/// Clients of protocol `2025-06-18` take rmcp's other request path: same results, a success
+/// and a tool error.
+#[tokio::test]
+async fn tool_calls_answer_the_same_on_the_handshake_protocol() {
+    let volume = examples_volume();
+    let app = mcp_app(&volume);
+    let body = sample_request();
+    let (status, _, expected) = post_json(&app, "/templates/sample/render", &body).await;
+    assert_eq!(status, StatusCode::OK);
+
+    for id in ["sample", "unknown"] {
+        let args = render_args(id, &body);
+        let stateless = call_tool(&app, "render_template", args.clone()).await;
+
+        let result = call_tool_with(&app, "render_template", args, HANDSHAKE_PROTOCOL).await;
+
+        for key in ["content", "isError", "structuredContent"] {
+            assert_eq!(result.get(key), stateless.get(key), "{id}: {key}");
+        }
+        if id == "sample" {
+            assert_eq!(result["isError"], false, "{result}");
+            assert!(decode_pdf(&result) == expected, "the PDF differs");
+        } else {
+            assert_eq!(result["isError"], true, "{result}");
+            assert_eq!(result["structuredContent"]["code"], "template-not-found");
+        }
+    }
+}
+
 #[tokio::test]
 async fn render_result_carries_a_summary_and_the_pdf() {
     let volume = examples_volume();
